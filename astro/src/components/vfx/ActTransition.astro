@@ -18,7 +18,9 @@
  *   warp      (Act 3) the dot detonates into a speed-of-light streak field
  *   six-beam  (Act 4) the dot splits into six RGBMCY beams that land on a
  *             hexagonal pixel: RGB triangle + inverted MCY triangle
- *   rays      (Act 8) rays bend around the viewer; monocentric shells pass
+ *   rays      (legacy, unused) rays bend around the viewer
+ * Bespoke Acts 5–12 (act-tx-variants.ts): flare (5), whip (6), blueprint (7),
+ *   cone (8), shield (9), timelapse (10), seals (11), race (12).
  *
  * Fully scrubbed (pure function of scroll), so it plays backwards too.
  * Tiers: full · reduced (shorter, fewer particles) · static (not rendered:
@@ -26,8 +28,10 @@
  */
 import type { VfxSlotProps } from '../../lib/motion/types';
 import BeamText from './BeamText.astro';
+import { acts } from '../../data/crt-vr';
 
-type Variant = 'default' | 'eye' | 'warp' | 'six-beam' | 'rays';
+const BESPOKE = ['flare', 'whip', 'blueprint', 'cone', 'shield', 'timelapse', 'seals', 'race'] as const;
+type Variant = 'default' | 'eye' | 'warp' | 'six-beam' | 'rays' | (typeof BESPOKE)[number];
 interface Props extends Partial<VfxSlotProps> {
   variant?: Variant | string;
   number: number;
@@ -41,13 +45,20 @@ interface Props extends Partial<VfxSlotProps> {
 }
 const { variant = 'default', number, title, kicker, tint = '#00ff99', first = number === 1 } = Astro.props;
 const num = String(number).padStart(2, '0');
-const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? variant : 'default') as Variant;
+const v = (['default', 'eye', 'warp', 'six-beam', 'rays', ...BESPOKE].includes(variant) ? variant : 'default') as Variant;
+const lower = v === 'eye' || v === 'six-beam' || (BESPOKE as readonly string[]).includes(v);
+// Act 11 seals stamp in the act's own certification list (page data, not invented here)
+const labels = v === 'seals'
+  ? (acts.find((a) => a.number === number)?.sections.flatMap((s: any) => (s.kind === 'badges' ? (s.items ?? []).map((i: any) => i.label) : [])) ?? [])
+  : [];
 ---
 <div
   class:list={['act-tx', { 'act-tx--first': first }]}
   data-act-tx
   data-variant={v}
   data-first={first ? '1' : '0'}
+  data-lower={lower ? '1' : '0'}
+  data-labels={labels.length ? JSON.stringify(labels) : undefined}
   style={`--tx-tint:${tint}`}
 >
   <div class="act-tx__spacer"></div>
@@ -174,10 +185,8 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
     text-align: center;
     pointer-events: none;
   }
-  .act-tx[data-variant='eye'] .tx-copy,
-  .act-tx[data-variant='six-beam'] .tx-copy { top: 85%; }
-  .act-tx[data-variant='eye'] .tx-copy :global(.tx-title),
-  .act-tx[data-variant='six-beam'] .tx-copy :global(.tx-title) { font-size: clamp(44px, 7vw, 112px); }
+  .act-tx[data-lower='1'] .tx-copy { top: 85%; }
+  .act-tx[data-lower='1'] .tx-copy :global(.tx-title) { font-size: clamp(44px, 7vw, 112px); }
   .tx-kicker {
     font-family: var(--vfx-font-mono);
     font-size: 12px;
@@ -198,6 +207,7 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
 <script>
   import { ready, seg, clamp01, smooth, easeOut, easeInOut, expoOut, lerp } from './motion';
   import { getTier, budget } from './quality';
+  import { BESPOKE } from './act-tx-variants';
 
   const NS = 'http://www.w3.org/2000/svg';
   const mk = (tag: string, attrs: Record<string, string | number> = {}, parent?: Element) => {
@@ -215,7 +225,12 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
     getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
   type Ctx = { W: number; H: number; cx: number; cy: number; R: number; tint: string };
-  type VariantImpl = { build(g: SVGGElement, c: Ctx): void; render(u: number, c: Ctx, out: number): void };
+  type VariantImpl = {
+    opts?: { lower?: boolean; ownIgnite?: boolean };
+    build(g: SVGGElement, c: Ctx): void;
+    render(u: number, c: Ctx, out: number): void;
+    title?(u: number, el: HTMLElement, out: number): void;
+  };
 
   /* ── variant: default · phosphor rings ───────────────────── */
   function ringsVariant(): VariantImpl {
@@ -526,9 +541,13 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
     const copy = stage.querySelector<HTMLElement>('.tx-copy')!;
     const title = stage.querySelector<HTMLElement & { progress: number }>('beam-text')!;
     const tint = getComputedStyle(root).getPropertyValue('--tx-tint').trim() || '#00ff99';
-    const variant = (VARIANTS[root.dataset.variant || 'default'] ?? ringsVariant)();
+    const vname = root.dataset.variant || 'default';
+    let labels: string[] = [];
+    try { labels = JSON.parse(root.dataset.labels || '[]'); } catch { labels = []; }
+    const variant: VariantImpl = BESPOKE[vname] ? BESPOKE[vname](labels) : (VARIANTS[vname] ?? ringsVariant)();
     // variants whose art owns the center push the title to the lower third
-    const centered = root.dataset.variant === 'eye' || root.dataset.variant === 'six-beam';
+    const centered = root.dataset.lower === '1';
+    const ownIgnite = !!variant.opts?.ownIgnite;
 
     const c: Ctx = { W: 0, H: 0, cx: 0, cy: 0, R: 0, tint };
     let totalVh = 400;
@@ -618,17 +637,18 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
       dot.setAttribute('cx', String(c.cx));
       dot.setAttribute('cy', String(c.cy));
       dot.setAttribute('r', Math.max(0, dotR).toFixed(2));
-      dot.setAttribute('opacity', dotO.toFixed(3));
+      dot.setAttribute('opacity', (ownIgnite && s >= P.ignite[0] ? 0 : dotO).toFixed(3));
       const bl = Math.sin(Math.PI * Math.min(1, ig)) * (1 - out);
       bloom.setAttribute('cx', String(c.cx));
       bloom.setAttribute('cy', String(c.cy));
       bloom.setAttribute('r', (c.R * (0.2 + 2.2 * expoOut(ig))).toFixed(1));
-      bloom.setAttribute('opacity', (bl * bl * 0.5 + (first ? (1 - ig) * 0.3 : 0)).toFixed(3));
+      bloom.setAttribute('opacity', (ownIgnite ? 0 : bl * bl * 0.5 + (first ? (1 - ig) * 0.3 : 0)).toFixed(3));
 
       // 3 · variant moment
       const u = S(s, P.art);
       gVar.style.opacity = s >= P.art[0] ? '1' : '0';
       variant.render(u, c, out);
+      variant.title?.(u, title, out);
 
       // 4 · number traced by the beam, title beam-drawn
       const nn = S(s, P.num);

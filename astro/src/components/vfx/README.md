@@ -69,7 +69,19 @@ function of scroll, so it plays backwards too.
 | `eye` (Act 2) | The collapsed line opens into an eye; the dot becomes the pupil; it glances, then locks on you |
 | `warp` (Act 3) | The dot detonates into a streak field that accelerates to a light-speed flash |
 | `six-beam` (Act 4) | The dot spirals into six RGBMCY beams landing on a hexagon pixel: RGB triangle + inverted MCY triangle |
-| `rays` (Act 8) | Rays bend around the viewer while monocentric shells sweep past |
+| `rays` | Legacy (no longer used): rays bend around the viewer |
+| `flare` (Act 5) | True black, then one hexagon pixel ignites into a blinding HDR bloom and settles on black-on-black wells |
+| `whip` (Act 6) | Whip-pan: a sample-and-hold box smear is swept by the raster into a razor-crisp impulse frame |
+| `blueprint` (Act 7) | The side-fire tube flies together from exploded parts as a blueprint, then the six beams fire |
+| `cone` (Act 8) | Rays leave the tube as a cone, the eyepiece turns it around, then it wraps you: ±50° Gaze-Cone, Periphery Ring to 160° |
+| `shield` (Act 9) | A high-voltage arc crackles, then hex shield cells seal around it |
+| `timelapse` (Act 10) | Hours-on counter blurs past (never lands), dust and daylight sweep, burn-in is evened out |
+| `seals` (Act 11) | The act's certification seals stamp in one by one, then shimmer |
+| `race` (Act 12) | Refresh bars race; CRT-VR smashes the chart ceiling and counts to 3,000+ Hz |
+
+The Act 5–12 moments live in `act-tx-variants.ts`. A variant can set
+`opts.lower` (title to the lower band), `opts.ownIgnite` (hide the shared
+dot and bloom) and a `title()` hook that styles the beam-drawn title in sync.
 
 Act 1 is a timed power-on intro instead (dot, bloom, raster opens on the hero).
 It takes no scroll.

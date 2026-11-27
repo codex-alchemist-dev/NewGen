@@ -13,6 +13,13 @@ import { BUILT_INTERACTIVES } from '../../../components/interactives/crt-vr';
 import { acts } from '../../../data/crt-vr';
 import { comparisonHeads, comparisonRows, openQuestions, liveFootnotes, specGroups } from '../../../data/crt-vr-proof';
 import SpecTable from '../../../components/kit/SpecTable.astro';
+// Act 4 · RGBMCY interactives and visuals
+import GamutExplorer from '../../../components/interactives/crt-vr/GamutExplorer';
+import HexZoom from '../../../components/interactives/crt-vr/HexZoom';
+import SixBeamConvergence from '../../../components/interactives/crt-vr/SixBeamConvergence';
+import CoverageCalc from '../../../components/interactives/crt-vr/CoverageCalc';
+import PuretonePicker from '../../../components/interactives/crt-vr/PuretonePicker';
+import GamutInnovations from '../../../components/visuals/crt-vr/GamutInnovations.astro';
 
 const placeholder = '[copy pending]';
 ---
@@ -62,8 +69,14 @@ const placeholder = '[copy pending]';
             {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
             {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
+{s.interactive === 'gamut-explorer' && <GamutExplorer client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'hex-zoom' && <HexZoom client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'six-beam-convergence' && <SixBeamConvergence client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'coverage-calc' && <CoverageCalc client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'puretone-picker' && <PuretonePicker client:visible tier="full" reducedMotion={false} />}
+            {act.number === 4 && s.id === 'gamut-innovations' && <GamutInnovations tier="full" reducedMotion={false} />}
             {s.interactive && BUILT_INTERACTIVES.has(s.interactive) && <CrtVrInteractive id={s.interactive} />}
-            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && <Slot id={s.interactive} kind="interactive" />}
+            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && !['gamut-explorer', 'hex-zoom', 'six-beam-convergence', 'coverage-calc', 'puretone-picker'].includes(s.interactive) && <Slot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>

@@ -23,3 +23,9 @@ Shared: `tokens.css` (aliases shell tokens, fonts stay swappable), `lib/scrub.ts
 - **static** (and `prefers-reduced-motion`): no scrubbing. The hero shows one composed frame with all three lines, the background is a CSS still, the stats are drawn.
 
 All three copy lines, captions and figures are real HTML/SVG text.
+
+## Act 4 · RGBMCY
+
+| Component | Slot | What it is |
+|---|---|---|
+| `GamutInnovations.astro` | `gamut-innovations` section | Four plates: QD lines (~20 nm) vs phosphor (~40–100 nm), Resonant Wells (schematic), per-subpixel dichroic trim (schematic), zero cross-talk (< −30 dB, labeled as a target). Spectra come from the interactives' colour model. |

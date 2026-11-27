@@ -13,33 +13,33 @@
  * (target parked mid-lane, smeared vs. crisp).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 
 interface Props extends Partial<VfxSlotProps> { id?: string }
 const { id = 'crtvr-motion-blur' } = Astro.props;
 ---
-<div class="crtvr ix mbc" id={id} data-mbc>
-  <div class="ix-head">
-    <span class="ix-tag">What your eye sees, following the target</span>
-    <span class="ix-note">Illustrative pursuit view</span>
+<div class="crtvr cx mbc" id={id} data-mbc>
+  <div class="cx-head">
+    <span class="cx-tag">What your eye sees, following the target</span>
+    <span class="cx-note">Illustrative pursuit view</span>
   </div>
-  <div class="ix-frame mbc-frame">
-    <div class="mbc-lane" style="--ix-accent: var(--crtvr-panel-cold)">
-      <span class="mbc-name"><span class="ix-label">Sample-and-hold</span><em>Smears</em></span>
+  <div class="cx-frame mbc-frame">
+    <div class="mbc-lane" style="--cx-accent: var(--crtvr-panel-cold)">
+      <span class="mbc-name"><span class="cx-label">Sample-and-hold</span><em>Smears</em></span>
       <canvas data-lane="hold" aria-hidden="true"></canvas>
     </div>
     <div class="mbc-lane">
-      <span class="mbc-name"><span class="ix-label mbc-hot">CRT-VR impulse</span><em class="hot">Stays crisp</em></span>
+      <span class="mbc-name"><span class="cx-label mbc-hot">CRT-VR impulse</span><em class="hot">Stays crisp</em></span>
       <canvas data-lane="impulse" aria-hidden="true"></canvas>
     </div>
   </div>
-  <p class="ix-sr">A target moving across two displays. On the sample-and-hold display it smears into a blur as it moves. On CRT-VR, which flashes each line for an instant, it stays sharp at any speed.</p>
-  <div class="ix-controls">
-    <label class="ix-range"><span class="ix-label">Speed</span>
+  <p class="cx-sr">A target moving across two displays. On the sample-and-hold display it smears into a blur as it moves. On CRT-VR, which flashes each line for an instant, it stays sharp at any speed.</p>
+  <div class="cx-controls">
+    <label class="cx-range"><span class="cx-label">Speed</span>
       <input type="range" min="0.4" max="2" step="0.05" value="1" data-speed aria-label="Target speed" />
     </label>
-    <button type="button" class="ix-chip" aria-pressed="false" data-pause>Pause</button>
+    <button type="button" class="cx-chip" aria-pressed="false" data-pause>Pause</button>
   </div>
 </div>
 

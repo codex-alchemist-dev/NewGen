@@ -12,40 +12,40 @@
  * static (one composed frame, gaze at centre).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 
 interface Props extends Partial<VfxSlotProps> { id?: string }
 const { id = 'crtvr-pixel-vs-soft' } = Astro.props;
 ---
-<div class="crtvr ix pvs" id={id} data-pvs>
-  <div class="ix-head">
-    <span class="ix-tag">Same periphery · two displays</span>
-    <span class="ix-note">Illustrative · move to look around</span>
+<div class="crtvr cx pvs" id={id} data-pvs>
+  <div class="cx-head">
+    <span class="cx-tag">Same periphery · two displays</span>
+    <span class="cx-note">Illustrative · move to look around</span>
   </div>
   <div class="pvs-grid">
-    <figure class="ix-frame pvs-pane" style="--ix-accent: var(--crtvr-panel-cold)">
+    <figure class="cx-frame pvs-pane" style="--cx-accent: var(--crtvr-panel-cold)">
       <canvas data-side="grid" aria-hidden="true"></canvas>
       <figcaption>
-        <span class="ix-label">Grid panel</span>
+        <span class="cx-label">Grid panel</span>
         <span class="pvs-verdict cold">Periphery turns to blocks</span>
       </figcaption>
     </figure>
-    <figure class="ix-frame pvs-pane">
+    <figure class="cx-frame pvs-pane">
       <canvas data-side="crt" aria-hidden="true"></canvas>
       <figcaption>
-        <span class="ix-label">CRT-VR</span>
+        <span class="cx-label">CRT-VR</span>
         <span class="pvs-verdict">Periphery goes soft. No pixels.</span>
       </figcaption>
     </figure>
   </div>
-  <p class="ix-sr">Two copies of the same scene, foveated around your gaze. On the grid panel the low-resolution periphery shows square blocks. On CRT-VR the same low-resolution periphery is soft and smooth, with no visible pixels.</p>
-  <div class="ix-controls">
-    <label class="ix-range"><span class="ix-label">Periphery</span>
+  <p class="cx-sr">Two copies of the same scene, foveated around your gaze. On the grid panel the low-resolution periphery shows square blocks. On CRT-VR the same low-resolution periphery is soft and smooth, with no visible pixels.</p>
+  <div class="cx-controls">
+    <label class="cx-range"><span class="cx-label">Periphery</span>
       <input type="range" min="0" max="3" step="1" value="2" data-level aria-label="Periphery resolution" />
-      <output class="ix-label pvs-out" data-level-out>480p-class</output>
+      <output class="cx-label pvs-out" data-level-out>480p-class</output>
     </label>
-    <button type="button" class="ix-chip" aria-pressed="false" data-zones>Show zones</button>
+    <button type="button" class="cx-chip" aria-pressed="false" data-zones>Show zones</button>
   </div>
 </div>
 

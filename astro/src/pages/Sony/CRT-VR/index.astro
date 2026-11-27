@@ -8,6 +8,8 @@ import HeroAnimatic from '../../../components/visuals/crt-vr/HeroAnimatic.astro'
 import HookBackground from '../../../components/visuals/crt-vr/HookBackground.astro';
 import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
 import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
+import CrtVrInteractive from '../../../components/interactives/crt-vr/CrtVrInteractive.astro';
+import { BUILT_INTERACTIVES } from '../../../components/interactives/crt-vr';
 import { acts } from '../../../data/crt-vr';
 import { comparisonHeads, comparisonRows, openQuestions, liveFootnotes, specGroups } from '../../../data/crt-vr-proof';
 import SpecTable from '../../../components/kit/SpecTable.astro';
@@ -62,7 +64,8 @@ const placeholder = '[copy pending]';
             {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
             {s.visual && s.visual !== 'hero-animatic' && <CrtvrSlot id={s.visual} kind="visual" />}
-            {s.interactive && <CrtvrSlot id={s.interactive} kind="interactive" />}
+            {s.interactive && BUILT_INTERACTIVES.has(s.interactive) && <CrtVrInteractive id={s.interactive} />}
+            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && <CrtvrSlot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>

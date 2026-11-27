@@ -12,36 +12,36 @@
  * Tiers: full (photon trails), reduced (fewer photons, no trails), static (ray fans).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 
 interface Props extends Partial<VfxSlotProps> { id?: string }
 const { id = 'crtvr-emission' } = Astro.props;
 ---
-<div class="crtvr ix emc" id={id} data-emc style="--ix-accent: #f0f4ff">
-  <div class="ix-head">
-    <span class="ix-tag">One subpixel · two faceplates</span>
-    <span class="ix-note">Illustrative simulation</span>
+<div class="crtvr cx emc" id={id} data-emc style="--cx-accent: #f0f4ff">
+  <div class="cx-head">
+    <span class="cx-tag">One subpixel · two faceplates</span>
+    <span class="cx-note">Illustrative simulation</span>
   </div>
   <div class="emc-grid">
-    <figure class="ix-frame emc-pane" style="--ix-accent: var(--crtvr-text-dim)">
+    <figure class="cx-frame emc-pane" style="--cx-accent: var(--crtvr-text-dim)">
       <canvas data-mode="lambert" aria-hidden="true"></canvas>
       <figcaption>
-        <span class="ix-label">Lambertian scattering</span>
+        <span class="cx-label">Lambertian scattering</span>
         <span class="emc-sub">Light goes everywhere. Most misses the lens.</span>
-        <span class="emc-meter"><span class="ix-label">Reaches the lens</span><i><b data-meter></b></i></span>
+        <span class="emc-meter"><span class="cx-label">Reaches the lens</span><i><b data-meter></b></i></span>
       </figcaption>
     </figure>
-    <figure class="ix-frame emc-pane">
+    <figure class="cx-frame emc-pane">
       <canvas data-mode="directional" aria-hidden="true"></canvas>
       <figcaption>
-        <span class="ix-label emc-hot">Directional Outcoupling</span>
+        <span class="cx-label emc-hot">Directional Outcoupling</span>
         <span class="emc-sub">Aimed straight into the relay cone.</span>
-        <span class="emc-meter hot"><span class="ix-label">Reaches the lens</span><i><b data-meter></b></i></span>
+        <span class="emc-meter hot"><span class="cx-label">Reaches the lens</span><i><b data-meter></b></i></span>
       </figcaption>
     </figure>
   </div>
-  <p class="ix-sr">Left: a subpixel that scatters light in all directions, so only a small share enters the relay lens. Right: the same subpixel with directional outcoupling, which sends nearly all of its light into the lens.</p>
+  <p class="cx-sr">Left: a subpixel that scatters light in all directions, so only a small share enters the relay lens. Right: the same subpixel with directional outcoupling, which sends nearly all of its light into the lens.</p>
 </div>
 
 <style>

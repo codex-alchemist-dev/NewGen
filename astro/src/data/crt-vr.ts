@@ -160,7 +160,7 @@ export const acts: ActDef[] = [
       { id: 'side-fire-tube', title: 'Side-fire tube', interactive: 'exploded-tube', eyebrow: 'Side-fire', headline: 'Fired from the side.', body: [
         "Inspired by Sony's Watchman flat CRT. The guns sit at your temples and fire across the screen, so there's no deep tube in front of your face, and the weight sits where your head carries it best."] },
       { id: 'dome-faceplate', title: 'Dome faceplate', eyebrow: 'Dome', headline: 'A dome, not a slab.', body: [
-        'The faceplate is a thin dome that carries the vacuum load the way an arch carries a bridge. It takes far less glass than any CRT before it.'] },
+        "The faceplate is a concave wraparound cap, 6–8 mm thick, with vacuum-side ribs outside the active area. It takes far less glass than any CRT before it."] },
       { id: 'faceplate-first-lens', title: 'Faceplate = first lens', eyebrow: 'First lens', headline: 'The screen is the first lens.', body: [
         "The dome's outer surface is the first element of the optics."] },
       { id: 'the-gun', title: 'The gun', interactive: 'gun-shootout', eyebrow: 'The gun', headline: 'One gun. Six beams.', body: [
@@ -178,8 +178,9 @@ export const acts: ActDef[] = [
     number: 8, id: 'wraparound-optics', title: 'Wraparound Optics', transition: 'rays', tagline: 'Made for VR. Before VR existed.', sections: [
       { id: 'cone-in-cone-out', title: 'Cone in, cone out', interactive: 'flat-vs-cone', eyebrow: 'Cone', headline: 'Born a cone.', body: [
         "A flat panel has to stretch a rectangle around your eye, which is where distortion and the screen-in-a-box feel come from. A CRT's light already leaves as a cone. CRT-VR's optics simply turn that cone around to wrap your eye. The panel the industry tried to leave behind was simply ahead of its time."] },
-      { id: 'monocentric-relay', title: 'Monocentric relay', interactive: 'rotate-eye', eyebrow: 'Monocentric', headline: 'Sharp wherever you look.', body: [
-        'Every optical surface shares one center: the point your eye rotates around. Look anywhere and the light takes the same path.'] },
+      { id: 'monocentric-relay', title: 'Gaze-Cone optics', interactive: 'rotate-eye', eyebrow: 'Gaze-Cone', headline: 'Sharp across the cone your eye sweeps.', body: [
+        'A curved-field aspheric eyepiece per eye, uniformly sharp across the ±50° cone the eye can rotate through, with softening only out in peripheral vision to 160° per eye.',
+        'Beyond the cone, a thin Periphery Ring carries the wraparound faceplate out to 160° per eye, where your vision is peripheral anyway.'] },
       { id: 'faceplate-is-first-lens', title: 'The faceplate is the first lens', eyebrow: 'First lens', headline: 'One less lens.', body: [
         'The dome faceplate doubles as the first optical element.'] },
       { id: 'optics-tiers', title: 'Optics tiers: Sony, G, G Master, G Master with ZEISS T*', interactive: 'tier-compare', eyebrow: 'Tiers', headline: 'Glass worthy of the image.', body: [
@@ -221,7 +222,7 @@ export const acts: ActDef[] = [
       { id: 'vacuum-lifetime', title: 'Vacuum lifetime', eyebrow: 'Vacuum', headline: 'A vacuum that stays a vacuum.', body: [
         'Thin-film getters absorb gas for the life of the panel.'] },
       { id: 'durability', title: 'Durability', eyebrow: 'Durability', headline: 'Tough by shape.', body: [
-        "The dome's compression makes it stronger than flat glass."] },
+        "The concave wraparound cap, 6–8 mm with vacuum-side ribs outside the active area, carries the vacuum load at a fraction of a classic CRT's glass mass."] },
     ],
   },
   {

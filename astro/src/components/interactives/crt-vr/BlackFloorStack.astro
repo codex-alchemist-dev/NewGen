@@ -12,7 +12,7 @@
  * Tiers: full and reduced (animated sequence), static (all fixes on, no motion).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 
 interface Props extends Partial<VfxSlotProps> { id?: string }
@@ -25,15 +25,15 @@ const rows = [
   { key: 'halo', name: 'Electron halo / backscatter', fix: 'Kurocoat wells + Photon Cups', before: 6e-3, after: 2e-6 },
 ];
 ---
-<div class="crtvr ix bfs" id={id} data-bfs data-rows={JSON.stringify(rows)} style="--ix-accent: #f0f4ff">
-  <div class="ix-head">
-    <span class="ix-tag">Black-level budget</span>
-    <span class="ix-note">Illustrative · log scale</span>
+<div class="crtvr cx bfs" id={id} data-bfs data-rows={JSON.stringify(rows)} style="--cx-accent: #f0f4ff">
+  <div class="cx-head">
+    <span class="cx-tag">Black-level budget</span>
+    <span class="cx-note">Illustrative · log scale</span>
   </div>
-  <div class="ix-frame bfs-body">
+  <div class="cx-frame bfs-body">
     <div class="bfs-patch-wrap">
-      <div class="bfs-patch" data-patch><span class="ix-label" data-patch-label>Lifted</span></div>
-      <span class="ix-label">The black you see</span>
+      <div class="bfs-patch" data-patch><span class="cx-label" data-patch-label>Lifted</span></div>
+      <span class="cx-label">The black you see</span>
     </div>
     <div class="bfs-chart">
       <div class="bfs-axis" aria-hidden="true">
@@ -43,7 +43,7 @@ const rows = [
         <div class="bfs-row" data-row={r.key}>
           <div class="bfs-row-head">
             <span class="bfs-name">{r.name}</span>
-            <button type="button" class="ix-chip" aria-pressed="false" data-fix={r.key}>{r.fix}</button>
+            <button type="button" class="cx-chip" aria-pressed="false" data-fix={r.key}>{r.fix}</button>
           </div>
           <div class="bfs-track"><b data-bar></b>{r.note && <em class="bfs-note" data-note>{r.note}</em>}</div>
         </div>
@@ -51,13 +51,13 @@ const rows = [
       <div class="bfs-row bfs-total">
         <div class="bfs-row-head">
           <span class="bfs-name">Total black floor</span>
-          <span class="bfs-stamp ix-tag" data-stamp>Near-zero floor</span>
+          <span class="bfs-stamp cx-tag" data-stamp>Near-zero floor</span>
         </div>
         <div class="bfs-track"><b data-total></b></div>
       </div>
     </div>
   </div>
-  <p class="ix-sr" data-sr>Without fixes, beam leakage, veiling glare and electron halo lift the black level. Blanking, the Kurocoat barrel, and Kurocoat wells with Photon Cups each push their contributor down by orders of magnitude, leaving a near-zero black floor.</p>
+  <p class="cx-sr" data-sr>Without fixes, beam leakage, veiling glare and electron halo lift the black level. Blanking, the Kurocoat barrel, and Kurocoat wells with Photon Cups each push their contributor down by orders of magnitude, leaving a near-zero black floor.</p>
 </div>
 
 <style>

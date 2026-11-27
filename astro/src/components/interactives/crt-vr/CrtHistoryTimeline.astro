@@ -13,7 +13,7 @@
  * reduced motion (no pinning: a wrapped grid with every device drawn).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 
 interface Props extends Partial<VfxSlotProps> { id?: string }
@@ -34,11 +34,11 @@ const nodes: { year: string; name: string; line: string; era: Era; icon: string 
 ];
 const six = ['#ff2d20', '#00ff99', '#3a6bff', '#ff3cc8', '#00e5ff', '#ffe135'];
 ---
-<div class="crtvr ix tl" id={id} data-tl style={`--n:${nodes.length}`}>
+<div class="crtvr cx tl" id={id} data-tl style={`--n:${nodes.length}`}>
   <div class="tl-scroller" data-scroller>
     <div class="tl-stage" data-stage>
-      <div class="tl-bigyear ix-display" aria-hidden="true" data-bigyear>{nodes[0].year}</div>
-      <div class="tl-era ix-tag" data-era>The tube era</div>
+      <div class="tl-bigyear cx-display" aria-hidden="true" data-bigyear>{nodes[0].year}</div>
+      <div class="tl-era cx-tag" data-era>The tube era</div>
       <div class="tl-viewport">
         <ol class="tl-track" data-track>
           <li class="tl-rail" aria-hidden="true"><span class="tl-rail-lit" data-lit></span></li>
@@ -120,7 +120,7 @@ const six = ['#ff2d20', '#00ff99', '#3a6bff', '#ff3cc8', '#00e5ff', '#ffe135'];
                   ))}
                 </g>)}
               </svg>
-              <p class="tl-year ix-display">{n.year}</p>
+              <p class="tl-year cx-display">{n.year}</p>
               <h4 class="tl-name">{n.name}</h4>
               <p class="tl-line">{n.line}</p>
             </li>

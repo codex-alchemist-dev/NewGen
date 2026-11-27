@@ -11,7 +11,7 @@
  * static (everything drawn).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 
 interface Props extends Partial<VfxSlotProps> { id?: string }
@@ -29,18 +29,18 @@ const rows = [
 ];
 const six = ['#ff2d20', '#ffe135', '#00ff99', '#00e5ff', '#3a6bff', '#ff3cc8'];
 ---
-<div class="crtvr ix slt" id={id} data-slt>
+<div class="crtvr cx slt" id={id} data-slt>
   <div class="slt-heads" aria-hidden="true">
-    <span class="ix-tag slt-sony">Sony ancestor</span>
+    <span class="cx-tag slt-sony">Sony ancestor</span>
     <span></span>
-    <span class="ix-tag">Became, in CRT-VR</span>
+    <span class="cx-tag">Became, in CRT-VR</span>
   </div>
   <ol class="slt-rows">
     {rows.map((r, i) => (
       <li class:list={['slt-row', { rival: r.rival }]} style={`--i:${i}`} tabindex="0" data-row
         aria-label={`${r.year}, ${r.from}${r.rival ? ': ' : ' became '}${r.to}`}>
         <div class="slt-from">
-          <span class="slt-year ix-display">{r.year}</span>
+          <span class="slt-year cx-display">{r.year}</span>
           <span class="slt-name">{r.from}</span>
         </div>
         <svg class="slt-link" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
@@ -58,7 +58,7 @@ const six = ['#ff2d20', '#ffe135', '#00ff99', '#00e5ff', '#3a6bff', '#ff3cc8'];
       {six.map((c, k) => <path d={`M${20 + k * 12} 0 C${20 + k * 12} 30 50 30 50 60`} stroke={c} pathLength="1" />)}
     </svg>
   </div>
-  <p class="slt-crt ix-display">CRT-VR</p>
+  <p class="slt-crt cx-display">CRT-VR</p>
 </div>
 
 <style>

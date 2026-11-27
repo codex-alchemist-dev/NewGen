@@ -12,7 +12,7 @@
  * Tiers: full and reduced (row reveal + filter fades), static (no motion).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 import { comparisonHeads, comparisonRows } from '../../../data/crt-vr-proof';
 
@@ -27,24 +27,24 @@ const TOPIC: Record<string, string> = {
 const topics = [['all', 'All'], ['image', 'Image'], ['motion', 'Motion'], ['practical', 'Practical']];
 const rivals = comparisonHeads.slice(1);
 ---
-<div class="crtvr ix cmp" id={id} data-cmp>
+<div class="crtvr cx cmp" id={id} data-cmp>
   <div class="cmp-bar">
     <div class="cmp-group" role="group" aria-label="Topic">
-      <span class="ix-label">Topic</span>
-      {topics.map(([k, l], i) => <button type="button" class="ix-chip" data-topic={k} aria-pressed={i === 0 ? 'true' : 'false'}>{l}</button>)}
+      <span class="cx-label">Topic</span>
+      {topics.map(([k, l], i) => <button type="button" class="cx-chip" data-topic={k} aria-pressed={i === 0 ? 'true' : 'false'}>{l}</button>)}
     </div>
     <div class="cmp-group" role="group" aria-label="Compare with">
-      <span class="ix-label">Compare with</span>
-      {rivals.map((r, i) => <button type="button" class="ix-chip cmp-rival" data-col={i + 1} aria-pressed="true">{r}</button>)}
+      <span class="cx-label">Compare with</span>
+      {rivals.map((r, i) => <button type="button" class="cx-chip cmp-rival" data-col={i + 1} aria-pressed="true">{r}</button>)}
     </div>
   </div>
 
-  <div class="ix-frame cmp-frame" role="region" aria-label="CRT-VR vs. everything" tabindex="0">
+  <div class="cx-frame cmp-frame" role="region" aria-label="CRT-VR vs. everything" tabindex="0">
     <table class="cmp-table">
-      <caption class="ix-sr">CRT-VR compared with microOLED, TV-class OLED, true RGB LED and MiniLED LCD</caption>
+      <caption class="cx-sr">CRT-VR compared with microOLED, TV-class OLED, true RGB LED and MiniLED LCD</caption>
       <thead>
         <tr>
-          <th scope="col" class="cmp-corner"><span class="ix-label">Spec</span></th>
+          <th scope="col" class="cmp-corner"><span class="cx-label">Spec</span></th>
           {comparisonHeads.map((h, c) => (
             <th scope="col" data-c={c} class:list={[{ 'cmp-us': c === 0 }]}>
               {c === 0 ? (<><span class="cmp-us-name">CRT-VR</span><span class="cmp-us-sub">Theoretical</span></>) : h}
@@ -62,14 +62,14 @@ const rivals = comparisonHeads.slice(1);
       </tbody>
     </table>
   </div>
-  <p class="ix-note cmp-foot">CRT-VR figures are theoretical design targets (TRL 2–3).</p>
+  <p class="cx-note cmp-foot">CRT-VR figures are theoretical design targets (TRL 2–3).</p>
 </div>
 
 <style>
   .cmp-bar { display: flex; flex-wrap: wrap; gap: 12px 28px; margin-bottom: 16px; }
   .cmp-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .cmp-group .ix-label { margin-right: 4px; }
-  .cmp-rival[aria-pressed="true"] { --ix-accent: var(--crtvr-panel-cold); }
+  .cmp-group .cx-label { margin-right: 4px; }
+  .cmp-rival[aria-pressed="true"] { --cx-accent: var(--crtvr-panel-cold); }
   .cmp-frame { overflow-x: auto; scrollbar-color: var(--crtvr-line-bright) transparent; }
   .cmp-table { width: 100%; min-width: 820px; border-collapse: separate; border-spacing: 0; font-size: 12.5px; line-height: 1.5; }
   .cmp-table th, .cmp-table td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--crtvr-line); transition: background .25s, color .25s, opacity .25s; }

@@ -49,10 +49,19 @@ function clampToCeiling(tier: VfxTier): VfxTier {
   return ORDER.indexOf(tier) < ORDER.indexOf(ceiling) ? ceiling : tier;
 }
 
+/*
+ * FPS can only reach 'reduced'. 'static' is reserved for prefers-reduced-motion
+ * (and explicit setTier). Static hides the act transitions and backgrounds, so an
+ * FPS dip during fast scrolling used to make them vanish when scrolling back.
+ */
+function clampToFpsFloor(tier: VfxTier): VfxTier {
+  return tier === 'static' && !state.reducedMotion ? 'reduced' : tier;
+}
+
 function step(delta: -1 | 1, now: number) {
   const i = ORDER.indexOf(state.tier) + delta;
   if (i < 0 || i >= ORDER.length) return;
-  const next = clampToCeiling(ORDER[i]);
+  const next = clampToFpsFloor(clampToCeiling(ORDER[i]));
   if (next === state.tier) return;
   emit({ tier: next });
   cooldownUntil = now + COOLDOWN_MS;

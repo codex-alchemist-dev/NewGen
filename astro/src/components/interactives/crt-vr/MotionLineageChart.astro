@@ -11,7 +11,7 @@
  * Tiers: full (glow + flare), reduced (no filters), static (fully drawn).
  */
 import '../../visuals/crt-vr/tokens.css';
-import './ix.css';
+import './cx.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
 
 interface Props extends Partial<VfxSlotProps> { id?: string }
@@ -40,12 +40,12 @@ const oled = path([[2010, .4], [2015, .5], [2020, .62], [2024, .72], [2027, .79]
 const vrD = `M${x(2027)} ${y(.9)} C${x(2028.3)} ${y(.95)} ${x(2029.2)} ${y(1.25)} ${x(2030.2)} ${y(1.62)}`;
 const ticks = [1950, 1970, 1990, 2010, 2026];
 ---
-<div class="crtvr ix mlc" id={id} data-mlc>
-  <div class="ix-head">
-    <span class="ix-tag">Motion clarity, by era</span>
-    <span class="ix-note">Qualitative · not to scale</span>
+<div class="crtvr cx mlc" id={id} data-mlc>
+  <div class="cx-head">
+    <span class="cx-tag">Motion clarity, by era</span>
+    <span class="cx-note">Qualitative · not to scale</span>
   </div>
-  <div class="ix-frame mlc-frame">
+  <div class="cx-frame mlc-frame">
     <svg viewBox="0 -80 1000 530" role="img" aria-labelledby={`${id}-t`} data-svg>
       <title id={`${id}-t`}>Motion clarity by era, qualitative. CRT held the top for decades and is still kept by holdouts. LCD never caught up. OLED is still chasing with black-frame insertion and 480 Hz. CRT-VR breaks off the top of the chart.</title>
       <defs>

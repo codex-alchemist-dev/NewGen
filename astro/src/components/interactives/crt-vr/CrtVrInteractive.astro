@@ -11,7 +11,7 @@ import ZoneInspector from './ZoneInspector';
 import GridVsCrtFoveation from './GridVsCrtFoveation';
 import EyeRoam from './EyeRoam';
 import SkipCoarsenessHz from './SkipCoarsenessHz';
-import MotionAdaptiveTimeline from './MotionAdaptiveTimeline';
+import SaccadeTimeline from './SaccadeTimeline';
 import SlewCompare from './SlewCompare';
 
 interface Props extends Partial<VfxSlotProps> { id: string }
@@ -25,5 +25,5 @@ const p = { tier, reducedMotion };
 {id === 'grid-vs-crt-foveation' && <GridVsCrtFoveation client:visible {...p} />}
 {id === 'eye-roam' && <EyeRoam client:visible {...p} />}
 {id === 'skip-coarseness-hz' && <SkipCoarsenessHz client:visible {...p} />}
-{id === 'motion-adaptive-timeline' && <MotionAdaptiveTimeline client:visible {...p} />}
+{id === 'saccade-timeline' && <SaccadeTimeline client:visible {...p} />}
 {id === 'slew-compare' && <SlewCompare client:visible {...p} />}

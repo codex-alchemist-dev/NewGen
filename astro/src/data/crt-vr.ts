@@ -86,7 +86,7 @@ export const acts: ActDef[] = [
         { value: '226 Hz', label: 'Minimum' },
         { value: '800+ Hz', label: 'Aggressive foveation' },
         { value: '2200+ Hz', label: 'Looking into a corner' }] },
-      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'motion-adaptive-timeline', eyebrow: 'Saccade banking', headline: 'It knows when your eyes jump.', body: [
+      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'saccade-timeline', eyebrow: 'Saccade banking', headline: 'It knows when your eyes jump.', body: [
         'During a saccade your brain briefly stops seeing. CRT-VR uses that moment: it drops to its coarsest scan, refresh spikes, and it is caught up by the time your eyes land.'] },
       { id: 'traveling-wave-deflection', title: 'Traveling-Wave Deflection', interactive: 'slew-compare', eyebrow: 'Traveling-Wave Deflection', headline: 'Steering at the speed of the beam.', body: [
         'The deflection plates are split into segments whose field travels with the electrons, which allows GHz-class beam steering.'] },

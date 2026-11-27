@@ -32,6 +32,24 @@ export default function GamutExplorer(props: Partial<VfxSlotProps>) {
   const areas: Record<Layer, number> = { srgb: polyArea(SRGB), p3: P3_AREA, rec2020: polyArea(REC2020), rgbmcy: gamutArea(ps) };
   const draw = (layer: Layer) => (on[layer] && (seen || tier === 'static') ? '' : 'off');
 
+  // RGBMCY trace: one continuous draw R→Y→G→C→B→M→R, untraced in reverse when toggled off.
+  const TRACE_S = 1.6;
+  const edgeLen = ps.list.map((p, i) => { const q = ps.list[(i + 1) % ps.list.length]; return Math.hypot(sx(q.xy[0]) - sx(p.xy[0]), sy(q.xy[1]) - sy(p.xy[1])); });
+  const hexPerim = edgeLen.reduce((a, b) => a + b, 0);
+  const edgeStart = edgeLen.map((_, i) => edgeLen.slice(0, i).reduce((a, b) => a + b, 0));
+  const hexOn = on.rgbmcy && (seen || tier === 'static');
+  const edgeTransition = (i: number) => {
+    const dur = (TRACE_S * edgeLen[i]) / hexPerim;
+    const delay = hexOn ? (TRACE_S * edgeStart[i]) / hexPerim : (TRACE_S * (hexPerim - edgeStart[i] - edgeLen[i])) / hexPerim;
+    return `stroke-dashoffset ${dur.toFixed(3)}s linear ${delay.toFixed(3)}s`;
+  };
+  /** Fade for vertex dots and labels: in as the trace reaches the vertex, out as the untrace leaves it. */
+  const vertexFade = (i: number) => {
+    const at = (TRACE_S * edgeStart[i]) / hexPerim;
+    return { opacity: hexOn ? 1 : 0, transition: `opacity .35s ease ${(hexOn ? at : TRACE_S - at).toFixed(3)}s` };
+  };
+  const groupFade = (onDelay: number, offDelay = 0) => ({ opacity: hexOn ? 1 : 0, transition: `opacity .6s ease ${hexOn ? onDelay : offDelay}s` });
+
   // RGB triangle (from the same QD primaries) for the "three isn't enough" contrast
   const rgbTri: XY[] = [ps.by.R.xy, ps.by.G.xy, ps.by.B.xy];
 
@@ -64,10 +82,10 @@ export default function GamutExplorer(props: Partial<VfxSlotProps>) {
             <polygon key={l.id} points={poly(l.pts!)} fill="none" stroke={l.color} strokeWidth="1.6" strokeDasharray={l.id === 'srgb' ? '5 4' : undefined}
               data-draw className={draw(l.id)} style={{ ['--len' as string]: perim(l.pts!), opacity: on[l.id] ? 1 : 0 }} />
           ))}
-          {on.rgbmcy && (
-            <g>
-              <polygon points={poly(rgbTri)} fill="none" stroke="#fff" strokeOpacity=".22" strokeDasharray="2 4" />
-              <polygon points={poly(hex)} fill="url(#gx-six)" fillOpacity=".09" stroke="none" />
+          {(
+            <g aria-hidden={!on.rgbmcy} style={{ pointerEvents: on.rgbmcy ? undefined : 'none' }}>
+              <polygon points={poly(rgbTri)} fill="none" stroke="#fff" strokeOpacity=".22" strokeDasharray="2 4" style={groupFade(TRACE_S * 0.5)} />
+              <polygon points={poly(hex)} fill="url(#gx-six)" fillOpacity=".09" stroke="none" style={groupFade(TRACE_S * 0.6, TRACE_S * 0.4)} />
               <g filter={tier === 'full' ? 'url(#gx-glow)' : undefined}>
                 {ps.list.map((p, i) => {
                   const q = ps.list[(i + 1) % ps.list.length];
@@ -76,7 +94,7 @@ export default function GamutExplorer(props: Partial<VfxSlotProps>) {
                     <g key={gid}>
                       <defs><linearGradient id={gid} gradientUnits="userSpaceOnUse" x1={sx(p.xy[0])} y1={sy(p.xy[1])} x2={sx(q.xy[0])} y2={sy(q.xy[1])}><stop offset="0" stopColor={UI[p.key]} /><stop offset="1" stopColor={UI[q.key]} /></linearGradient></defs>
                       <line x1={sx(p.xy[0])} y1={sy(p.xy[1])} x2={sx(q.xy[0])} y2={sy(q.xy[1])} stroke={`url(#${gid})`} strokeWidth="2.6" strokeLinecap="round"
-                        data-draw className={draw('rgbmcy')} style={{ ['--len' as string]: Math.hypot(sx(q.xy[0]) - sx(p.xy[0]), sy(q.xy[1]) - sy(p.xy[1])) }} />
+                        data-draw className={draw('rgbmcy')} style={{ ['--len' as string]: edgeLen[i] + 2, transition: edgeTransition(i) }} />
                     </g>
                   );
                 })}
@@ -84,9 +102,9 @@ export default function GamutExplorer(props: Partial<VfxSlotProps>) {
               {/* complementary axes through D65: R–C, Y–B, G–M */}
               {([['R', 'C'], ['Y', 'B'], ['G', 'M']] as [Key, Key][]).map(([a, b]) => (
                 <line key={a} x1={sx(ps.by[a].xy[0])} y1={sy(ps.by[a].xy[1])} x2={sx(ps.by[b].xy[0])} y2={sy(ps.by[b].xy[1])}
-                  stroke="#fff" strokeOpacity={focus === a || focus === b ? 0.55 : 0.12} strokeDasharray="1 5" />
+                  stroke="#fff" strokeOpacity={focus === a || focus === b ? 0.55 : 0.12} strokeDasharray="1 5" style={groupFade(TRACE_S)} />
               ))}
-              {ps.list.map((p) => {
+              {ps.list.map((p, i) => {
                 const [x, y] = [sx(p.xy[0]), sy(p.xy[1])];
                 const lbl = p.key === 'M' ? `M ${p.peaks[0]}+${p.peaks[1]} nm` : `${p.key} ${p.peaks[0]} nm`;
                 const off: Record<Key, [number, number, 'start' | 'end' | 'middle']> = {
@@ -94,15 +112,15 @@ export default function GamutExplorer(props: Partial<VfxSlotProps>) {
                 };
                 const [ox, oy, an] = off[p.key];
                 return (
-                  <g key={p.key} tabIndex={0} role="button" aria-label={`${NAMES[p.key]} primary, x ${p.xy[0].toFixed(3)}, y ${p.xy[1].toFixed(3)}`}
-                    onMouseEnter={() => setFocus(p.key)} onMouseLeave={() => setFocus(null)} onFocus={() => setFocus(p.key)} onBlur={() => setFocus(null)} style={{ cursor: 'pointer' }}>
+                  <g key={p.key} tabIndex={on.rgbmcy ? 0 : -1} role="button" aria-label={`${NAMES[p.key]} primary, x ${p.xy[0].toFixed(3)}, y ${p.xy[1].toFixed(3)}`}
+                    onMouseEnter={() => setFocus(p.key)} onMouseLeave={() => setFocus(null)} onFocus={() => setFocus(p.key)} onBlur={() => setFocus(null)} style={{ cursor: 'pointer', ...vertexFade(i) }}>
                     <circle cx={x} cy={y} r={focus === p.key ? 9 : 6} fill={UI[p.key]} stroke="#04050a" strokeWidth="2" style={{ transition: 'r .3s' }} />
                     {tier === 'full' && <circle cx={x} cy={y} r="14" fill={UI[p.key]} opacity=".18" className="gx-pulse" />}
                     <text x={x + ox} y={y + oy} textAnchor={an} fontSize="11" fill="var(--x4-white)" fontWeight="500">{lbl}</text>
                   </g>
                 );
               })}
-              <text x={sx(0.56)} y={sy(0.19)} fontSize="9.5" fill="var(--x4-dim)" textAnchor="middle" transform={`rotate(${(Math.atan2(sy(ps.by.R.xy[1]) - sy(ps.by.B.xy[1]), sx(ps.by.R.xy[0]) - sx(ps.by.B.xy[0])) * 180) / Math.PI} ${sx(0.56)} ${sy(0.19)})`}>purple line · M adds no area here</text>
+              <text style={groupFade(TRACE_S)} x={sx(0.56)} y={sy(0.19)} fontSize="9.5" fill="var(--x4-dim)" textAnchor="middle" transform={`rotate(${(Math.atan2(sy(ps.by.R.xy[1]) - sy(ps.by.B.xy[1]), sx(ps.by.R.xy[0]) - sx(ps.by.B.xy[0])) * 180) / Math.PI} ${sx(0.56)} ${sy(0.19)})`}>purple line · M adds no area here</text>
             </g>
           )}
           <circle cx={sx(D65[0])} cy={sy(D65[1])} r="1.5" fill="#fff" />

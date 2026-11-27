@@ -56,7 +56,7 @@ export default function RotateEye(props: Partial<VfxSlotProps>) {
           <label htmlFor={`${uid}-g`}>Gaze</label>
           <input id={`${uid}-g`} type="range" min={-50} max={50} step={5} value={+keyFor(gaze)} disabled={tier === 'static'}
             onChange={(e) => { setAuto(false); setGaze(+e.target.value); }} />
-          <output htmlFor={`${uid}-g`}>{tier === 'static' ? '—' : `${keyFor(gaze)}°`}</output>
+          <output htmlFor={`${uid}-g`}>{tier === 'static' ? '−40°, 0°, +40°' : `${keyFor(gaze)}°`}</output>
         </div>
         {tier === 'full' && (
           <button type="button" className="wo__btn" aria-pressed={auto} onClick={() => setAuto((a) => !a)}>{auto ? 'Pause sweep' : 'Auto sweep'}</button>

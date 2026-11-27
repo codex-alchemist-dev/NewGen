@@ -72,7 +72,7 @@ export default function SixBeamConvergence(props: Partial<VfxSlotProps>) {
           <rect x={EM_X - 22} y={CY - 56} width="14" height="112" rx="2" fill="#2a3450" />
           {[205, 250].map((x) => <rect key={x} x={x} y={CY - 58} width="8" height="116" fill="#3a4768" />)}
           <rect x="285" y={CY - 62} width="30" height="124" rx="4" fill="none" stroke="#56658c" />
-          {/* deflection yoke */}
+          {/* MEMS deflection plates */}
           <path d={`M350 ${CY - 96} L470 ${CY - 140} L470 ${CY - 118} L350 ${CY - 74} Z M350 ${CY + 96} L470 ${CY + 140} L470 ${CY + 118} L350 ${CY + 74} Z`} fill="#c87533" opacity=".55" />
 
           {/* grille / mask with the aperture */}
@@ -99,7 +99,7 @@ export default function SixBeamConvergence(props: Partial<VfxSlotProps>) {
           <g fontFamily="var(--x4-mono)" fontSize="10.5" fill="var(--x4-dim)">
             <text x={EM_X - 26} y={CY + 92} textAnchor="middle">6-emitter cathode ring</text>
             <text x="265" y={CY - 82} textAnchor="middle">G1 / G2 · focus</text>
-            <text x="410" y={CY - 152} textAnchor="middle">deflection yoke</text>
+            <text x="410" y={CY - 152} textAnchor="middle">MEMS deflection plates</text>
             <text x={AP_X} y={CY + 206} textAnchor="middle">grille aperture: beams cross</text>
             <text x={SC_X - 6} y={CY - 210} textAnchor="end">faceplate · landing ×6 exaggerated</text>
           </g>

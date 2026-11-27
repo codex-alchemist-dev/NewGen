@@ -39,12 +39,13 @@ export const acts: ActDef[] = [
         footnote: 'TRL 2–3 · Design study. Nothing here is built yet. All figures are design targets.' },
       { id: 'the-problem', title: 'The problem', eyebrow: '01 · The window', headline: 'VR shows you a screen. We show you a world.', body: [
         "Today's VR feels like looking through a window at a flat screen. A CRT feels like looking through a real window at a real world. CRT-VR takes that, and everything on this page, so you feel like you're truly looking at the game world."] },
-      { id: 'the-reveal', title: 'The reveal', kind: 'stats', eyebrow: '02 · The numbers', headline: 'The fastest display technology in the world.', footnote: 'OLED is still catching up. † Design targets.', items: [
+      { id: 'the-reveal', title: 'The reveal', kind: 'stats', eyebrow: '02 · The numbers', headline: 'The fastest display technology in the world.', footnote: 'OLED is still catching up. Design targets.', items: [
         { value: '0', label: 'Motion blur', color: '#00b4ff' },
-        { value: '180°+', label: 'Field of view', color: '#ffe135' },
+        { value: '180°+', label: 'Binocular field of view', color: '#ffe135' },
         { value: '24K', label: 'Per eye', color: '#ff3c6e' },
         { value: 'True', label: 'Black', color: '#f0f4ff' },
-        { value: '6', label: 'Primaries', color: 'six' }] },
+        { value: '6', label: 'Primaries', color: 'six' },
+        { value: '3,000+', unit: 'Hz', label: 'Peak refresh', color: '#00ff99' }] },
       { id: 'no-pixels', title: 'No pixels. Ever.', eyebrow: '03 · No grid', headline: 'No pixels. Ever.', interactive: 'pixel-vs-soft', body: [
         "Even at 480i or 480p, a CRT shows no visible pixel grid, because the beam's Gaussian spot blends into the phosphor. That's why CRT-VR's foveation feels invisible: away from where you look, the image gets softer, never blocky. Your peripheral vision is soft anyway, so the illusion never breaks."] },
       { id: 'the-comeback', title: 'The comeback', eyebrow: '04 · Ahead of its time', headline: 'The industry left it behind. It was simply ahead of its time.', interactive: 'crt-history-timeline', body: [
@@ -56,7 +57,7 @@ export const acts: ActDef[] = [
         'FD Trinitron, the GDM-FW900 and BVM/PVM broadcast monitors: the reference standard for color and motion.',
         "Sony microOLED (the ECX series, used in today's premium headsets): the near-eye panel CRT-VR now beats.",
         'TRILUMINOS QDs and XCD-LED become six-primary QD color.',
-        'Sony G Master camera optics become the relay lens array.',
+        'Sony G Master optics become the Gaze-Cone eyepiece.',
         "PlayStation VR is Sony's VR heritage."] },
       { id: 'built-by-newgen', title: 'Built by NewGen', eyebrow: '06 · Built by NewGen', headline: 'One panel. Every expert.', visual: 'contribution-map', body: [
         'Sony brings the tube, the color and the glass. Intel Eventide brings the link and the scan silicon. Lightmatter brings the photonic interconnect, if used.',
@@ -78,7 +79,7 @@ export const acts: ActDef[] = [
       { id: 'grid-vs-crt', title: "Why grid panels can't do this", interactive: 'grid-vs-crt-foveation', eyebrow: 'Flat panels', headline: "Why flat panels can't do this.", body: [
         'On OLED and LCD, foveation only saves GPU work. The panel still drives every pixel at a fixed refresh, and the periphery turns to blocks. On CRT-VR, every skipped dot is beam time saved, and that time becomes refresh rate. Precedent: Varjo\'s dual-panel approach.'] },
       { id: 'real-eye-freedom', title: 'Real eye freedom', interactive: 'eye-roam', eyebrow: 'Eye freedom', headline: 'Look with your eyes, not your neck.', body: [
-        "In today's VR you turn your head because only the center is sharp. CRT-VR's relay is uniform across 180°+, so you can glance the way you do in real life, and it's sharp wherever you land."] },
+        "In today's VR you turn your head because only the center is sharp. CRT-VR's Gaze-Cone eyepiece is uniformly sharp across the ±50° cone your eye can rotate through, and a Periphery Ring carries the view out to 160° per eye, so you can glance the way you do in real life."] },
       { id: 'foveation-presets', title: 'Foveation presets: Quality / Balanced / Velocity', eyebrow: 'Presets', headline: 'Quality. Balanced. Velocity.', body: [
         'Quality, Balanced and Velocity trade periphery detail for refresh rate, from 226 Hz to 800+ Hz.'] },
       { id: 'end-to-end-pipeline', title: 'End-to-end foveated pipeline', visual: 'foveated-pipeline', eyebrow: 'Pipeline', headline: 'Foveated end to end.', body: [
@@ -87,11 +88,11 @@ export const acts: ActDef[] = [
   },
   {
     number: 3, id: 'velocity', title: 'Velocity', transition: 'warp', tagline: 'One screen. Thousands of refreshes a second.', sections: [
-      { id: 'vari-refresh', title: 'Vari-refresh', interactive: 'skip-coarseness-hz', kind: 'stats', eyebrow: 'Vari-refresh', headline: 'The less it draws, the faster it gets.', footnote: '† Design targets, to be recomputed at 24K.', body: [
-        "CRT-VR refreshes the whole screen in a single raster pass. Where detail isn't needed, the beam takes bigger jumps, so the frame finishes sooner and the screen refreshes faster. 2200+ Hz when you look into a corner, where the high-res region is clipped to about a quarter."], items: [
+      { id: 'vari-refresh', title: 'Vari-refresh', interactive: 'skip-coarseness-hz', kind: 'stats', eyebrow: 'Vari-refresh', headline: 'The less it draws, the faster it gets.', footnote: 'Design targets, to be recomputed at 24K.', body: [
+        "CRT-VR refreshes the whole screen in a single raster pass. Where detail isn't needed, the beam takes bigger jumps, so the frame finishes sooner and the screen refreshes faster. 2,400+ Hz when you look into a corner, where the high-res region is clipped to about a quarter."], items: [
         { value: '226 Hz', label: 'Minimum' },
         { value: '800+ Hz', label: 'Aggressive foveation' },
-        { value: '2200+ Hz', label: 'Looking into a corner' }] },
+        { value: '2,400+ Hz', label: 'Looking into a corner' }] },
       { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'motion-adaptive-timeline', eyebrow: 'Motion-adaptive', headline: 'When everything moves, go all speed.', body: [
         'Resolution matters less when everything is moving. During fast motion, like a whip-pan or a quick head turn, Motion-Adaptive Foveated Rendering drops the entire screen, fovea included, to stage-3 foveation. With the coarsest skips everywhere, the whole-screen refresh rockets past 2,400 Hz even at the mildest setting, and beyond 3,000 Hz at the most aggressive. When motion settles, full three-zone foveation and every bit of detail come straight back. It all happens in a split second. As the motion slows and its natural blur fades, your fovea snaps back to full resolution, so you never notice the switch.'] },
       { id: 'traveling-wave-deflection', title: 'Traveling-Wave Deflection', interactive: 'slew-compare', eyebrow: 'Traveling-Wave Deflection', headline: 'Steering at the speed of the beam.', body: [
@@ -101,7 +102,7 @@ export const acts: ActDef[] = [
       { id: 'open-loop-slew', title: 'Open-Loop Slew + Hexa-Index Correction', eyebrow: 'Open-Loop Slew', headline: 'Jump now. Correct next pass.', body: [
         "The beam doesn't wait to settle. Hexa-Index measures where it landed and corrects it on the next pass."] },
       { id: 'nanosecond-qds', title: 'Nanosecond QDs', eyebrow: 'Nanosecond QDs', headline: 'No afterglow. Ever.', body: [
-        "Quantum dots fade in nanoseconds, so even at 2200+ Hz there's no ghosting."] },
+        "Quantum dots fade in nanoseconds, so even at 2,400+ Hz there's no ghosting."] },
     ],
   },
   {
@@ -138,7 +139,7 @@ export const acts: ActDef[] = [
   },
   {
     number: 5, id: 'brilliance', title: 'Brilliance', transition: 'flare', tagline: 'Blinding light. Absolute black.', sections: [
-      { id: 'the-numbers', title: 'The numbers', kind: 'stats', eyebrow: 'The numbers', headline: 'Bright enough to squint.', footnote: '† Design targets at the faceplate.', items: [
+      { id: 'the-numbers', title: 'The numbers', kind: 'stats', eyebrow: 'The numbers', headline: 'Bright enough to squint.', footnote: 'Design targets. Full-field and peak are at the faceplate; at your eye is what reaches you.', items: [
         { value: '1,500', unit: 'nits', label: 'Full screen' },
         { value: '4,000+', unit: 'nits', label: 'Highlights' },
         { value: '1,000+', unit: 'nits', label: 'At your eye' }] },
@@ -171,7 +172,7 @@ export const acts: ActDef[] = [
       { id: 'side-fire-tube', title: 'Side-fire tube', interactive: 'exploded-tube', eyebrow: 'Side-fire', headline: 'Fired from the side.', body: [
         'Watchman lineage, with guns at the temples firing across the faceplate.'] },
       { id: 'dome-faceplate', title: 'Dome faceplate', eyebrow: 'Dome', headline: 'A dome, not a slab.', body: [
-        'The faceplate is a concave wraparound cap, 6–8 mm thick, with vacuum-side ribs outside the active area.'] },
+        'The faceplate is a shallow concave cap, 6–8 mm thick, that bows into the vacuum, with vacuum-side ribs outside the active area.'] },
       { id: 'faceplate-first-lens', title: 'Faceplate = first lens', eyebrow: 'First lens', headline: 'The screen is the first lens.', body: [
         'The outer surface is the first element of the Sony relay.'] },
       { id: 'the-gun', title: 'The gun', interactive: 'gun-shootout', eyebrow: 'The gun', headline: 'One gun. Six beams.', body: [
@@ -183,16 +184,16 @@ export const acts: ActDef[] = [
         'A collector ring and timing decode show where the beam landed.',
         'Beam lock, Earth-field and head-turn drift correction, keystone correction, aging uniformity and stuck-beam kill.'] },
       { id: 'density', title: 'Density', interactive: 'pitch-calc', eyebrow: 'Density', headline: '24K in four inches.', body: [
-        '24K on 4″ means a ~3.4 µm pitch and ~2 µm triangles, with a beam voltage of about 2–3 kV.'] },
+        '24K on 4″ means a ~3.4 µm pitch and ~2 µm triangles, with a beam voltage of about 2–10 kV.'] },
     ],
   },
   {
     number: 8, id: 'wraparound-optics', title: 'Wraparound Optics', transition: 'cone', tagline: 'Made for VR. Before VR existed.', sections: [
       { id: 'cone-in-cone-out', title: 'Cone in, cone out', interactive: 'flat-vs-cone', eyebrow: 'Cone', headline: 'Born a cone.', body: [
         "A flat panel has to stretch a rectangle around your eye, which is where distortion and the screen-in-a-box feel come from. A CRT's light already leaves as a cone. CRT-VR's optics simply turn that cone around to wrap your eye. The panel the industry tried to leave behind was simply ahead of its time."] },
-      { id: 'monocentric-relay', title: 'Gaze-Cone optics', interactive: 'rotate-eye', eyebrow: 'Gaze-Cone', headline: 'Sharp across the cone your eye sweeps.', body: [
+      { id: 'gaze-cone-optics', title: 'Gaze-Cone optics', interactive: 'rotate-eye', eyebrow: 'Gaze-Cone', headline: 'Sharp across the cone your eye sweeps.', body: [
         'A curved-field aspheric eyepiece per eye, uniformly sharp across the ±50° cone the eye can rotate through, with softening only out in peripheral vision to 160° per eye.',
-        'Beyond the cone, a thin Periphery Ring carries the wraparound faceplate out to 160° per eye, where your vision is peripheral anyway.'] },
+        'Beyond the cone, a thin Periphery Ring covers 55–80°, giving 160° per eye, where your vision is peripheral anyway.'] },
       { id: 'faceplate-is-first-lens', title: 'The faceplate is the first lens', eyebrow: 'First lens', headline: 'One less lens.', body: [
         'The dome faceplate doubles as the first optical element.'] },
       { id: 'optics-tiers', title: 'Optics tiers: Sony, G, G Master, G Master with ZEISS T*', interactive: 'tier-compare', eyebrow: 'Tiers', headline: 'Glass worthy of the image.', body: [
@@ -201,7 +202,8 @@ export const acts: ActDef[] = [
         'Sony G (mid-range panels): G-series elements and coatings.',
         "Sony G Master (high-end panels): XA extreme-aspherical elements, Nano AR Coating II and the full G Master coating stack.",
         'ZEISS (select flagship panels): branded "G Master with ZEISS T*", in the same style as Sony\'s ZEISS-badged lenses. It is the full G Master relay with ZEISS T* coating, for the very top of the line.'] },
-      { id: 'exploded-relay', title: 'Exploded relay', interactive: 'exploded-relay', eyebrow: 'Relay' },
+      { id: 'exploded-relay', title: 'Exploded relay', interactive: 'exploded-relay', eyebrow: 'Relay', body: [
+        'Pulled apart from the panel side: the faceplate as first lens, the Gaze-Cone eyepiece for each eye, and the Periphery Ring that carries the view out to 160° per eye. Use the slider to pull the parts apart.'] },
       { id: 'field-curvature-match', title: 'Field-curvature match', eyebrow: 'Field curvature', headline: 'Edge to edge.', body: [
         'The curved screen cancels the optics\' field curvature, so it stays sharp right out to the edges.'] },
       { id: 'per-beam-ca-prewarp', title: 'Per-beam chromatic-aberration pre-warp', interactive: 'fringe-toggle', eyebrow: 'CA pre-warp', headline: 'Fringe-free, in hardware.', body: [
@@ -212,12 +214,12 @@ export const acts: ActDef[] = [
         'A generous eyebox, room for glasses or a prescription insert, and IPD range.'] },
       { id: 'glare-and-ghost-control', title: 'Glare and ghost control', visual: 'glare-control', eyebrow: 'Glare', headline: 'Darkness, protected.', body: [
         'A Kurocoat-lined relay barrel and baffles keep veiling glare from lifting the black floor, which ties into the black-level budget.'] },
-      { id: 'honest-fov-note', title: 'Honest FOV note', eyebrow: 'Field of view', headline: 'Your whole field of view.', footnote: '† Stretch design targets.', body: [
+      { id: 'honest-fov-note', title: 'Honest FOV note', eyebrow: 'Field of view', headline: 'Your whole field of view.', footnote: 'Stretch design targets.', body: [
         'Up to about 160° per eye, and 200°+ across both eyes.'] },
       { id: 'no-screen-door-no-mura', title: 'No screen-door, no mura', eyebrow: 'No grid', headline: 'No screen-door. No mura.', body: [
         "With no grid, there's nothing to see between pixels."] },
       { id: 'varifocal-relay', title: 'Varifocal relay', eyebrow: 'Moonshot', headline: 'Next: focus that follows you.', body: [
-        'Moonshot.'] },
+        'A moonshot beyond the Gaze-Cone baseline: an eyepiece whose focus follows where your eye is looking. It is not part of the design study\'s baseline.'] },
     ],
   },
   {
@@ -225,11 +227,11 @@ export const acts: ActDef[] = [
       { id: 'high-voltage', title: 'High voltage', eyebrow: 'High voltage', headline: 'High voltage, sealed away.', body: [
         'Potted high-voltage modules at the temples, with an instant fail-safe beam kill.'] },
       { id: 'x-rays', title: 'X-rays', eyebrow: 'X-rays', headline: 'X-rays? Effectively none.', body: [
-        'At 2–3 kV beam energy, any X-rays are below about 3 keV and are absorbed within microns of faceplate glass, effectively zero at the eye.'] },
+        'At 2–10 kV beam energy, the soft X-rays are fully absorbed by the glass envelope, effectively zero at the eye.'] },
       { id: 'heat-and-power', title: 'Heat and power', eyebrow: 'Power', headline: 'Power only where there\'s light.', body: [
         'Power is drawn only where pixels are lit.'] },
       { id: 'weight-and-balance', title: 'Weight and balance', eyebrow: 'Weight', headline: 'Balanced on your head.', body: [
-        'Mass at the temples, with a full-stack weight including the relay: to be published.'] },
+        'Design target: about 300 g per eye. The glass cap is about 140 g, the gun and yoke about 100 g, and the optics about 60 g. The side-fired guns run back toward the temples, so the mass sits close to the head\'s center. The full-stack weight is open question №1.'] },
     ],
   },
   {
@@ -237,14 +239,14 @@ export const acts: ActDef[] = [
       { id: 'burn-in', title: 'Burn-in', eyebrow: 'Burn-in', headline: 'Burn-in, compensated.', body: [
         "Hexa-Index tracks every subpixel's aging and evens it out."] },
       { id: 'vacuum-lifetime', title: 'Vacuum lifetime', eyebrow: 'Vacuum', headline: 'A vacuum that stays a vacuum.', body: [
-        'NEG getters.'] },
+        'Non-evaporable getters (NEG) keep the vacuum by soaking up gas over the panel\'s whole life, the same approach long-life vacuum tubes and FEDs use. Getter capacity against outgassing is open question №9.'] },
       { id: 'durability', title: 'Durability', eyebrow: 'Durability', headline: 'Tough by shape.', body: [
-        'The concave wraparound cap, 6–8 mm with vacuum-side ribs outside the active area, carries the vacuum load in compression.'] },
+        'The shallow cap bows into the vacuum, so it carries the vacuum load in tension, like a membrane, at about 0.5 MPa. Chemically strengthened glass and vacuum-side ribs outside the active area hold it.'] },
     ],
   },
   {
     number: 11, id: 'certified', title: 'Certified', transition: 'seals', tagline: 'Certified, top to bottom.', sections: [
-      { id: 'badge-wall', title: 'Certifications', kind: 'badges', eyebrow: 'Certified', headline: 'Certified, top to bottom.', footnote: 'Measured at the faceplate.', items: [
+      { id: 'badge-wall', title: 'Certifications', kind: 'badges', eyebrow: 'Certified', headline: 'Certified, top to bottom.', footnote: 'Targeted, at the faceplate.', items: [
         { label: 'VESA DisplayHDR 1400' }, { label: 'DisplayHDR True Black 1000' }, { label: 'ClearMR 21000' },
         { label: 'AdaptiveSync Display' }, { label: 'AMD FreeSync Premium Pro' }, { label: 'NVIDIA G-SYNC (Pulsar-class)' },
         { label: 'Pantone Validated + SkinTone Validated' }, { label: 'Calman Verified' },
@@ -254,7 +256,7 @@ export const acts: ActDef[] = [
   {
     number: 12, id: 'proof', title: 'Proof', transition: 'race', tagline: 'The proof.', sections: [
       { id: 'versus', title: 'Versus', kind: 'comparison', interactive: 'comparison-table', eyebrow: 'Versus', headline: 'CRT-VR vs. everything.' },
-      { id: 'full-specs', title: 'Full specs', kind: 'specs', eyebrow: 'Specs', headline: 'Every number.', footnote: '† Design targets, TRL 2–3.' },
+      { id: 'full-specs', title: 'Full specs', kind: 'specs', eyebrow: 'Specs', headline: 'Every number.', footnote: 'Design targets, TRL 2–3.' },
       { id: 'engineering-honesty', title: 'Engineering honesty', kind: 'honesty', eyebrow: 'Honesty', headline: "What we don't know yet." },
     ],
   },

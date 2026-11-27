@@ -5,7 +5,8 @@
  * morphs scene → scene and tint → tint with long soft blends and extra
  * per-frame damping, so section changes never pop.
  *
- * Scenes: phosphor | mask | grid | scan | void
+ * Scenes (one per act): field | eye | streaks | mosaic | hdr | trails |
+ *   blueprint | cone | calm | timelapse | shimmer | clean
  * Tiers: full = DPR-capped native res, 60 fps · reduced = 0.5× res, 30 fps
  *        static = CSS gradient only (no WebGL)
  */
@@ -55,13 +56,15 @@
   import { getTier, onTier, type Tier } from './quality';
   import { ready, onVelocity, hexToRgb, smooth, clamp01 } from './motion';
 
-  const SCENES: Record<string, number> = { phosphor: 0, mask: 1, grid: 2, scan: 3, void: 4 };
+  const SCENES: Record<string, number> = {
+    field: 0, eye: 1, streaks: 2, mosaic: 3, hdr: 4, trails: 5, blueprint: 6, cone: 7, calm: 8, timelapse: 9, shimmer: 10, clean: 11,
+  };
 
   const VERT = `attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
   const FRAG = `
 precision highp float;
 uniform vec2 uRes; uniform float uTime; uniform float uSceneA; uniform float uSceneB;
-uniform float uMix; uniform vec3 uTintA; uniform vec3 uTintB; uniform float uVel; uniform float uScroll;
+uniform float uMix; uniform vec3 uTintA; uniform vec3 uTintB; uniform float uVel; uniform float uScroll; uniform vec2 uMouse;
 
 float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
 float noise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
@@ -80,61 +83,136 @@ vec3 hexCell(vec2 p){
   return vec3(length(g), hash(floor(id*10.)), ang);
 }
 
+vec3 prim6(float s){
+  return s < .5 ? vec3(1.,.18,.12) : s < 1.5 ? vec3(1.,.17,.84) : s < 2.5 ? vec3(.16,.42,1.)
+       : s < 3.5 ? vec3(0.,.9,1.) : s < 4.5 ? vec3(0.,1.,.6) : vec3(1.,.88,.2);
+}
+
 vec3 scene(float id, vec2 uv, vec2 frag, vec3 tint){
   float t = uTime;
-  vec2 c = uv - .5; c.x *= uRes.x/uRes.y;
+  float asp = uRes.x/uRes.y;
+  vec2 c = uv - .5; c.x *= asp;
   if (id < .5) {
-    // phosphor aurora: slow luminous fog
-    float n = fbm(c*1.4 + vec2(t*.02, -t*.03 + uScroll*.15));
-    float n2 = fbm(c*3. - vec2(t*.04, uScroll*.25));
-    float glow = pow(n, 2.2)*.9 + pow(n2, 4.)*.5;
-    float floorGlow = smoothstep(.9, -.2, uv.y) * .25;
-    return tint * (glow*.38 + floorGlow*.3);
-  } else if (id < 1.5) {
-    // shadow-mask hex lattice: RGB triangle + inverted MCY triangle per cell
-    vec2 p = c*26. + vec2(0., uScroll*4.);
-    vec3 h = hexCell(p);
-    float cell = smoothstep(.5, .38, h.x);
-    // six sectors → six primaries, dimmed, tinted toward the section tint
-    float sector = floor(mod((h.z + 3.14159)/1.0472, 6.));
-    vec3 prim = sector < .5 ? vec3(1.,.18,.12) : sector < 1.5 ? vec3(1.,.17,.84) : sector < 2.5 ? vec3(.16,.42,1.)
-              : sector < 3.5 ? vec3(0.,.9,1.) : sector < 4.5 ? vec3(0.,1.,.6) : vec3(1.,.88,.2);
-    float wave = .5 + .5*sin(length(c)*6. - t*.8);
-    float light = smoothstep(1.2, 0., length(c - vec2(sin(t*.11)*.6, cos(t*.07)*.3)));
-    float k = cell * (.08 + .5*light*wave) * (.6 + .4*h.y);
-    return mix(prim, tint, .55) * k * .55;
-  } else if (id < 2.5) {
-    // VR grid: perspective floor + mirrored dome
-    float hy = .5;
-    float y = uv.y - hy;
+    // 0 field: the VR field the tube powers on into (perspective floor + dome)
+    float y = uv.y - .5;
     float side = sign(y);
     float z = .35 / max(abs(y), .002);
     float x = c.x * z;
-    float zz = z + t*.6 + uScroll*2.;
-    float lx = abs(fract(x*1.) - .5);
+    float zz = z + t*.5 + uScroll*2.;
+    float lx = abs(fract(x) - .5);
     float lz = abs(fract(zz*.5) - .5);
     float w = .015*z;
     float line = smoothstep(w, 0., lx) + smoothstep(w*1.2, 0., lz);
-    float fade = smoothstep(18., 1., z) * (side < 0. ? 1. : .45);
+    float fade = smoothstep(18., 1., z) * (side < 0. ? 1. : .4);
     float horizon = exp(-abs(y)*40.)*.6;
-    return tint * (line*fade*.55 + horizon*.5);
+    return tint * (line*fade*.5 + horizon*.45);
+  } else if (id < 1.5) {
+    // 1 eye: an almond scan field centred on the gaze (cursor); lines pack
+    // densest at the fovea and thin out toward the edge, like Skip-Scan
+    vec2 m = (uMouse - .5) * vec2(asp, 1.);
+    vec2 d = c - m;
+    float f = abs(d.y) * 1.25 + d.x*d.x*.9;          // level sets are eye-shaped
+    float dens = pow(f, .55);
+    float lines = smoothstep(.55, 1., sin(dens*95. - t*3.)*.5+.5);
+    float fall = exp(-f*2.4);
+    float fovea = exp(-f*28.);
+    float iris = smoothstep(.012, 0., abs(length(d) - .085)) * .7;
+    return tint * (lines*fall*.32 + fovea*.5 + iris*.35) + vec3(fovea*.15);
+  } else if (id < 2.5) {
+    // 2 streaks: beam streaks, faster as you scroll
+    float lanes = 46.;
+    float ln = floor(uv.y*lanes);
+    float ly = fract(uv.y*lanes);
+    float h = hash(vec2(ln, 3.1));
+    float sp = (.04 + h*.12) * (1. + min(abs(uVel), 60.)*.18);
+    float s = fract(uv.x*(.6 + h*.8) - uTime*sp*2. - h*7. - uScroll*(.3+h));
+    float head = smoothstep(.985, 1., s);
+    float tail = pow(s, 9.) * (.55 + min(abs(uVel), 60.)*.03);
+    float lane = smoothstep(.5, .15, abs(ly - .5)) * step(.5, hash(vec2(ln, 9.7)));
+    return tint * (head*1.2 + tail) * lane * .65 + vec3(head*lane*.25);
   } else if (id < 3.5) {
-    // raster scan: a beam sweeps down; phosphor decays behind it
-    float lines = .55 + .45*sin(frag.y*3.14159*.5);
-    float beamY = fract(t*.18 + uScroll*.3);
-    float d = (1. - uv.y) - beamY;
-    d = d < 0. ? d + 1. : d;           // distance behind the beam (wraps)
-    float decay = exp(-d*7.) + .25*exp(-d*1.5);
-    float beam = exp(-pow(((1.-uv.y)-beamY)*uRes.y*.15, 2.));
-    float grain = noise(vec2(frag.x*.05, t*30.));
-    return tint * (decay*.22*lines + beam*.9*(.6+.4*grain)) + vec3(beam*.25);
+    // 3 mosaic: six-color hex mosaic, flowing
+    vec2 p = c*16. + vec2(t*.35 + uScroll*2., uScroll*5.);
+    vec3 hc = hexCell(p);
+    float cell = smoothstep(.5, .36, hc.x);
+    float sector = floor(mod((hc.z + 3.14159)/1.0472, 6.));
+    vec3 col = prim6(sector);
+    float flow = .5 + .5*sin(dot(c, vec2(3., 1.6)) - t*1.1 + hc.y*1.5);
+    float k = cell * (.05 + .45*pow(flow, 3.)) * (.55 + .45*hc.y);
+    return col * k * .9;
+  } else if (id < 4.5) {
+    // 4 hdr: HDR bloom on a pure Kurocoat-black void (true 0 floor)
+    vec3 acc = vec3(0.);
+    for (int i = 0; i < 4; i++) {
+      float fi = float(i);
+      vec2 q = vec2(sin(t*.07*(fi+1.) + fi*2.1)*.55*asp, cos(t*.05*(fi+1.3) + fi)*.32);
+      float pulse = .5 + .5*sin(t*.6 + fi*1.7);
+      float d2 = dot(c-q, c-q);
+      acc += vec3(exp(-d2*900.)*1.6 + exp(-d2*40.)*.18) * pulse;
+    }
+    return acc * tint;
+  } else if (id < 5.5) {
+    // 5 trails: moving dots with crisp impulse copies: motion that never smears
+    vec3 acc = vec3(0.);
+    for (int i = 0; i < 6; i++) {
+      float fi = float(i);
+      float y = (fi + .5)/6. - .5;
+      float sp = .12 + hash(vec2(fi, 1.))*.18;
+      float span = asp + .4;
+      for (int k = 0; k < 6; k++) {
+        float fk = float(k);
+        float x = mod(t*sp + hash(vec2(fi, 2.))*span - fk*.045, span) - span*.5;
+        float dd = length(c - vec2(x, y*.8));
+        float dot1 = smoothstep(.016, .013, dd);   // hard edge: no blur
+        acc += tint * dot1 * pow(.48, fk);
+      }
+    }
+    return acc * 1.1;
+  } else if (id < 6.5) {
+    // 6 blueprint: engineering grid, minor + major lines, slow pan
+    vec2 p = frag/uRes.y * 24. + vec2(0., uScroll*6.);
+    vec2 g1 = abs(fract(p) - .5);
+    vec2 g2 = abs(fract(p/6.) - .5);
+    float minor = smoothstep(.48, .5, max(g1.x, g1.y));
+    float major = smoothstep(.49, .5, max(g2.x, g2.y));
+    float ring = smoothstep(.004, 0., abs(length(c - vec2(.35*asp, .1)) - .22)) +
+                 smoothstep(.003, 0., abs(length(c + vec2(.4*asp, .15)) - .12));
+    float scan = exp(-pow((uv.y - fract(t*.05))*30., 2.));
+    return tint * (minor*.14 + major*.4 + ring*.45 + scan*.08);
+  } else if (id < 7.5) {
+    // 7 cone: a ray cone wrapping the viewer (rays + rings rushing past)
+    float r = length(c);
+    float a = atan(c.y, c.x);
+    float rays = pow(abs(sin(a*18. + .3)), 60.) * smoothstep(.02, .6, r);
+    float z = .25 / max(r, .01);
+    float rings = smoothstep(.035, 0., abs(fract(z - t*.25 - uScroll*.8) - .5)) * smoothstep(.0, .5, r);
+    float core = exp(-r*9.)*.4;
+    return tint * (rays*.35 + rings*.22 + core);
+  } else if (id < 8.5) {
+    // 8 calm: soft, slow gradients
+    float n = fbm(c*.6 + vec2(t*.008, -t*.01 + uScroll*.05));
+    float g = smoothstep(.9, -.4, uv.y);
+    return tint * (n*n*.22 + g*.06);
+  } else if (id < 9.5) {
+    // 9 timelapse: a slow sun-arc of glow crossing the sky
+    float ph = fract(t/48. + uScroll*.02);
+    vec2 sun = vec2((ph - .5)*1.6*asp, -.35 + sin(ph*3.14159)*.6);
+    float d = length(c - sun);
+    float glow = exp(-d*3.5)*.4 + exp(-d*22.)*.5;
+    float sky = smoothstep(-.6, .5, c.y*-1.) * .06 * sin(ph*3.14159);
+    return tint * (glow + sky);
+  } else if (id < 10.5) {
+    // 10 shimmer: diamond foil with sheen bands sweeping across
+    vec2 p = vec2(c.x + c.y, c.x - c.y) * 28.;
+    vec2 g = abs(fract(p) - .5);
+    float foil = smoothstep(.43, .5, max(g.x, g.y));
+    float band = mod(t*.25 + uScroll*.3, 2.4) - 1.2;
+    float sheen = exp(-pow((c.x*.7 + c.y*.4 - band*asp)*4., 2.));
+    return tint * (foil*(.1 + sheen*.6) + sheen*.12);
   } else {
-    // void: deep space dust, calm
-    vec2 g = floor(frag/3.);
-    float s = step(.9975, hash(g + floor(uScroll*3.)*0.));
-    float tw = .5 + .5*sin(t*2. + hash(g)*30.);
-    float fog = fbm(c*.8 + t*.01)*smoothstep(1.,0.,uv.y);
-    return vec3(s*tw*.5) + tint*fog*.12;
+    // 11 clean: modern, near-flat, one soft key light
+    float key = exp(-length((c - vec2(0., .65))*vec2(.6, 1.))*2.2);
+    return tint * (key * .16 + smoothstep(1., 0., uv.y) * .025);
   }
 }
 
@@ -152,7 +230,7 @@ void main(){
   col *= 1. + min(abs(uVel)*.02, .35);
   // tone map + tiny dither
   col = col / (1. + col);
-  col += (hash(frag + uTime) - .5) / 255.;
+  col += (hash(frag + uTime) - .5) / 255. * step(.002, col.r + col.g + col.b);
   gl_FragColor = vec4(col, 1.);
 }`;
 
@@ -188,7 +266,7 @@ void main(){
     const U = (n: string) => gl.getUniformLocation(prog, n);
     const u = {
       res: U('uRes'), time: U('uTime'), a: U('uSceneA'), b: U('uSceneB'), mix: U('uMix'),
-      ta: U('uTintA'), tb: U('uTintB'), vel: U('uVel'), scroll: U('uScroll'),
+      ta: U('uTintA'), tb: U('uTintB'), vel: U('uVel'), scroll: U('uScroll'), mouse: U('uMouse'),
     };
 
     let tier: Tier = getTier();
@@ -210,7 +288,7 @@ void main(){
     const collect = () => {
       secs = [...document.querySelectorAll<HTMLElement>('[data-vfx-bg]')].map((m) => ({
         el: (m.closest('[data-act]') as HTMLElement) ?? m.parentElement!,
-        scene: SCENES[m.dataset.scene || 'phosphor'] ?? 0,
+        scene: SCENES[m.dataset.scene || 'field'] ?? 0,
         tint: hexToRgb(m.dataset.tint || '#00ff99').map((v) => v / 255) as [number, number, number],
       }));
     };
@@ -224,6 +302,10 @@ void main(){
     let vel = 0;
     onVelocity((v) => { vel = v; });
     let sVel = 0;
+    // gaze (cursor) for the eye scene, damped; GL y is up
+    const mouse = [0.5, 0.5];
+    const mouseT = [0.5, 0.5];
+    addEventListener('pointermove', (e) => { mouseT[0] = e.clientX / innerWidth; mouseT[1] = 1 - e.clientY / innerHeight; }, { passive: true });
     const cur = { a: 0, b: 0, mix: 0, ta: [0, 1, 0.6], tb: [0, 1, 0.6] };
 
     // Blend window: the last BLEND viewports before a boundary reaches mid-screen.
@@ -244,6 +326,9 @@ void main(){
     let last = 0;
     let t0 = performance.now();
     let first = true;
+    // QA: ?vfxscene=eye pins one scene
+    const fq = new URLSearchParams(location.search).get('vfxscene');
+    const forced = fq && fq in SCENES ? SCENES[fq] : null;
     canvas.classList.add('is-live');
     const frame = (now: number) => {
       requestAnimationFrame(frame);
@@ -258,13 +343,16 @@ void main(){
         pos += (tp - pos) * (1 - Math.exp(-dt * 3.5));
         const ia = Math.max(0, Math.min(secs.length - 1, Math.floor(pos)));
         const ib = Math.min(ia + 1, secs.length - 1);
-        cur.a = secs[ia].scene;
-        cur.b = secs[ib].scene;
+        cur.a = forced ?? secs[ia].scene;
+        cur.b = forced ?? secs[ib].scene;
         cur.mix = ia === ib ? 0 : pos - ia;
         cur.ta = secs[ia].tint;
         cur.tb = secs[ib].tint;
         const live = cur.ta.map((v, i) => Math.round((v + (cur.tb[i] - v) * cur.mix) * 255));
         document.documentElement.style.setProperty('--vfx-tint-rgb', live.join(' '));
+        // retro → modern: 1 at the first act, 0 at the last
+        const retro = secs.length > 1 ? 1 - Math.min(1, pos / (secs.length - 1)) : 1;
+        document.documentElement.style.setProperty('--vfx-retro', retro.toFixed(3));
       }
       sVel += (vel - sVel) * 0.1;
       gl.uniform2f(u.res, canvas.width, canvas.height);
@@ -276,6 +364,9 @@ void main(){
       gl.uniform3fv(u.tb, cur.tb);
       gl.uniform1f(u.vel, Math.max(-60, Math.min(60, sVel)));
       gl.uniform1f(u.scroll, scrollY / innerHeight);
+      mouse[0] += (mouseT[0] - mouse[0]) * 0.08;
+      mouse[1] += (mouseT[1] - mouse[1]) * 0.08;
+      gl.uniform2f(u.mouse, mouse[0], mouse[1]);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
     requestAnimationFrame(frame);

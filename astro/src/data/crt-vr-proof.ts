@@ -127,7 +127,7 @@ export const openQuestions = [
  },
  {
   "tier": "P1 Architecture-Completing",
-  "body": "Saccade timing: how early can the panel predict the landing point to start the burst?"
+  "body": "Motion thresholds: which pan and head-turn speeds should push foveation to its most aggressive?"
  },
  {
   "tier": "P1 Architecture-Completing",

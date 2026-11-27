@@ -86,8 +86,8 @@ export const acts: ActDef[] = [
         { value: '226 Hz', label: 'Minimum' },
         { value: '800+ Hz', label: 'Aggressive foveation' },
         { value: '2200+ Hz', label: 'Looking into a corner' }] },
-      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'saccade-timeline', eyebrow: 'Saccade banking', headline: 'It knows when your eyes jump.', body: [
-        'During a saccade your brain briefly stops seeing. CRT-VR uses that moment: it drops to its coarsest scan, refresh spikes, and it is caught up by the time your eyes land.'] },
+      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'saccade-timeline', eyebrow: 'Motion banking', headline: 'It knows when the world moves.', body: [
+        'Motion-Adaptive Foveated Rendering watches the frame itself. When content pans or your head turns, the skip-scan coarsens outside the fovea, where motion already hides detail, and refresh climbs from 227 Hz to 836 Hz. When the scene settles, it relaxes and fills the detail back in. The fovea never drops below full resolution.'] },
       { id: 'traveling-wave-deflection', title: 'Traveling-Wave Deflection', interactive: 'slew-compare', eyebrow: 'Traveling-Wave Deflection', headline: 'Steering at the speed of the beam.', body: [
         'The deflection plates are split into segments whose field travels with the electrons, which allows GHz-class beam steering.'] },
       { id: 'charge-dense-dwell', title: 'Charge-Dense Dwell', eyebrow: 'Charge-Dense Dwell', headline: 'Half a nanosecond per dot.', body: [

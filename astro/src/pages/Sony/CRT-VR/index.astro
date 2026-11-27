@@ -41,7 +41,7 @@ import FringeToggle from '../../../components/interactives/crt-vr/FringeToggle';
 
 // Act 8 visuals and islands that replace their <Slot>.
 const act8Visuals = new Set(['pupil-swim', 'glare-control']);
-const act8Islands = new Set(['flat-vs-cone', 'rotate-eye', 'tier-compare', 'fringe-toggle']);
+const act8Islands = new Set(['flat-vs-cone', 'rotate-eye', 'tier-compare', 'exploded-relay', 'fringe-toggle']);
 
 const placeholder = '[copy pending]';
 /* Act 7 · The Machine interactives (slot id → component). Hexa-Index mounts emission, sensors and features. */
@@ -106,12 +106,8 @@ const act7: Record<string, any> = {
               </>
             )}
             {s.interactive === 'rotate-eye' && <RotateEye client:visible tier="full" reducedMotion={false} />}
-            {s.interactive === 'tier-compare' && (
-              <>
-                <TierCompare client:visible tier="full" reducedMotion={false} />
-                <ExplodedRelay client:visible tier="full" reducedMotion={false} />
-              </>
-            )}
+            {s.interactive === 'tier-compare' && <TierCompare client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'exploded-relay' && <ExplodedRelay client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'fringe-toggle' && <FringeToggle client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'gamut-explorer' && <GamutExplorer client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'hex-zoom' && <HexZoom client:visible tier="full" reducedMotion={false} />}
@@ -121,8 +117,8 @@ const act7: Record<string, any> = {
             {act.number === 4 && s.id === 'gamut-innovations' && <GamutInnovations tier="full" reducedMotion={false} />}
             {s.interactive && BUILT_INTERACTIVES.has(s.interactive) && <CrtVrInteractive id={s.interactive} />}
             {s.interactive && act7[s.interactive] && (() => { const C = act7[s.interactive!]; return <C tier="full" reducedMotion={false} />; })()}
-            {s.interactive === 'hexa-emission' && <HexaSensors tier="full" reducedMotion={false} />}
-            {s.interactive === 'hexa-emission' && <HexaFeatures tier="full" reducedMotion={false} />}
+            {s.id === 'hexa-index' && <HexaSensors tier="full" reducedMotion={false} />}
+            {s.id === 'hexa-index' && <HexaFeatures tier="full" reducedMotion={false} />}
             {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && !act8Islands.has(s.interactive) && !act7[s.interactive] && !['gamut-explorer', 'hex-zoom', 'six-beam-convergence', 'coverage-calc', 'puretone-picker'].includes(s.interactive) && <CrtvrSlot id={s.interactive} kind="interactive" />}
           </Section>
         ))}

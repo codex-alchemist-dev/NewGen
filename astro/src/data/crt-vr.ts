@@ -160,7 +160,7 @@ export const acts: ActDef[] = [
       { id: 'side-fire-tube', title: 'Side-fire tube', interactive: 'exploded-tube', eyebrow: 'Side-fire', headline: 'Fired from the side.', body: [
         "Inspired by Sony's Watchman flat CRT. The guns sit at your temples and fire across the screen, so there's no deep tube in front of your face, and the weight sits where your head carries it best."] },
       { id: 'dome-faceplate', title: 'Dome faceplate', eyebrow: 'Dome', headline: 'A dome, not a slab.', body: [
-        'The faceplate is a thin dome that carries the vacuum load the way an arch carries a bridge. It takes far less glass than any CRT before it.'] },
+        "The faceplate is a concave wraparound cap, 6–8 mm thick, with vacuum-side ribs outside the active area. It takes far less glass than any CRT before it."] },
       { id: 'faceplate-first-lens', title: 'Faceplate = first lens', eyebrow: 'First lens', headline: 'The screen is the first lens.', body: [
         "The dome's outer surface is the first element of the optics."] },
       { id: 'the-gun', title: 'The gun', interactive: 'gun-shootout', eyebrow: 'The gun', headline: 'One gun. Six beams.', body: [
@@ -221,7 +221,7 @@ export const acts: ActDef[] = [
       { id: 'vacuum-lifetime', title: 'Vacuum lifetime', eyebrow: 'Vacuum', headline: 'A vacuum that stays a vacuum.', body: [
         'Thin-film getters absorb gas for the life of the panel.'] },
       { id: 'durability', title: 'Durability', eyebrow: 'Durability', headline: 'Tough by shape.', body: [
-        "The dome's compression makes it stronger than flat glass."] },
+        "The concave wraparound cap, 6–8 mm with vacuum-side ribs outside the active area, is stronger than flat glass."] },
     ],
   },
   {

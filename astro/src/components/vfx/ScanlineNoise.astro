@@ -35,15 +35,22 @@
       rgb(0 0 0 / 1) 3px
     );
     opacity: calc(var(--vfx-scan-opacity) * 2.2 * var(--vfx-retro, 1));
-    mix-blend-mode: multiply;
+    /* No blend mode: multiplying by black at opacity a is exactly a normal
+       black overlay at opacity a, and skipping the full-viewport blend keeps
+       the layer cheap at 4K. */
+    will-change: opacity;
   }
   .vfx-tube__grain {
     position: absolute;
-    inset: -200px;
+    /* the keyframes move at most 97px, so 100px of bleed covers every frame */
+    inset: -100px;
     background-image: var(--vfx-grain, none);
     background-size: 192px 192px;
     opacity: calc(var(--vfx-grain-opacity) * var(--vfx-retro, 1));
-    mix-blend-mode: screen;
+    /* No blend mode: screen with a grey value v at opacity a equals white at
+       alpha a*v (Cb + a*v*(1-Cb) both ways), so the tile is baked as white with
+       alpha = v and composites normally. Same pixels, no full-viewport blend. */
+    will-change: transform, opacity;
     animation: vfx-grain 0.9s steps(9) infinite;
   }
   .vfx-tube__roll {
@@ -61,6 +68,7 @@
     );
     animation: vfx-roll 9s linear infinite;
     opacity: var(--vfx-retro, 1);
+    will-change: transform, opacity;
   }
   @keyframes vfx-grain {
     0% { transform: translate(0, 0); }
@@ -81,6 +89,8 @@
   :global(html[data-vfx-tier='reduced']) .vfx-tube__grain { animation: none; }
   :global(html[data-vfx-tier='reduced']) .vfx-tube__roll { display: none; }
   :global(html[data-vfx-tier='static']) .vfx-tube { display: none; }
+  /* Act 12 ends fully modern: once the retro arc has faded the tube out, stop compositing it. */
+  :global(html[data-vfx-retro-off]) .vfx-tube { visibility: hidden; }
 </style>
 
 <script>
@@ -92,8 +102,9 @@
     const img = x.createImageData(192, 192);
     for (let i = 0; i < img.data.length; i += 4) {
       const v = Math.random() * 255;
-      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
-      img.data[i + 3] = 255;
+      // white with alpha = grey value (see .vfx-tube__grain: equals a screen blend)
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = 255;
+      img.data[i + 3] = v;
     }
     x.putImageData(img, 0, 0);
     document.documentElement.style.setProperty('--vfx-grain', `url(${c.toDataURL('image/png')})`);

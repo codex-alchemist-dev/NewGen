@@ -22,7 +22,9 @@
     z-index: 950;
     pointer-events: none;
     mix-blend-mode: screen;
+    visibility: hidden;
   }
+  .vfx-cursor.is-live { visibility: visible; }
   :global(html:not([data-vfx-tier='full'])) .vfx-cursor { display: none; }
   @media (pointer: coarse) {
     .vfx-cursor { display: none; }
@@ -52,11 +54,17 @@
     let running = false;
     let dpr = 1;
 
+    // The trail is a soft glow: DPR ≤ 1.5 and ≤ ~3.7 MP is indistinguishable
+    // from native and keeps the full-screen screen-blend layer cheap at 4K.
     const resize = () => {
-      dpr = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = innerWidth * dpr;
-      canvas.height = innerHeight * dpr;
+      const cap = Math.sqrt((2560 * 1440) / Math.max(1, innerWidth * innerHeight));
+      dpr = Math.min(devicePixelRatio || 1, 1.5, cap);
+      canvas.width = Math.round(innerWidth * dpr);
+      canvas.height = Math.round(innerHeight * dpr);
     };
+    // While the trail is dark the canvas is hidden, so the compositor does not
+    // blend an empty full-viewport layer over the page every frame.
+    const show = (on: boolean) => canvas.classList.toggle('is-live', on);
     resize();
     addEventListener('resize', resize);
 
@@ -79,6 +87,7 @@
         pts.push({ x: e.clientX, y: e.clientY, t: now });
         if (!running) {
           running = true;
+          show(true);
           requestAnimationFrame(draw);
         }
       },
@@ -91,6 +100,7 @@
       ctx!.clearRect(0, 0, innerWidth, innerHeight);
       if (!pts.length) {
         running = false;
+        show(false);
         return;
       }
       const cs = getComputedStyle(document.documentElement);

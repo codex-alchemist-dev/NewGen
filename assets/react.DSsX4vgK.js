@@ -1,0 +1,1 @@
+import{t as e}from"./react.Cg_pLmHK.js";import{t}from"./vfx-quality.DX_7kE6q.js";var n=e(),r={tier:`full`,fps:60,reducedMotion:!1};function i(){return(0,n.useSyncExternalStore)(t.subscribe,t.getSnapshot,()=>r)}export{i as t};

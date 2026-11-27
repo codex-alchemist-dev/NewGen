@@ -9,8 +9,10 @@
  *   4. reassembly, then power-on.
  *
  * Lineage: Sony Watchman FD (1982) side-fired flat CRT.
- * Geometry note (coordinator, Nov 27): the dome is convex toward the eye, so the
- * vacuum load keeps the glass in compression. Its outer surface is relay
+ * Geometry note (coordinator, Nov 27, revised): the faceplate is a cap concave
+ * toward the eye that wraps it (needed to reach 160°). The glass is in tension,
+ * stiffened by a few radial ribs on the vacuum side, outside the active area.
+ * The beams graze the phosphor on its vacuum-side face. Its outer surface is relay
  * element 1, a field element with its own centre (E2 onward are monocentric).
  *
  * Tiers: full (time-driven beam sweep + glow), reduced (sweep, no glow),
@@ -26,7 +28,7 @@ const { tier = 'full', id = 'bp-tube', length = 460 } = Astro.props;
 const SIX = ['#ff3c3c', '#ff3cdc', '#00ff99', '#00e5ff', '#3a6bff', '#ffe135'];
 
 // Phosphor curve (inner dome surface, vacuum side): quadratic bezier.
-const P0 = [340, 432], PC = [760, 578], P2 = [1180, 432];
+const P0 = [340, 468], PC = [760, 388], P2 = [1180, 468];
 const curve = `M${P0} Q${PC} ${P2}`;
 
 // Hex lattice for the screen inset: each hex = 6 equilateral wedges (RGB + inverted MCY).
@@ -52,7 +54,7 @@ const parts = [
   { n: 3, key: 'rear', name: 'Wafer-sealed vacuum envelope', sub: 'Anodic / frit bond under vacuum' },
   { n: 4, key: 'neg', name: 'NEG getter film', sub: 'Scavenges continuously on the cavity walls' },
   { n: 5, key: 'phos', name: 'QD hex phosphor screen', sub: 'RGBMCY hexes in Kurocoat wells' },
-  { n: 6, key: 'dome', name: 'Dome faceplate', sub: 'Glass in compression · outer face = relay E1' },
+  { n: 6, key: 'dome', name: 'Dome faceplate', sub: 'Wraps the eye · ribbed cap in tension · outer face = relay E1' },
 ];
 ---
 
@@ -106,9 +108,9 @@ const parts = [
           <rect x="330" y="280" width="860" height="22" fill={`url(#${id}-hatch)`} />
           <rect class="ink" x="330" y="280" width="860" height="22" />
           <!-- frit seal walls -->
-          <path class="ink" d="M1176,302 L1176,436 M1190,302 L1190,450" />
-          <rect x="1176" y="302" width="14" height="140" fill={`url(#${id}-hatch)`} />
-          <path class="ink" d="M330,302 L330,330 M330,410 L330,446" />
+          <path class="ink" d="M1176,302 L1176,474 M1190,302 L1190,476" />
+          <rect x="1176" y="302" width="14" height="172" fill={`url(#${id}-hatch)`} />
+          <path class="ink" d="M330,302 L330,330 M330,410 L330,476" />
           <g class="tag" data-tag="3">
             <path class="leader" d="M900,280 L930,232 L1040,232" />
             <g class="num"><circle cx="1058" cy="232" r="13" /><text x="1058" y="233">3</text></g>
@@ -190,31 +192,38 @@ const parts = [
           </g>
         </g>
 
-        <!-- ── 6 · dome faceplate (convex toward the eye, in compression) ── -->
+        <!-- ── 6 · dome faceplate (concave toward the eye, wraps it; ribbed cap in tension) ── -->
         <g data-part="dome">
-          <path d="M330,440 Q760,588 1190,440 L1190,454 Q760,604 330,454 Z" fill={`url(#${id}-glass)`} />
-          <path class="ink" d="M330,440 Q760,588 1190,440" />
-          <path class="ink" d="M330,454 Q760,604 1190,454" />
-          <!-- compression arrows (atmosphere pushing on the convex face) -->
+          <path d="M330,476 Q760,396 1190,476 L1190,490 Q760,410 330,490 Z" fill={`url(#${id}-glass)`} />
+          <path class="ink" d="M330,476 Q760,396 1190,476" />
+          <path class="ink" d="M330,490 Q760,410 1190,490" />
+          <!-- radial ribs on the vacuum side, outside the active area -->
+          <g class="ribs">
+            {[[334, 352], [1168, 1186]].map(([x0, x1]) => (
+              <path d={`M${x0},${x0 < 760 ? 476 : 476 - (x0 - 1168) * 0} L${x0 + 4},${448} L${x1 - 4},${448} L${x1},${476}`} fill={`url(#${id}-hatch)`} stroke="#7fd4ff" stroke-width="1.2" />
+            ))}
+          </g>
+          <!-- atmospheric load on the eye side of the cap -->
           <g class="press" opacity=".7">
             {[520, 640, 760, 880, 1000].map((x) => {
               const t = (x - 330) / 860;
-              const y = (1 - t) * (1 - t) * 454 + 2 * (1 - t) * t * 604 + t * t * 454;
+              const y = 490 - 160 * t * (1 - t);
               return <path class="ink dim" d={`M${x},${y + 30} L${x},${y + 8} M${x - 5},${y + 15} L${x},${y + 8} L${x + 5},${y + 15}`} />;
             })}
           </g>
           <g class="tag" data-tag="6">
-            <path class="leader" d="M470,512 L420,585 L330,585" />
+            <path class="leader" d="M470,468 L420,585 L330,585" />
             <g class="num"><circle cx="312" cy="585" r="13" /><text x="312" y="586">6</text></g>
             <text class="lbl tl" x="294" y="581" text-anchor="end">Dome faceplate</text>
-            <text class="lbl sub tl" x="294" y="599" text-anchor="end">Thin glass in compression</text>
-            <text class="lbl sub tl" x="294" y="615" text-anchor="end">Outer face = relay element 1</text>
+            <text class="lbl sub tl" x="294" y="599" text-anchor="end">Concave cap, wraps the eye</text>
+            <text class="lbl sub tl" x="294" y="615" text-anchor="end">Tension · radial ribs (vacuum side)</text>
+            <text class="lbl sub tl" x="294" y="631" text-anchor="end">Outer face = relay element 1</text>
           </g>
         </g>
 
         <!-- ── eye + relay ghost (assembled only) ── -->
         <g data-part="eye">
-          <path class="ink dim dash" d="M520,640 Q760,700 1000,640 M560,682 Q760,734 960,682" />
+          <path class="ink dim dash" d="M520,650 Q760,600 1000,650 M560,692 Q760,650 960,692" />
           <text class="lbl sub" x="1012" y="664">Sony relay E2+ · Act 8</text>
           <path class="ink dim dash" d="M520,560 L700,770 M1000,560 L820,770" />
           <circle class="ink" cx="760" cy="792" r="34" />
@@ -311,7 +320,7 @@ const parts = [
   import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
   import { scrubLoop, stickyProgress, seg, easeInOut } from '../../visuals/crt-vr/lib/scrub';
 
-  const P0 = [340, 432], PC = [760, 578], P2 = [1180, 432];
+  const P0 = [340, 468], PC = [760, 388], P2 = [1180, 468];
   const bez = (t: number) => {
     const u = 1 - t;
     return [u * u * P0[0] + 2 * u * t * PC[0] + t * t * P2[0], u * u * P0[1] + 2 * u * t * PC[1] + t * t * P2[1]];

@@ -97,7 +97,13 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
     pointer-events: none;
   }
   .act-tx--first { --tx-len: 0px; height: 0; margin: 0; }
-  :global(html[data-vfx-tier='static']) .act-tx { display: none; }
+  /* Static tier keeps a poster frame: the transition becomes an in-flow still
+     (no scroll spacer, no fixed stage), rendered once at mid-transition. */
+  :global(html[data-vfx-tier='static']) .act-tx { height: 72vh; margin: 0; }
+  :global(html[data-vfx-tier='static']) .act-tx--first { height: 0; }
+  :global(html[data-vfx-tier='static']) .act-tx__spacer { display: none; }
+  :global(html[data-vfx-tier='static']) .act-tx__stage { position: relative; inset: auto; height: 100%; visibility: visible; }
+  :global(html[data-vfx-tier='static']) .act-tx--first .act-tx__stage { visibility: hidden; }
 
   .act-tx__spacer { height: 100%; }
   .act-tx__stage {
@@ -550,6 +556,8 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
 
     let target = 0;
     let shown = first ? 0 : -1;
+    const POSTER_P = 0.5;
+    let posted = false;
     const S = (s: number, r: number[]) => seg(s, r[0], r[1]);
 
     const render = (p: number) => {
@@ -669,7 +677,8 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
         const dt = Math.min(0.05, (now - lastT) / 1000);
         lastT = now;
         if (getTier() === 'static') {
-          stage.classList.remove('is-on');
+          // poster frame: one still at mid-transition, re-drawn on resize only
+          if (!posted) { posted = true; render(POSTER_P); }
           return;
         }
         if (shown < 0) {
@@ -687,7 +696,8 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
     }
     addEventListener('resize', () => {
       layout();
-      render(clamp01(shown));
+      if (getTier() === 'static') render(POSTER_P);
+      else render(clamp01(shown));
     });
   }
 

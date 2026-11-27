@@ -1,0 +1,283 @@
+---
+/**
+ * CRT-VR · Act 7 · "hexa-sensors" — Hexa-Index, part 2: reading the signal.
+ *
+ * A segmented collector electrode rings the faceplate edge, each segment on a
+ * fast current amplifier. Every rim brush sends a burst of secondaries to the
+ * ring. Two things decode where the beam really landed:
+ *   · timing: when the pulse arrives versus when the scan expected that rim
+ *     → error along the scan line (Δx = scan speed × Δt),
+ *   · offset: how the burst splits across the ring segments → error across it (Δy).
+ *
+ * Drag on the screen (or use the sliders) to push the beam off its raster; the
+ * decoder reads the drift back.
+ *
+ * Tiers: full (moving beam, particle bursts, glow), reduced (moving beam, no
+ * particles), static (one decoded frame; sliders still update it).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './blueprint.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { tier = 'full', id = 'bp-sensors' } = Astro.props;
+
+// Screen (plan view) and ring segments.
+const SX0 = 70, SY0 = 70, SX1 = 590, SY1 = 430;
+const CXs = (SX0 + SX1) / 2, CYs = (SY0 + SY1) / 2;
+const SEGS = [
+  { k: 'N', x: CXs, y: SY0 - 26, w: 300, h: 10 },
+  { k: 'NE', x: SX1 + 4, y: SY0 - 22, w: 60, h: 10, r: 45 },
+  { k: 'E', x: SX1 + 26, y: CYs, w: 10, h: 230 },
+  { k: 'SE', x: SX1 + 4, y: SY1 + 22, w: 60, h: 10, r: -45 },
+  { k: 'S', x: CXs, y: SY1 + 26, w: 300, h: 10 },
+  { k: 'SW', x: SX0 - 4, y: SY1 + 22, w: 60, h: 10, r: 45 },
+  { k: 'W', x: SX0 - 26, y: CYs, w: 10, h: 230 },
+  { k: 'NW', x: SX0 - 4, y: SY0 - 22, w: 60, h: 10, r: -45 },
+];
+const RIM = 40; // index-strip spacing at drawing scale
+const rims: number[] = [];
+for (let x = SX0 + RIM / 2; x < SX1; x += RIM) rims.push(x);
+---
+
+<div class:list={['crtvr', 'bp', 'bp-sensors', { 'is-static': tier === 'static' }]} id={id} data-hexa-sensors>
+  <div class="bp-frame bp-wide">
+    <div class="bp-head">
+      <span><b>Hexa-Index · sensors</b> &nbsp;· a collector ring that knows where the beam landed</span>
+      <span class="bp-dwg">DWG CRT-VR-07-06B · faceplate plan view</span>
+    </div>
+
+    <svg viewBox="0 0 980 520" role="img" aria-labelledby={`${id}-t`}>
+      <title id={`${id}-t`}>Faceplate plan with a segmented collector ring and fast current amps; pulse timing and the split across segments decode the beam's landing error</title>
+
+      <!-- screen with index-strip columns -->
+      <rect x={SX0} y={SY0} width={SX1 - SX0} height={SY1 - SY0} rx="26" fill="#040c18" stroke="#7fd4ff" stroke-opacity=".6" data-screen />
+      {rims.map((x) => <line x1={x} y1={SY0 + 8} x2={x} y2={SY1 - 8} class="rimcol" data-rim={x} />)}
+      <text class="lbl sub" x={SX0 + 12} y={SY1 - 12}>index strips on the well rims (drawn far coarser than real)</text>
+
+      <!-- intended scan line + actual beam -->
+      <line data-intended x1={SX0 + 6} x2={SX1 - 6} y1={CYs} y2={CYs} class="ink dim dash" />
+      <line data-actual x1={SX0 + 6} x2={SX1 - 6} y1={CYs} y2={CYs} class="actual" />
+      <g data-bursts></g>
+      <circle data-beam r="6" class="beam glow" cx={CXs} cy={CYs} />
+
+      <!-- ring segments + amps -->
+      {SEGS.map((s) => (
+        <g data-seg={s.k}>
+          <rect x={s.x - s.w / 2} y={s.y - s.h / 2} width={s.w} height={s.h} rx="2" class="seg"
+            transform={s.r ? `rotate(${s.r} ${s.x} ${s.y})` : undefined} />
+          <text class="lbl sub segname" x={s.x} y={s.y + (s.k.includes('N') ? -12 : s.k.includes('S') ? 22 : 4)}
+            dx={s.k === 'E' ? 18 : s.k === 'W' ? -18 : 0} text-anchor={s.k === 'E' ? 'start' : s.k === 'W' ? 'end' : 'middle'}>{s.k}</text>
+        </g>
+      ))}
+      <text class="lbl sub" x={CXs} y="22" text-anchor="middle">collector ring · 8 segments · fast current amps</text>
+
+      <!-- decoder panel -->
+      <g transform="translate(660 60)">
+        <text class="lbl">Timing</text>
+        <rect y="12" width="300" height="104" fill="#020610" stroke="#7fd4ff" stroke-opacity=".35" />
+        <g data-scope></g>
+        <text class="lbl sub" x="6" y="132">dashed = when the scan expected each rim</text>
+        <text class="lbl sub" x="6" y="148">solid = when the pulse actually arrived</text>
+
+        <text class="lbl" y="190">Ring split</text>
+        <g data-bars transform="translate(0 200)">
+          {SEGS.map((s, i) => (
+            <g transform={`translate(${i * 37.5} 0)`}>
+              <rect x="6" y="0" width="24" height="110" fill="#020610" stroke="#7fd4ff" stroke-opacity=".25" />
+              <rect x="6" y="110" width="24" height="0" class="bar" data-bar={s.k} />
+              <text class="lbl sub" x="18" y="126" text-anchor="middle">{s.k}</text>
+            </g>
+          ))}
+        </g>
+      </g>
+    </svg>
+
+    <div class="bp-controls">
+      <label class="bp-ctl">Drift along the scan (Δx) <output data-o="dx"></output>
+        <input type="range" min="-150" max="150" value="60" data-in="dx" />
+      </label>
+      <label class="bp-ctl">Drift across the scan (Δy) <output data-o="dy"></output>
+        <input type="range" min="-150" max="150" value="-40" data-in="dy" />
+      </label>
+      <p class="bp-note hint">Or drag on the faceplate to push the beam.</p>
+    </div>
+    <div class="bp-readouts">
+      <div class="bp-ro" data-ro="dt"><span>Pulse timing offset</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="dxr"><span>Decoded Δx (timing)</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="dyr"><span>Decoded Δy (ring split)</span><strong>—</strong></div>
+      <div class="bp-ro ok" data-ro="lock"><span>Status</span><strong>—</strong></div>
+    </div>
+    <p class="bp-foot">Δx comes from timing: the pulse arrives early or late by Δt and Δx = scan speed × Δt. Δy comes from the split of the burst across opposite ring segments. Drift is shown in fractions of the 3.4 µm pixel pitch; the strip spacing is drawn far coarser than real.</p>
+  </div>
+</div>
+
+<script define:vars={{ G: { SX0, SY0, SX1, SY1, CXs, CYs, RIM, rims, segs: SEGS.map((s) => ({ k: s.k, x: s.x, y: s.y })) } }}>
+  window.__bpSensorsG = G;
+</script>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+
+  const G = (window as any).__bpSensorsG as {
+    SX0: number; SY0: number; SX1: number; SY1: number; CXs: number; CYs: number; RIM: number; rims: number[];
+    segs: { k: string; x: number; y: number }[];
+  };
+  const NS = 'http://www.w3.org/2000/svg';
+  const PITCH_UM = 3.4;
+  const PX_PER_PITCH = G.RIM;            // one rim spacing = one pixel pitch at drawing scale
+  const SLIDER_TO_PX = PX_PER_PITCH / 100; // slider ±150 → ±1.5 pitch
+
+  function setup(root: HTMLElement) {
+    const q = <T extends Element>(s: string) => root.querySelector(s) as T;
+    const inDx = q<HTMLInputElement>('[data-in="dx"]'), inDy = q<HTMLInputElement>('[data-in="dy"]');
+    const beam = q<SVGCircleElement>('[data-beam]');
+    const actual = q<SVGLineElement>('[data-actual]');
+    const scope = q<SVGGElement>('[data-scope]');
+    const bursts = q<SVGGElement>('[data-bursts]');
+    const screen = q<SVGRectElement>('[data-screen]');
+    const svg = q<SVGSVGElement>('svg');
+    const bars = Object.fromEntries(G.segs.map((s) => [s.k, q<SVGRectElement>(`[data-bar="${s.k}"]`)]));
+    const segEls = Object.fromEntries(G.segs.map((s) => [s.k, q<SVGGElement>(`[data-seg="${s.k}"]`)]));
+    const ro = (k: string) => q<HTMLElement>(`[data-ro="${k}"] strong`);
+    let tier: VfxTier = 'full';
+    let visible = false, raf = 0, last = 0, bx = G.SX0 + 10, lastRim = -1;
+    const glowUntil: Record<string, number> = {};
+
+    const drift = () => ({ dx: Number(inDx.value) * SLIDER_TO_PX, dy: Number(inDy.value) * SLIDER_TO_PX });
+
+    const fmtPitch = (px: number) => `${px >= 0 ? '+' : ''}${(px / PX_PER_PITCH).toFixed(2)}<small>pitch · ${((px / PX_PER_PITCH) * PITCH_UM).toFixed(2)} µm</small>`;
+
+    /** Ring split for a burst at (x,y): inverse-square weights to each segment. */
+    const split = (x: number, y: number) => {
+      const w = G.segs.map((s) => 1 / ((s.x - x) ** 2 + (s.y - y) ** 2 + 800));
+      const sum = w.reduce((a, b) => a + b, 0);
+      return w.map((v) => v / sum);
+    };
+
+    const decode = () => {
+      const { dx, dy } = drift();
+      q<HTMLOutputElement>('[data-o="dx"]').innerHTML = `${(dx / PX_PER_PITCH).toFixed(2)} pitch`;
+      q<HTMLOutputElement>('[data-o="dy"]').innerHTML = `${(dy / PX_PER_PITCH).toFixed(2)} pitch`;
+      const y = G.CYs + dy;
+      actual.setAttribute('y1', String(y)); actual.setAttribute('y2', String(y));
+      // scope: window of 5 rims centred on the screen middle; time ≡ position along the line
+      scope.replaceChildren();
+      const x0 = G.CXs - 2.5 * G.RIM, scale = 300 / (5 * G.RIM);
+      for (const r of G.rims) {
+        if (r < x0 || r > x0 + 5 * G.RIM) continue;
+        const ex = (r - x0) * scale;
+        const mx = (r - dx - x0) * scale; // a beam shifted +dx reaches each rim earlier
+        const l1 = document.createElementNS(NS, 'line');
+        l1.setAttribute('x1', String(ex)); l1.setAttribute('x2', String(ex)); l1.setAttribute('y1', '22'); l1.setAttribute('y2', '106');
+        l1.setAttribute('class', 'exp'); scope.appendChild(l1);
+        if (mx > 0 && mx < 300) {
+          const p = document.createElementNS(NS, 'path');
+          p.setAttribute('d', `M${mx - 10},100 Q${mx - 3},100 ${mx},34 Q${mx + 3},100 ${mx + 10},100`);
+          p.setAttribute('class', 'pulse glow'); scope.appendChild(p);
+        }
+      }
+      const base = document.createElementNS(NS, 'line');
+      base.setAttribute('x1', '0'); base.setAttribute('x2', '300'); base.setAttribute('y1', '100'); base.setAttribute('y2', '100');
+      base.setAttribute('class', 'base'); scope.appendChild(base);
+
+      // ring split for a burst at the screen centre on the actual line, versus on the intended line
+      const sNow = split(G.CXs, y), sRef = split(G.CXs, G.CYs);
+      G.segs.forEach((s, i) => {
+        const h = Math.min(110, sNow[i] * 330);
+        bars[s.k].setAttribute('y', String(110 - h)); bars[s.k].setAttribute('height', String(h));
+      });
+      const iN = G.segs.findIndex((s) => s.k === 'N'), iS = G.segs.findIndex((s) => s.k === 'S');
+      const imb = (sNow[iS] - sNow[iN]) - (sRef[iS] - sRef[iN]);
+      // calibrate imbalance → Δy with the same split model (decoder knows its ring)
+      const probe = split(G.CXs, G.CYs + 10);
+      const k = 10 / ((probe[iS] - probe[iN]) - (sRef[iS] - sRef[iN]));
+      const dyDec = imb * k;
+      ro('dt').innerHTML = `${dx > 0 ? 'early' : dx < 0 ? 'late' : 'on time'}<small>${Math.abs(dx / PX_PER_PITCH).toFixed(2)} pitch</small>`;
+      ro('dxr').innerHTML = fmtPitch(dx);
+      ro('dyr').innerHTML = fmtPitch(dyDec);
+      const off = Math.hypot(dx, dy) / PX_PER_PITCH;
+      const lock = q<HTMLElement>('[data-ro="lock"]');
+      lock.className = `bp-ro ${off < 0.05 ? 'ok' : 'warn'}`;
+      ro('lock').innerHTML = off < 0.05 ? 'Locked<small>on raster</small>' : 'Correcting<small>next pass</small>';
+    };
+
+    const burst = (x: number, y: number) => {
+      const w = split(x, y);
+      const t = performance.now();
+      G.segs.forEach((s, i) => { if (w[i] > 0.12) glowUntil[s.k] = t + 120 + w[i] * 500; });
+      if (tier !== 'full') return;
+      G.segs.forEach((s, i) => {
+        const n = Math.round(w[i] * 10);
+        for (let j = 0; j < n; j++) {
+          const c = document.createElementNS(NS, 'circle');
+          c.setAttribute('r', '2'); c.setAttribute('class', 'se');
+          c.setAttribute('cx', String(x)); c.setAttribute('cy', String(y));
+          bursts.appendChild(c);
+          const jx = (Math.random() - 0.5) * 60, jy = (Math.random() - 0.5) * 60;
+          c.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${s.x - x + jx}px, ${s.y - y + jy}px)`, opacity: 0.2 }],
+            { duration: 420 + Math.random() * 200, easing: 'cubic-bezier(.3,.6,.4,1)' }).onfinish = () => c.remove();
+        }
+      });
+    };
+
+    const frame = (t: number) => {
+      raf = 0;
+      const dt = Math.min(0.05, (t - (last || t)) / 1000);
+      last = t;
+      const { dx, dy } = drift();
+      if (tier !== 'static') {
+        bx += dt * 220;
+        if (bx > G.SX1 - 10) { bx = G.SX0 + 10; lastRim = -1; }
+      } else bx = G.CXs + 8;
+      const x = bx + dx, y = G.CYs + dy;
+      beam.setAttribute('cx', x.toFixed(1)); beam.setAttribute('cy', y.toFixed(1));
+      const ri = G.rims.findIndex((r) => Math.abs(r - x) < 3);
+      if (ri >= 0 && ri !== lastRim) { lastRim = ri; burst(G.rims[ri], y); }
+      root.querySelectorAll<SVGLineElement>('[data-rim]').forEach((l) => l.classList.toggle('hit', Math.abs(Number(l.dataset.rim) - x) < 6));
+      for (const s of G.segs) segEls[s.k].classList.toggle('on', (glowUntil[s.k] ?? 0) > t);
+      if (visible && tier !== 'static') raf = requestAnimationFrame(frame);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+    [inDx, inDy].forEach((i) => i.addEventListener('input', () => { decode(); kick(); }));
+
+    // drag on the faceplate to set drift
+    let dragging = false;
+    const toSvg = (e: PointerEvent) => {
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      return pt.matrixTransform(svg.getScreenCTM()!.inverse());
+    };
+    const onDrag = (e: PointerEvent) => {
+      const p = toSvg(e);
+      inDy.value = String(Math.max(-150, Math.min(150, Math.round((p.y - G.CYs) / SLIDER_TO_PX))));
+      inDx.value = String(Math.max(-150, Math.min(150, Math.round((p.x - G.CXs) / SLIDER_TO_PX / 3))));
+      decode(); kick();
+    };
+    screen.addEventListener('pointerdown', (e) => { dragging = true; screen.setPointerCapture(e.pointerId); onDrag(e); });
+    screen.addEventListener('pointermove', (e) => { if (dragging) onDrag(e); });
+    screen.addEventListener('pointerup', () => (dragging = false));
+
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) kick(); }).observe(root);
+    onTier((t) => { tier = t; root.classList.toggle('is-static', t === 'static'); decode(); kick(); });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-hexa-sensors]').forEach(setup);
+</script>
+
+<style>
+  [data-screen] { cursor: crosshair; touch-action: none; }
+  .rimcol { stroke: #e8f0ff; stroke-opacity: .14; stroke-width: 2; }
+  .rimcol.hit { stroke-opacity: .9; }
+  .actual { stroke: #00ff99; stroke-opacity: .45; stroke-width: 1.5; }
+  .beam { fill: #eafff4; color: #00ff99; }
+  .seg { fill: #0b1a2c; stroke: #7fd4ff; stroke-width: 1.2; transition: fill .12s; }
+  [data-seg].on .seg { fill: #ffe135; }
+  [data-seg].on .segname { fill: #ffe135; }
+  [data-bursts] :global(.se) { fill: #9fd8ff; }
+  [data-scope] :global(.exp) { stroke: #7fd4ff; stroke-opacity: .5; stroke-dasharray: 3 4; }
+  [data-scope] :global(.pulse) { fill: none; stroke: #ffe135; stroke-width: 2; color: #ffe135; }
+  [data-scope] :global(.base) { stroke: #ffe135; stroke-opacity: .5; }
+  .bar { fill: #7fd4ff; transition: y .2s, height .2s; }
+  .hint { align-self: end; margin: 0; }
+</style>

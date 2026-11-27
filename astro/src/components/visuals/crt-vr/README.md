@@ -37,3 +37,11 @@ All three copy lines, captions and figures are real HTML/SVG text.
 | Component | Slot | What it is |
 |---|---|---|
 | `GamutInnovations.astro` | `gamut-innovations` section | Four plates: QD lines (~20 nm) vs phosphor (~40–100 nm), Resonant Wells (schematic), per-subpixel dichroic trim (schematic), zero cross-talk (< −30 dB, labeled as a target). Spectra come from the interactives' colour model. |
+
+## Act 7 · The Machine
+
+| Component | Slot | What it is |
+|---|---|---|
+| `BlueprintBackground.astro` | `act-07/background` | Cyan drafting sheet: minor/major grid, zone letters, registration marks, title block, slow plotter sweep. Mounted through ActWrapper's `background` slot. |
+
+The Act 7 interactives live in `interactives/crt-vr/` (see its README).

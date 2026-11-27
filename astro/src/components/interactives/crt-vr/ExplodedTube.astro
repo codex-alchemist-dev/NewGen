@@ -1,0 +1,436 @@
+---
+/**
+ * CRT-VR · Act 7 · "exploded-tube" — the per-eye side-fire tube.
+ *
+ * A scroll-driven engineering cutaway (horizontal section, eye at the bottom):
+ *   1. assembled and running: six converged beams graze across the dome,
+ *   2. exploded: each part lifts off on its own axis and its callout draws on,
+ *   3. detail hold: magnified insets of the Schottky tip and the hex screen,
+ *   4. reassembly, then power-on.
+ *
+ * Lineage: Sony Watchman FD (1982) side-fired flat CRT.
+ * Geometry note (coordinator, Nov 27, revised): the faceplate is a shallow cap
+ * concave toward the eye; the 160° view comes from the Gaze-Cone eyepiece and
+ * Periphery Ring (Act 8), so the cap keeps side-fire line of sight. Glass in tension,
+ * stiffened by a few radial ribs on the vacuum side, outside the active area.
+ * The beams graze the phosphor on its vacuum-side face. Its outer surface is relay
+ * element 1, a field element with its own centre (E2 onward are monocentric).
+ *
+ * Tiers: full (time-driven beam sweep + glow), reduced (sweep, no glow),
+ * static / reduced motion (one exploded frame with every callout, no scroll length).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './blueprint.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string; length?: number }
+const { tier = 'full', id = 'bp-tube', length = 460 } = Astro.props;
+
+const SIX = ['#ff3c3c', '#ff3cdc', '#00ff99', '#00e5ff', '#3a6bff', '#ffe135'];
+
+// Phosphor curve (inner dome surface, vacuum side): quadratic bezier.
+const P0 = [340, 468], PC = [760, 388], P2 = [1180, 468];
+const curve = `M${P0} Q${PC} ${P2}`;
+
+// Hex lattice for the screen inset: each hex = 6 equilateral wedges (RGB + inverted MCY).
+const hexR = 26;
+const hexes: { cx: number; cy: number }[] = [];
+for (let row = -2; row <= 2; row++) {
+  for (let col = -3; col <= 3; col++) {
+    const cx = col * hexR * Math.sqrt(3) + (row % 2 ? (hexR * Math.sqrt(3)) / 2 : 0);
+    const cy = row * hexR * 1.5;
+    hexes.push({ cx, cy });
+  }
+}
+// Pointy-top hex: wedge k spans corners k and k+1. Order alternates RGB with MCY.
+const WEDGE = ['#ff3c3c', '#ffe135', '#00ff99', '#00e5ff', '#3a6bff', '#ff3cdc'];
+const corner = (cx: number, cy: number, k: number, r: number) => {
+  const a = (Math.PI / 180) * (60 * k - 90);
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)].map((v) => v.toFixed(2)).join(',');
+};
+
+const parts = [
+  { n: 1, key: 'gun', name: 'Schottky ZrO/W gun', sub: 'One assembly · six converged beams' },
+  { n: 2, key: 'defl', name: 'Electrostatic MEMS deflection', sub: 'Segmented traveling-wave plates' },
+  { n: 3, key: 'rear', name: 'Wafer-sealed vacuum envelope', sub: 'Anodic / frit bond under vacuum' },
+  { n: 4, key: 'neg', name: 'NEG getter film', sub: 'Scavenges continuously on the cavity walls' },
+  { n: 5, key: 'phos', name: 'QD hex phosphor screen', sub: 'RGBMCY hexes in Kurocoat wells' },
+  { n: 6, key: 'dome', name: 'Dome faceplate', sub: 'Shallow concave cap · tension · outer face = relay E1' },
+];
+---
+
+<div
+  class:list={['crtvr', 'bp', 'bp-tube', 'bp-wide', { 'is-static': tier === 'static' }]}
+  id={id}
+  data-exploded-tube
+  style={`--len:${length}vh`}
+>
+  <div class="stage">
+    <div class="bp-frame frame">
+      <div class="bp-head">
+        <span><b>Side-fire tube</b> &nbsp;· one per eye</span>
+        <span class="lineage">Sony Watchman FD lineage · 1982</span>
+        <span class="bp-dwg">DWG CRT-VR-07-01 · horizontal section · not to scale</span>
+      </div>
+
+      <svg viewBox="0 0 1400 860" preserveAspectRatio="xMidYMid meet" role="img"
+        aria-labelledby={`${id}-t ${id}-d`} class="film">
+        <title id={`${id}-t`}>Exploded cutaway of the CRT-VR side-fire tube</title>
+        <desc id={`${id}-d`}>The gun assembly sits at the temple and fires six converged beams at a shallow angle across the inside of a thin dome faceplate. Parts: Schottky ZrO/W source, segmented electrostatic MEMS deflection plates, wafer-sealed vacuum envelope with NEG getter film, quantum-dot hex phosphor screen in Kurocoat wells, and the dome faceplate whose outer surface is the first relay lens element.</desc>
+        <defs>
+          <pattern id={`${id}-hatch`} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#7fd4ff" stroke-opacity=".35" stroke-width="1.2" />
+          </pattern>
+          <pattern id={`${id}-dots`} width="6" height="6" patternUnits="userSpaceOnUse">
+            <circle cx="3" cy="3" r="1.3" fill="#9fe8c0" fill-opacity=".7" />
+          </pattern>
+          <linearGradient id={`${id}-glass`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#7fd4ff" stop-opacity=".28" />
+            <stop offset="1" stop-color="#7fd4ff" stop-opacity=".08" />
+          </linearGradient>
+          <radialGradient id={`${id}-tipglow`}>
+            <stop offset="0" stop-color="#fff4d6" stop-opacity=".95" />
+            <stop offset=".35" stop-color="#ffb347" stop-opacity=".55" />
+            <stop offset="1" stop-color="#ff7a00" stop-opacity="0" />
+          </radialGradient>
+          <clipPath id={`${id}-lens1`}><circle cx="0" cy="0" r="118" /></clipPath>
+          <clipPath id={`${id}-lens2`}><circle cx="0" cy="0" r="92" /></clipPath>
+        </defs>
+
+        <!-- centre lines + datum -->
+        <g class="ink dim dash" opacity=".5">
+          <line x1="40" y1="370" x2="1360" y2="370" />
+          <line x1="760" y1="40" x2="760" y2="840" />
+        </g>
+        <text class="lbl sub" x="1250" y="362" opacity=".6">beam axis</text>
+
+        <!-- ── 3 · rear wafer / vacuum envelope ── -->
+        <g data-part="rear">
+          <rect x="330" y="280" width="860" height="22" fill={`url(#${id}-hatch)`} />
+          <rect class="ink" x="330" y="280" width="860" height="22" />
+          <!-- frit seal walls -->
+          <path class="ink" d="M1176,302 L1176,474 M1190,302 L1190,476" />
+          <rect x="1176" y="302" width="14" height="172" fill={`url(#${id}-hatch)`} />
+          <path class="ink" d="M330,302 L330,330 M330,410 L330,476" />
+          <g class="tag" data-tag="3">
+            <path class="leader" d="M900,280 L930,232 L1040,232" />
+            <g class="num"><circle cx="1058" cy="232" r="13" /><text x="1058" y="233">3</text></g>
+            <text class="lbl tl" x="1080" y="228">Wafer-sealed envelope</text>
+            <text class="lbl sub tl" x="1080" y="246">Anodic / frit bond under vacuum</text>
+          </g>
+        </g>
+
+        <!-- ── 4 · NEG getter film (lines the cavity ceiling) ── -->
+        <g data-part="neg">
+          <rect x="350" y="303" width="810" height="6" fill={`url(#${id}-dots)`} />
+          <g class="tag" data-tag="4">
+            <path class="leader" d="M1100,309 L1130,322 L1206,322" />
+            <g class="num"><circle cx="1224" cy="322" r="13" /><text x="1224" y="323">4</text></g>
+            <text class="lbl tl" x="1246" y="318">NEG getter</text>
+            <text class="lbl sub tl" x="1246" y="336">Non-evaporable film</text>
+          </g>
+        </g>
+
+        <!-- ── 2 · electrostatic MEMS deflection (segmented, traveling-wave) ── -->
+        <g data-part="defl">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <>
+              <rect class="seg" data-seg={i} x={345 + i * 21} y="336" width="17" height="9" />
+              <rect class="seg" data-seg={i} x={345 + i * 21} y="395" width="17" height="9" />
+            </>
+          ))}
+          <path class="ink dim" d="M345,333 L470,333 M345,407 L470,407" />
+          <g class="tag" data-tag="2">
+            <path class="leader" d="M400,333 L380,214 L320,214" />
+            <g class="num"><circle cx="302" cy="214" r="13" /><text x="302" y="215">2</text></g>
+            <text class="lbl tl" x="284" y="210" text-anchor="end">MEMS deflection</text>
+            <text class="lbl sub tl" x="284" y="228" text-anchor="end">Segmented traveling-wave plates</text>
+          </g>
+        </g>
+
+        <!-- ── 1 · gun assembly at the temple ── -->
+        <g data-part="gun">
+          <rect class="ink" x="90" y="330" width="240" height="80" rx="22" />
+          <rect x="90" y="330" width="240" height="80" rx="22" fill={`url(#${id}-glass)`} opacity=".5" />
+          <!-- Schottky tip + heater -->
+          <circle class="tipglow" cx="118" cy="370" r="22" fill={`url(#${id}-tipglow)`} />
+          <path class="ink" d="M100,358 L118,370 L100,382 Z" fill="#0b1a2c" />
+          <!-- extractor, then three focus electrodes -->
+          {[140, 176, 212, 248].map((x, i) => (
+            <path class="ink" d={`M${x},340 L${x},360 M${x},380 L${x},400`} stroke-width={i === 0 ? 2.5 : 1.5} />
+          ))}
+          <!-- six beams inside the gun (parallel; they converge at the screen) -->
+          <g class="gun-beams">
+            {SIX.map((c, i) => <line x1="120" y1={364 + i * 2.4} x2="330" y2={364 + i * 2.4} stroke={c} stroke-width="1.4" />)}
+          </g>
+          <g class="tag" data-tag="1">
+            <path class="leader" d="M118,410 L118,500 L150,500" />
+            <g class="num"><circle cx="168" cy="500" r="13" /><text x="168" y="501">1</text></g>
+            <text class="lbl tl" x="190" y="496">Schottky ZrO/W gun</text>
+            <text class="lbl sub tl" x="190" y="514">~1800 K · self-cleaning · 6 beams, 1 assembly</text>
+          </g>
+          <text class="lbl sub" x="100" y="318" opacity=".7">temple</text>
+        </g>
+
+        <!-- ── live beams (assembled only) ── -->
+        <g class="beams" data-beams>
+          {SIX.map((c, i) => <line class="glow" data-beam={i} x1="330" y1={364 + i * 2.4} x2="900" y2="520" stroke={c} stroke-width="1.3" style={`color:${c}`} />)}
+          <circle data-spot cx="900" cy="520" r="5" fill="#fff4d6" class="glow" style="color:#fff4d6" />
+        </g>
+
+        <!-- ── 5 · QD hex phosphor screen in Kurocoat wells ── -->
+        <g data-part="phos">
+          {SIX.map((c, i) => (
+            <path d={curve} fill="none" stroke={c} stroke-width="6" stroke-dasharray="3 15" stroke-dashoffset={-i * 3} opacity=".9" />
+          ))}
+          <path d={curve} fill="none" stroke="#000" stroke-width="7" stroke-dasharray="1 2" stroke-opacity=".55" />
+          <path data-trail d={curve} fill="none" stroke="#fff4d6" stroke-width="7" pathLength="1" stroke-dasharray="0 1" class="glow" style="color:#bfffe0" opacity="0" />
+          <g class="tag" data-tag="5">
+            <path class="leader" d="M1150,446 L1190,402 L1206,402" />
+            <g class="num"><circle cx="1224" cy="402" r="13" /><text x="1224" y="403">5</text></g>
+            <text class="lbl tl" x="1246" y="398">QD hex phosphor</text>
+            <text class="lbl sub tl" x="1246" y="416">Kurocoat wells</text>
+          </g>
+        </g>
+
+        <!-- ── 6 · dome faceplate (shallow cap concave toward the eye; ribbed, in tension) ── -->
+        <g data-part="dome">
+          <path d="M330,476 Q760,396 1190,476 L1190,490 Q760,410 330,490 Z" fill={`url(#${id}-glass)`} />
+          <path class="ink" d="M330,476 Q760,396 1190,476" />
+          <path class="ink" d="M330,490 Q760,410 1190,490" />
+          <!-- radial ribs on the vacuum side, outside the active area -->
+          <g class="ribs">
+            {[[334, 352], [1168, 1186]].map(([x0, x1]) => (
+              <path d={`M${x0},${x0 < 760 ? 476 : 476 - (x0 - 1168) * 0} L${x0 + 4},${448} L${x1 - 4},${448} L${x1},${476}`} fill={`url(#${id}-hatch)`} stroke="#7fd4ff" stroke-width="1.2" />
+            ))}
+          </g>
+          <!-- atmospheric load on the eye side of the cap -->
+          <g class="press" opacity=".7">
+            {[520, 640, 760, 880, 1000].map((x) => {
+              const t = (x - 330) / 860;
+              const y = 490 - 160 * t * (1 - t);
+              return <path class="ink dim" d={`M${x},${y + 30} L${x},${y + 8} M${x - 5},${y + 15} L${x},${y + 8} L${x + 5},${y + 15}`} />;
+            })}
+          </g>
+          <g class="tag" data-tag="6">
+            <path class="leader" d="M470,468 L420,585 L330,585" />
+            <g class="num"><circle cx="312" cy="585" r="13" /><text x="312" y="586">6</text></g>
+            <text class="lbl tl" x="294" y="581" text-anchor="end">Dome faceplate</text>
+            <text class="lbl sub tl" x="294" y="599" text-anchor="end">Shallow cap, concave to the eye</text>
+            <text class="lbl sub tl" x="294" y="615" text-anchor="end">Tension · radial ribs (vacuum side)</text>
+            <text class="lbl sub tl" x="294" y="631" text-anchor="end">Outer face = relay element 1</text>
+          </g>
+        </g>
+
+        <!-- ── eye + relay ghost (assembled only) ── -->
+        <g data-part="eye">
+          <path class="ink dim dash" d="M520,650 Q760,600 1000,650 M560,692 Q760,650 960,692" />
+          <text class="lbl sub" x="1012" y="664">Gaze-Cone eyepiece + Periphery Ring · Act 8</text>
+          <path class="ink dim dash" d="M520,560 L700,770 M1000,560 L820,770" />
+          <circle class="ink" cx="760" cy="792" r="34" />
+          <circle cx="760" cy="760" r="9" fill="#7fd4ff" fill-opacity=".5" />
+          <text class="lbl sub" x="806" y="806">eye</text>
+        </g>
+
+        <!-- ── detail insets (hold phase) ── -->
+        <g class="inset" data-inset="tip" transform="translate(640 372) scale(.8)">
+          <circle r="118" fill="#030913" />
+          <g clip-path={`url(#${id}-lens1)`}>
+            <circle cx="-10" cy="0" r="80" fill={`url(#${id}-tipglow)`} />
+            <path d="M-118,-26 L10,-4 Q22,0 10,4 L-118,26 Z" fill="#33465e" stroke="#7fd4ff" stroke-width="1.2" />
+            <path d="M-60,-16 L10,-4 Q22,0 10,4 L-60,16" fill="none" stroke="#ffe135" stroke-width="3" opacity=".9" />
+            {[-14, -7, 0, 7, 14].map((a) => (
+              <line x1="22" y1="0" x2={22 + 100 * Math.cos((a * Math.PI) / 180)} y2={100 * Math.sin((a * Math.PI) / 180)} stroke="#fff4d6" stroke-opacity=".55" stroke-dasharray="3 5" class="emit" />
+            ))}
+          </g>
+          <circle class="ink" r="118" />
+          <text class="lbl" x="0" y="-128" text-anchor="middle">Tip detail</text>
+          <text class="lbl sub" x="-100" y="58">W tip</text>
+          <text class="lbl sub" x="-58" y="-26" fill="#ffe135">ZrO coat</text>
+          <text class="lbl sub" x="0" y="140" text-anchor="middle">Field-lowered work function</text>
+        </g>
+
+        <g class="inset" data-inset="hex" transform="translate(960 380) scale(.8)">
+          <circle r="118" fill="#030913" />
+          <g clip-path={`url(#${id}-lens1)`}>
+            {hexes.map(({ cx, cy }) => (
+              <g>
+                {WEDGE.map((c, k) => (
+                  <path d={`M${cx},${cy} L${corner(cx, cy, k, hexR)} L${corner(cx, cy, k + 1, hexR)} Z`} fill={c} fill-opacity=".78" stroke="#000" stroke-width="2.6" />
+                ))}
+              </g>
+            ))}
+          </g>
+          <circle class="ink" r="118" />
+          <text class="lbl" x="0" y="-128" text-anchor="middle">Screen detail</text>
+          <text class="lbl sub" x="0" y="140" text-anchor="middle">6 wedges per hex · black = Kurocoat walls</text>
+        </g>
+      </svg>
+
+      <ol class="legend" aria-label="Parts">
+        {parts.map((p) => (
+          <li data-legend={p.key}><span class="n">{p.n}</span><span class="t">{p.name}<em>{p.sub}</em></span></li>
+        ))}
+      </ol>
+      <p class="phase bp-note" data-phase aria-live="polite">Assembled · running</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .bp-tube { position: relative; height: var(--len, 460vh); }
+  .bp-tube.is-static { height: auto; }
+  .stage { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; padding-top: 48px; box-sizing: border-box; }
+  .is-static .stage { position: static; height: auto; }
+  .frame { margin: 0; width: 100%; display: flex; flex-direction: column; max-height: calc(100svh - 64px); }
+  .film { flex: 1 1 auto; min-height: 0; height: auto; max-height: calc(100svh - 230px); }
+  .is-static .film { max-height: none; }
+  .lineage { color: var(--bp-sony); }
+
+  .seg { fill: #0b1a2c; stroke: var(--bp-ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .seg.hot { fill: var(--bp-ink); }
+
+  .legend {
+    list-style: none; margin: 0; padding: 8px 10px; display: grid; gap: 4px 10px;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); border-top: 1px solid var(--bp-ink-dim);
+  }
+  .legend li { display: flex; gap: 8px; align-items: baseline; font-size: 11px; letter-spacing: .06em; color: var(--crtvr-text-dim); transition: color .3s; }
+  .legend li.on { color: var(--crtvr-white); }
+  .legend .n { display: inline-grid; place-items: center; width: 18px; height: 18px; border: 1px solid var(--bp-ink-dim); border-radius: 50%; color: var(--bp-ink); font-size: 10px; flex: none; }
+  .legend li.on .n { background: var(--bp-ink); color: var(--bp-paper); }
+  .legend em { display: block; font-style: normal; font-size: 10px; color: var(--crtvr-text-dimmer, #3a4a6a); }
+  .legend li.on em { color: var(--crtvr-text-dim); }
+  .phase { margin: 0; padding: 6px 14px 10px; }
+
+  .inset { opacity: 0; }
+  .is-static .inset { opacity: 1; }
+  .is-static .beams, .is-static [data-part='eye'] { display: none; }
+
+  /* On phones the numbered markers + legend carry the labels. */
+  @media (max-width: 720px) {
+    .film :global(.tl) { display: none; }
+    .film :global(.num circle) { r: 24px; }
+    .film :global(.num text) { font-size: 24px; }
+    .legend { grid-template-columns: 1fr 1fr; }
+    .legend em { display: none; }
+    .bp-head .bp-dwg { display: none; }
+  }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+  import { scrubLoop, stickyProgress, seg, easeInOut } from '../../visuals/crt-vr/lib/scrub';
+
+  const P0 = [340, 468], PC = [760, 388], P2 = [1180, 468];
+  const bez = (t: number) => {
+    const u = 1 - t;
+    return [u * u * P0[0] + 2 * u * t * PC[0] + t * t * P2[0], u * u * P0[1] + 2 * u * t * PC[1] + t * t * P2[1]];
+  };
+
+  // Exploded offsets [dx, dy] and the order callouts draw on.
+  const OFF: Record<string, [number, number]> = {
+    rear: [0, -190], neg: [0, -120], defl: [-20, -80], gun: [-70, 0], phos: [0, 95], dome: [0, 205], eye: [0, 140],
+  };
+  const ORDER = ['gun', 'defl', 'rear', 'neg', 'phos', 'dome'];
+  const TAGN: Record<string, string> = { gun: '1', defl: '2', rear: '3', neg: '4', phos: '5', dome: '6' };
+
+  function setup(root: HTMLElement) {
+    const q = <T extends Element>(s: string) => root.querySelector(s) as T;
+    const partEls = Object.fromEntries(Object.keys(OFF).map((k) => [k, q<SVGGElement>(`[data-part="${k}"]`)]));
+    const beamLines = Array.from(root.querySelectorAll<SVGLineElement>('[data-beam]'));
+    const spot = q<SVGCircleElement>('[data-spot]');
+    const beams = q<SVGGElement>('[data-beams]');
+    const trail = q<SVGPathElement>('[data-trail]');
+    const segs = Array.from(root.querySelectorAll<SVGRectElement>('.seg'));
+    const insets = Array.from(root.querySelectorAll<SVGGElement>('[data-inset]'));
+    const legend = Object.fromEntries(ORDER.map((k) => [k, q<HTMLLIElement>(`[data-legend="${k}"]`)]));
+    const phaseEl = q<HTMLElement>('[data-phase]');
+    let tier: VfxTier = 'full';
+    let explode = 0;
+    let running = 0; // 0..1 how "powered" the tube is
+    let raf = 0;
+    let visible = false;
+    let lastPhase = '';
+
+    const setPhase = (s: string) => { if (s !== lastPhase) { lastPhase = s; phaseEl.textContent = s; } };
+
+    const placeBeam = (u: number) => {
+      const [x, y] = bez(u);
+      const yOff = explode * OFF.phos[1];
+      beamLines.forEach((l) => { l.setAttribute('x2', x.toFixed(1)); l.setAttribute('y2', (y + yOff).toFixed(1)); });
+      spot.setAttribute('cx', x.toFixed(1));
+      spot.setAttribute('cy', (y + yOff).toFixed(1));
+      // traveling-wave: the plate segment nearest the electrons is hot
+      const k = Math.floor((performance.now() / 40) % 6);
+      segs.forEach((s) => s.classList.toggle('hot', running > 0.5 && Number(s.dataset.seg) === k));
+      trail.setAttribute('stroke-dasharray', `${Math.max(0, u - 0.06).toFixed(3)} 0 0.06 1`);
+    };
+
+    const render = (p: number) => {
+      // timeline: 0–.10 run · .10–.40 explode · .40–.66 detail · .66–.88 reassemble · .88–1 power on
+      const out = easeInOut(seg(p, 0.1, 0.4));
+      const back = easeInOut(seg(p, 0.66, 0.88));
+      explode = out * (1 - back);
+      running = p < 0.1 ? 1 : p > 0.88 ? seg(p, 0.88, 0.94) : Math.max(0, 1 - seg(p, 0.1, 0.16));
+      for (const [k, el] of Object.entries(partEls)) {
+        const [dx, dy] = OFF[k];
+        el.setAttribute('transform', `translate(${(dx * explode).toFixed(1)} ${(dy * explode).toFixed(1)})`);
+      }
+      partEls.eye.style.opacity = String(1 - Math.min(1, explode * 2.2));
+      // callouts draw on in order, then stay until reassembly
+      ORDER.forEach((k, i) => {
+        const a = seg(p, 0.14 + i * 0.035, 0.18 + i * 0.035) * (1 - seg(p, 0.66, 0.72));
+        const tag = root.querySelector<SVGGElement>(`[data-tag="${TAGN[k]}"]`)!;
+        tag.style.opacity = String(a);
+        legend[k].classList.toggle('on', a > 0.5);
+      });
+      const ins = seg(p, 0.42, 0.48) * (1 - seg(p, 0.62, 0.67));
+      insets.forEach((g) => (g.style.opacity = String(ins)));
+      beams.style.opacity = String(running);
+      trail.style.opacity = String(running * 0.9);
+      root.querySelector<SVGCircleElement>('.tipglow')!.style.opacity = String(0.35 + 0.65 * running);
+
+      if (p < 0.1) setPhase('Assembled · six beams grazing the dome');
+      else if (p < 0.4) setPhase('Exploding · each part on its own axis');
+      else if (p < 0.66) setPhase('Detail · Schottky tip and the hex screen');
+      else if (p < 0.88) setPhase('Reassembling');
+      else setPhase('Power on');
+      if (tier === 'static') placeBeam(0.62);
+    };
+
+    // Time-driven beam sweep (a slow raster pass across the dome) when powered.
+    const tick = (t: number) => {
+      raf = 0;
+      if (!visible || tier === 'static') return;
+      const u = 0.22 + 0.76 * ((t / 1600) % 1);
+      if (running > 0.01) placeBeam(u);
+      raf = requestAnimationFrame(tick);
+    };
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !raf && tier !== 'static') raf = requestAnimationFrame(tick);
+    });
+    io.observe(root);
+
+    let stopScrub: (() => void) | null = null;
+    onTier((t) => {
+      tier = t;
+      root.classList.toggle('is-static', t === 'static');
+      stopScrub?.();
+      stopScrub = null;
+      if (t === 'static') {
+        // one composed frame: fully exploded, every callout and inset visible
+        render(0.55);
+        root.querySelectorAll<SVGGElement>('[data-tag]').forEach((g) => (g.style.opacity = '1'));
+        ORDER.forEach((k) => legend[k].classList.add('on'));
+        setPhase('Exploded view');
+      } else {
+        stopScrub = scrubLoop(root, stickyProgress, render, { smoothing: t === 'full' ? 0.16 : 0.4 });
+        if (visible && !raf) raf = requestAnimationFrame(tick);
+      }
+    });
+    placeBeam(0.6);
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-exploded-tube]').forEach(setup);
+</script>

@@ -29,6 +29,7 @@
 import type { VfxSlotProps } from '../../lib/motion/types';
 import BeamText from './BeamText.astro';
 import { acts } from '../../data/crt-vr';
+import { CERT_MARKS } from '../../data/crt-vr-cert-marks';
 
 const BESPOKE = ['flare', 'whip', 'blueprint', 'cone', 'shield', 'timelapse', 'seals', 'race'] as const;
 type Variant = 'default' | 'eye' | 'warp' | 'six-beam' | 'rays' | (typeof BESPOKE)[number];
@@ -51,6 +52,8 @@ const lower = v === 'eye' || v === 'six-beam' || (BESPOKE as readonly string[]).
 const labels = v === 'seals'
   ? (acts.find((a) => a.number === number)?.sections.flatMap((s: any) => (s.kind === 'badges' ? (s.items ?? []).map((i: any) => i.label) : [])) ?? [])
   : [];
+// ...and each one's official mark (src/data/crt-vr-cert-marks.ts)
+const marks = labels.map((l: string) => (CERT_MARKS[l] ?? []).map((m) => ({ src: m.src, dark: !!m.dark })));
 ---
 <div
   class:list={['act-tx', { 'act-tx--first': first }]}
@@ -59,6 +62,7 @@ const labels = v === 'seals'
   data-first={first ? '1' : '0'}
   data-lower={lower ? '1' : '0'}
   data-labels={labels.length ? JSON.stringify(labels) : undefined}
+  data-marks={marks.some((m) => m.length) ? JSON.stringify(marks) : undefined}
   style={`--tx-tint:${tint}`}
 >
   <div class="act-tx__spacer"></div>
@@ -544,7 +548,9 @@ const labels = v === 'seals'
     const vname = root.dataset.variant || 'default';
     let labels: string[] = [];
     try { labels = JSON.parse(root.dataset.labels || '[]'); } catch { labels = []; }
-    const variant: VariantImpl = BESPOKE[vname] ? BESPOKE[vname](labels) : (VARIANTS[vname] ?? ringsVariant)();
+    let marks: { src: string; dark: boolean }[][] = [];
+    try { marks = JSON.parse(root.dataset.marks || '[]'); } catch { marks = []; }
+    const variant: VariantImpl = BESPOKE[vname] ? BESPOKE[vname](labels, marks) : (VARIANTS[vname] ?? ringsVariant)();
     // variants whose art owns the center push the title to the lower third
     const centered = root.dataset.lower === '1';
     const ownIgnite = !!variant.opts?.ownIgnite;

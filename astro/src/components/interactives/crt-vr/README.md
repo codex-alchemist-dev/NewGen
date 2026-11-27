@@ -10,7 +10,7 @@ by the coordinator on Nov 27; nothing here is invented.
 
 | Component | Slot | What it is |
 |---|---|---|
-| `ExplodedTube.astro` | `exploded-tube` | Scroll-scrubbed horizontal section of the per-eye side-fire tube (Watchman FD lineage): running → exploded with callouts → tip and hex-screen insets → reassembly → power-on. Dome is a cap concave toward the eye that wraps it (glass in tension, radial ribs on the vacuum side outside the active area); beams graze its vacuum-side phosphor; its outer face is relay E1. |
+| `ExplodedTube.astro` | `exploded-tube` | Scroll-scrubbed horizontal section of the per-eye side-fire tube (Watchman FD lineage): running → exploded with callouts → tip and hex-screen insets → reassembly → power-on. Dome is a shallow cap concave toward the eye (glass in tension, radial ribs on the vacuum side outside the active area; the 160° view comes from the Gaze-Cone eyepiece + Periphery Ring); beams graze its vacuum-side phosphor; its outer face is relay E1. |
 | `GunShootout.astro` | `gun-shootout` | Port of the live page's trade study with its data verbatim, plus a live emitter cutaway, a radar over the chosen Schottky source and ARIA tabs. One approved text change: spot headroom vs. the ~2 µm triangle side. |
 | `BeamFunnel.astro` | `beam-funnel` | Focus-Well Hexagons (Chromatron revival): rims biased negative vs. the floor funnel a shallow, off-target beam into its triangle. Side section + hex top view, illustrative paraxial model. |
 | `HexaEmission.astro` | `hexa-emission` | The beam brushes the MgO / doped-diamond index strip on the rim and secondaries fly off; rim current vs. beam position. |

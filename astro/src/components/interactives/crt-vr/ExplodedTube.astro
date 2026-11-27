@@ -9,8 +9,9 @@
  *   4. reassembly, then power-on.
  *
  * Lineage: Sony Watchman FD (1982) side-fired flat CRT.
- * Geometry note (coordinator, Nov 27, revised): the faceplate is a cap concave
- * toward the eye that wraps it (needed to reach 160°). The glass is in tension,
+ * Geometry note (coordinator, Nov 27, revised): the faceplate is a shallow cap
+ * concave toward the eye; the 160° view comes from the Gaze-Cone eyepiece and
+ * Periphery Ring (Act 8), so the cap keeps side-fire line of sight. Glass in tension,
  * stiffened by a few radial ribs on the vacuum side, outside the active area.
  * The beams graze the phosphor on its vacuum-side face. Its outer surface is relay
  * element 1, a field element with its own centre (E2 onward are monocentric).
@@ -54,7 +55,7 @@ const parts = [
   { n: 3, key: 'rear', name: 'Wafer-sealed vacuum envelope', sub: 'Anodic / frit bond under vacuum' },
   { n: 4, key: 'neg', name: 'NEG getter film', sub: 'Scavenges continuously on the cavity walls' },
   { n: 5, key: 'phos', name: 'QD hex phosphor screen', sub: 'RGBMCY hexes in Kurocoat wells' },
-  { n: 6, key: 'dome', name: 'Dome faceplate', sub: 'Wraps the eye · ribbed cap in tension · outer face = relay E1' },
+  { n: 6, key: 'dome', name: 'Dome faceplate', sub: 'Shallow concave cap · tension · outer face = relay E1' },
 ];
 ---
 
@@ -215,7 +216,7 @@ const parts = [
             <path class="leader" d="M470,468 L420,585 L330,585" />
             <g class="num"><circle cx="312" cy="585" r="13" /><text x="312" y="586">6</text></g>
             <text class="lbl tl" x="294" y="581" text-anchor="end">Dome faceplate</text>
-            <text class="lbl sub tl" x="294" y="599" text-anchor="end">Concave cap, wraps the eye</text>
+            <text class="lbl sub tl" x="294" y="599" text-anchor="end">Shallow cap, concave to the eye</text>
             <text class="lbl sub tl" x="294" y="615" text-anchor="end">Tension · radial ribs (vacuum side)</text>
             <text class="lbl sub tl" x="294" y="631" text-anchor="end">Outer face = relay element 1</text>
           </g>
@@ -224,7 +225,7 @@ const parts = [
         <!-- ── eye + relay ghost (assembled only) ── -->
         <g data-part="eye">
           <path class="ink dim dash" d="M520,650 Q760,600 1000,650 M560,692 Q760,650 960,692" />
-          <text class="lbl sub" x="1012" y="664">Sony relay E2+ · Act 8</text>
+          <text class="lbl sub" x="1012" y="664">Gaze-Cone eyepiece + Periphery Ring · Act 8</text>
           <path class="ink dim dash" d="M520,560 L700,770 M1000,560 L820,770" />
           <circle class="ink" cx="760" cy="792" r="34" />
           <circle cx="760" cy="760" r="9" fill="#7fd4ff" fill-opacity=".5" />

@@ -349,6 +349,7 @@ export function blueprintVariant(): VariantImpl {
   let lock: SVGElement, head: SVGElement[] = [];
   let phosPath: SVGPathElement;
   let six: string[] = [];
+  let legend: SVGElement[] = [];
   const ink = (parent: Element, tag: string, a: Record<string, string | number>) =>
     mk(tag, { fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, pathLength: 1, 'stroke-dasharray': 1, ...a }, parent);
   return {
@@ -424,6 +425,7 @@ export function blueprintVariant(): VariantImpl {
       six.forEach((col) => beams.push(mk('line', { stroke: col, 'stroke-width': 1.5, filter: 'url(#ng-bloom)' }, bg)));
       spot = mk('circle', { r: 7, fill: '#ffffff', filter: 'url(#ng-bloom-hot)' }, bg);
       lock = mk('rect', { x: 60, y: 160, width: 1300, height: 480, fill: 'none', stroke: c.tint, 'stroke-width': 1 }, root);
+      legend = parts.map((p, i) => label(g, `${i + 1}  ${(p.tag[0]?.textContent ?? '').toUpperCase()}`, { fill: '#e6fbff', 'font-size': 9.5, 'letter-spacing': 1.2 }));
       head = [
         label(g, 'DWG CRT-VR-07 · SIDE-FIRE TUBE · ONE PER EYE', { x: 28, y: 32, fill: c.tint, 'font-size': 11 }),
         label(g, 'SONY WATCHMAN FD LINEAGE · 1982', { x: c.W - 28, y: 32, fill: '#e6fbff', 'font-size': 11, 'text-anchor': 'end' }),
@@ -432,10 +434,18 @@ export function blueprintVariant(): VariantImpl {
     render(u, c, out) {
       const vis = 1 - out;
       // fit the 1400 × 860 drawing into the upper ~72% of the screen
-      // drawing content spans x 60…1360, y 160…640
-      const s = Math.min((c.W * 0.84) / 1300, (c.H * 0.64) / 480);
-      const ox = c.cx - 710 * s, oy = c.H * 0.41 - 400 * s;
-      root.setAttribute('transform', `translate(${ox.toFixed(1)},${oy.toFixed(1)}) scale(${s.toFixed(4)})`);
+      // drawing content spans x 60…1360, y 160…640. Phones get a vertical
+      // version: the section turns 90° (gun at the top, the dome down the
+      // side) and the callouts move to a level parts legend under it.
+      const portrait = c.W < c.H * 0.8;
+      if (portrait) {
+        const s = Math.min((c.H * 0.56) / 1300, (c.W * 0.9) / 560);
+        root.setAttribute('transform', `translate(${c.cx.toFixed(1)},${(c.H * 0.39).toFixed(1)}) rotate(90) scale(${s.toFixed(4)}) translate(-710,-400)`);
+      } else {
+        const s = Math.min((c.W * 0.84) / 1300, (c.H * 0.64) / 480);
+        const ox = c.cx - 710 * s, oy = c.H * 0.41 - 400 * s;
+        root.setAttribute('transform', `translate(${ox.toFixed(1)},${oy.toFixed(1)}) scale(${s.toFixed(4)})`);
+      }
       root.setAttribute('opacity', vis.toFixed(3));
       const gr = seg(u, 0, 0.12) * vis;
       grid.forEach((l) => l.setAttribute('opacity', (gr * 0.12).toFixed(3)));
@@ -450,8 +460,21 @@ export function blueprintVariant(): VariantImpl {
         const draw = easeOut(seg(t, 0, 0.85));
         p.strokes.forEach((st) => st.setAttribute('stroke-dashoffset', (1 - draw).toFixed(4)));
         const tg = seg(u, 0.24 + p.at, 0.32 + p.at) * (1 - seg(u, 0.62, 0.72) * 0.5);
-        p.tag.forEach((x) => x.setAttribute('opacity', tg.toFixed(3)));
+        p.tag.forEach((x) => x.setAttribute('opacity', (portrait ? 0 : tg).toFixed(3)));
+        const li = parts.indexOf(p);
+        const lg = legend[li];
+        if (lg) {
+          const col = li % 2, row = Math.floor(li / 2);
+          set(lg, { x: c.W * (col ? 0.53 : 0.08), y: c.H * 0.7 + row * 15, opacity: portrait ? seg(u, 0.24 + p.at, 0.32 + p.at) * vis : 0 });
+        }
       });
+      if (portrait) {
+        set(head[0], { x: 16, y: c.H * 0.075, 'text-anchor': 'start', 'font-size': 9.5 });
+        set(head[1], { x: 16, y: c.H * 0.075 + 15, 'text-anchor': 'start', 'font-size': 9.5 });
+      } else {
+        set(head[0], { x: 28, y: 32, 'text-anchor': 'start', 'font-size': 11 });
+        set(head[1], { x: c.W - 28, y: 32, 'text-anchor': 'end', 'font-size': 11 });
+      }
       // lock flash when the last part seats
       const lk = bell(u, 0.46, 0.56);
       set(lock, { opacity: lk * 0.7, 'stroke-width': 1 + lk * 2 });

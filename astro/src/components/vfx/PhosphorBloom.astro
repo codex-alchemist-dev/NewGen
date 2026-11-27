@@ -38,6 +38,28 @@
   </defs>
 </svg>
 
+<script>
+  // Reduced tier: drop each bloom's widest blur pass (the most expensive one,
+  // over the largest filter region). Full tier keeps all three passes.
+  import { getTier, onTier } from './quality';
+  const wide = ['ng-bloom', 'ng-bloom-hot'].map((id) => {
+    const f = document.getElementById(id);
+    const blur = f?.querySelector<SVGElement>('feGaussianBlur[result="b3"]') ?? null;
+    const node = f?.querySelector<SVGElement>('feMergeNode[in="b3"]') ?? null;
+    return { f, blur, node, merge: node?.parentElement ?? null };
+  });
+  const apply = (t: string) => {
+    const lite = t === 'reduced';
+    for (const w of wide) {
+      if (!w.f || !w.blur || !w.node || !w.merge) continue;
+      if (lite && w.blur.isConnected) { w.blur.remove(); w.node.remove(); }
+      else if (!lite && !w.blur.isConnected) { w.merge.before(w.blur); w.merge.prepend(w.node); }
+    }
+  };
+  apply(getTier());
+  onTier((t) => apply(t));
+</script>
+
 <style is:global>
   .ng-bloom-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
   .ng-glow {

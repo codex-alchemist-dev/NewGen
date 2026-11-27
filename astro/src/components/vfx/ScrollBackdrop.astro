@@ -7,7 +7,7 @@
  *
  * Scenes (one per act): field | eye | streaks | mosaic | hdr | trails |
  *   blueprint | cone | calm | timelapse | shimmer | clean
- * Tiers: full = DPR-capped native res, 60 fps · reduced = 0.5× res, 30 fps
+ * Tiers: full = DPR ≤ 1.5, ≤ 3.7 MP, dynamic res · reduced = 0.5× res, 30 fps
  *        static = CSS gradient only (no WebGL)
  */
 ---
@@ -271,16 +271,42 @@ void main(){
 
     let tier: Tier = getTier();
     let scale = 1;
+    // Backing-store budget. The scenes are soft glows and fine lines, so past
+    // about 1440p of real pixels extra resolution is invisible but the cost is
+    // not: a 4K or high-DPR screen used to shade 2-3x more pixels per frame.
+    // full: DPR up to 1.5, capped at ~3.7 MP (2560x1440).  reduced: half that
+    // scale, 30 fps.  `dyn` is a dynamic-resolution factor (0.6-1) that trims
+    // the full tier first on a GPU that can't keep up, before the FPS monitor
+    // has to step the whole page down to reduced.
+    const MAX_PX = 2560 * 1440;
+    let dyn = 1;
     const resize = () => {
       const dpr = Math.min(devicePixelRatio || 1, 1.5);
-      scale = tier === 'full' ? dpr : 0.5;
-      canvas.width = Math.round(innerWidth * scale);
-      canvas.height = Math.round(innerHeight * scale);
+      const cap = Math.sqrt(MAX_PX / Math.max(1, innerWidth * innerHeight));
+      const full = Math.min(dpr, cap);
+      scale = tier === 'full' ? full * dyn : Math.min(0.5, full * 0.5);
+      canvas.width = Math.max(1, Math.round(innerWidth * scale));
+      canvas.height = Math.max(1, Math.round(innerHeight * scale));
       gl.viewport(0, 0, canvas.width, canvas.height);
     };
     resize();
     addEventListener('resize', resize);
-    onTier((t) => { tier = t; resize(); });
+    onTier((t) => { tier = t; dyn = 1; slowMs = fastMs = 0; resize(); });
+    // Dynamic resolution (full tier): frame interval EMA above ~21 ms (under
+    // ~48 fps) for a second trims the backing scale by 15%, down to 0.6; under
+    // ~17.5 ms for four seconds grows it back. Each step re-allocates once.
+    let ema = 16.7;
+    let slowMs = 0;
+    let fastMs = 0;
+    // QA: ?vfxdyn=0 holds the full backing scale (for frame-time comparisons)
+    const noDyn = new URLSearchParams(location.search).get('vfxdyn') === '0';
+    const adapt = (dtMs: number) => {
+      if (noDyn || tier !== 'full' || dtMs > 250) return; // ignore tab switches / stalls
+      ema += (dtMs - ema) * 0.1;
+      if (ema > 21) { slowMs += dtMs; fastMs = 0; } else if (ema < 17.5) { fastMs += dtMs; slowMs = 0; } else { slowMs = fastMs = 0; }
+      if (slowMs > 1000 && dyn > 0.6) { dyn = Math.max(0.6, dyn - 0.15); slowMs = 0; resize(); }
+      else if (fastMs > 4000 && dyn < 1) { dyn = Math.min(1, dyn + 0.15); fastMs = 0; resize(); }
+    };
 
     // Section map
     type Sec = { el: HTMLElement; scene: number; tint: [number, number, number] };
@@ -324,6 +350,9 @@ void main(){
     };
 
     let last = 0;
+    let lastTint = '';
+    let lastRetro = '';
+    const rootStyle = document.documentElement.style;
     let t0 = performance.now();
     let first = true;
     // QA: ?vfxscene=eye pins one scene
@@ -335,6 +364,7 @@ void main(){
       if (tier === 'static' || document.hidden) return;
       const minDt = tier === 'full' ? 0 : 1000 / 30;
       if (now - last < minDt) return;
+      if (last) adapt(now - last);
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       if (secs.length) {
@@ -348,11 +378,20 @@ void main(){
         cur.mix = ia === ib ? 0 : pos - ia;
         cur.ta = secs[ia].tint;
         cur.tb = secs[ib].tint;
-        const live = cur.ta.map((v, i) => Math.round((v + (cur.tb[i] - v) * cur.mix) * 255));
-        document.documentElement.style.setProperty('--vfx-tint-rgb', live.join(' '));
+        // These two are inherited custom properties on <html>: every write
+        // restyles the whole document, so write only when the value changes
+        // (retro in 0.01 steps, invisible over a page-long fade).
+        const live = cur.ta.map((v, i) => Math.round((v + (cur.tb[i] - v) * cur.mix) * 255)).join(' ');
+        if (live !== lastTint) { lastTint = live; rootStyle.setProperty('--vfx-tint-rgb', live); }
         // retro → modern: 1 at the first act, 0 at the last
         const retro = secs.length > 1 ? 1 - Math.min(1, pos / (secs.length - 1)) : 1;
-        document.documentElement.style.setProperty('--vfx-retro', retro.toFixed(3));
+        const rs = retro.toFixed(2);
+        if (rs !== lastRetro) {
+          lastRetro = rs;
+          rootStyle.setProperty('--vfx-retro', rs);
+          if (rs === '0.00') document.documentElement.dataset.vfxRetroOff = '';
+          else delete document.documentElement.dataset.vfxRetroOff;
+        }
       }
       sVel += (vel - sVel) * 0.1;
       gl.uniform2f(u.res, canvas.width, canvas.height);

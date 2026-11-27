@@ -27,7 +27,7 @@ export const R_FOVEA = 70;
 export const R_MID = 190;
 
 /** Angular mapping used by the acuity curve (coordinator-approved, illustrative). */
-export const CORE_DEG = 5;   // full-res core, ±5° (2° fovea + tracking margin)
+export const CORE_DEG = 5;   // full-res core, ±5° (2° fovea plus margin)
 export const MID_DEG = 20;   // interlaced mid-zone to ±20°
 export const FOV_DEG = 180;  // 180°+ field
 /** Relative acuity, standard falloff: 1 / (1 + e / E2). */
@@ -126,3 +126,29 @@ export const ZONE_RGB: Record<'fovea' | 'mid' | 'edge', [number, number, number]
   mid: [0, 180, 255],
   edge: [216, 228, 255],
 };
+
+/**
+ * Motion mode (Motion-Adaptive Foveated Rendering): during fast motion the whole
+ * screen, fovea included, drops to stage-3 foveation (low-res, never interlaced).
+ * ILLUSTRATIVE DESIGN TARGETS: the stage-3 keep grid is tuned so refresh runs from
+ * 2,400+ Hz at minimum aggressiveness (keep 5×5 → 2,688 Hz) to 3,000+ Hz at maximum
+ * (keep 5×6 → 3,456 Hz). Stage 3 everywhere beats the 2,400 Hz corner case, which
+ * still draws a quarter of the fovea. Same refresh formula as above, without the 0.05 floor.
+ */
+export const stage3Keep = (agg: number) => ({ kx: 5, ky: 5 + Math.round(agg) });
+export function stage3Count(agg: number): { drawn: number; hz: number } {
+  const { kx, ky } = stage3Keep(agg);
+  const drawn = Math.ceil(COLS / kx) * Math.ceil(ROWS / ky);
+  return { drawn, hz: Math.round(BASELINE_HZ * (FIXED_POINTS / drawn)) };
+}
+
+/** Motion mode while slowing: the fovea is back at full res, the rest of the screen still at stage 3. Illustrative design target. */
+export function stage3FoveaCount(gazeX: number, gazeY: number, agg: number): { drawn: number; hz: number } {
+  const { kx, ky } = stage3Keep(agg);
+  let drawn = 0;
+  for (let gy = 0; gy < ROWS; gy++) for (let gx = 0; gx < COLS; gx++) {
+    const d = Math.hypot(gx * CELL + CELL / 2 - gazeX, gy * CELL + CELL / 2 - gazeY);
+    if (d < R_FOVEA || (gx % kx === 0 && gy % ky === 0)) drawn++;
+  }
+  return { drawn, hz: Math.round(BASELINE_HZ * (FIXED_POINTS / drawn)) };
+}

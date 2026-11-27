@@ -3,7 +3,7 @@
  * Dots are drawn as soft phosphor spots, never squares: the CRT has no pixel grid,
  * so even the sparsest zone reads soft rather than blocky.
  */
-import { CELL, COLS, ROWS, R_FOVEA, R_MID, ZONE_RGB, midLit, zoneOf } from './model';
+import { CELL, COLS, ROWS, R_FOVEA, R_MID, ZONE_RGB, midLit, stage3Keep, zoneOf } from './model';
 import type { VfxTier } from '../../../../lib/motion/types';
 
 const spriteCache = new Map<string, HTMLCanvasElement>();
@@ -47,6 +47,10 @@ export interface FieldOpts {
   rings?: boolean;
   /** Restrict to a zone. */
   only?: 'fovea' | 'mid' | 'edge';
+  /** Motion mode: whole screen at stage 3 (edge tier on the stage-3 keep grid). */
+  stage3?: boolean;
+  /** With stage3: keep the fovea at full res (motion slowing). */
+  stage3Fovea?: boolean;
 }
 
 /** Draws the field; returns dots lit this frame. */
@@ -60,7 +64,8 @@ export function drawField(ctx: CanvasRenderingContext2D, o: FieldOpts): number {
   const spr = glow ? { fovea: spot(ZONE_RGB.fovea), mid: spot(ZONE_RGB.mid), edge: spot(ZONE_RGB.edge) } : null;
   for (let gy = 0; gy < rows; gy++) {
     for (let gx = 0; gx < COLS; gx++) {
-      const z = zoneOf(gx, gy, o.gazeX, o.gazeY, o.agg, o.noFovea);
+      let z = zoneOf(gx, gy, o.gazeX, o.gazeY, o.agg, o.noFovea);
+      if (o.stage3) { const k3 = stage3Keep(o.agg); const inF = o.stage3Fovea && z === 'fovea'; z = inF ? 'fovea' : gx % k3.kx === 0 && gy % k3.ky === 0 ? 'edge' : 'skip'; }
       if (z === 'skip') continue;
       if (o.only && z !== o.only) continue;
       if (z === 'mid' && !midLit(gx, gy, o.frame, o.agg)) continue;
@@ -84,7 +89,7 @@ export function drawField(ctx: CanvasRenderingContext2D, o: FieldOpts): number {
     }
   }
   ctx.restore();
-  if (o.rings && !o.noFovea) drawRings(ctx, o.gazeX * s + ox, o.gazeY * s + oy, s, o.tier);
+  if (o.rings && !o.noFovea && (!o.stage3 || o.stage3Fovea)) drawRings(ctx, o.gazeX * s + ox, o.gazeY * s + oy, s, o.tier);
   return lit;
 }
 

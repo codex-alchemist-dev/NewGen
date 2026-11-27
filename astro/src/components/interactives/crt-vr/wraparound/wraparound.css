@@ -1,0 +1,60 @@
+/* Act 8 · Wraparound Optics · shared island styles (scoped to .wo). */
+.wo {
+  --wo-bg: var(--bg, #04050a);
+  --wo-surface: color-mix(in srgb, var(--surface, #0d1220) 82%, transparent);
+  --wo-line: var(--border, #1a2240);
+  --wo-line-bright: var(--border-bright, #2a3860);
+  --wo-text: var(--text, #d8e4ff);
+  --wo-dim: var(--text-dim, #6a7fa8);
+  --wo-dimmer: var(--text-dimmer, #3a4a6a);
+  --wo-ice: #c8f6ff;
+  --wo-cyan: #00e1ff;
+  --wo-warn: #ffb347;
+  --wo-mono: var(--font-mono, 'DM Mono', ui-monospace, monospace);
+  --wo-display: var(--font-display, 'Bebas Neue', Impact, sans-serif);
+  position: relative;
+  margin: var(--s-4, 24px) 0;
+  padding: clamp(14px, 2.4vw, 24px);
+  border: 1px solid var(--wo-line);
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 80% at 50% 100%, rgba(0, 225, 255, 0.06), transparent 60%),
+    var(--wo-surface);
+  color: var(--wo-text);
+  font-family: var(--wo-mono);
+  font-size: 13px;
+}
+.wo * { box-sizing: border-box; }
+.wo__eyebrow { margin: 0 0 4px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--wo-cyan); }
+.wo__title { margin: 0 0 12px; font-family: var(--wo-display); font-size: clamp(22px, 3vw, 30px); letter-spacing: .02em; font-weight: 400; color: var(--wo-ice); }
+.wo__svg { display: block; width: 100%; height: auto; overflow: hidden; }
+.wo__svg text { font-family: var(--wo-mono); }
+.wo__grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.wo__panel { border: 1px solid var(--wo-line); border-radius: 10px; padding: 10px; background: rgba(4, 5, 10, .55); min-width: 0; }
+.wo__panel h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 500; color: var(--wo-dim); }
+.wo__panel h4 b { color: var(--wo-ice); font-weight: 500; }
+.wo__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; }
+.wo__range { display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 0; }
+.wo__range label { white-space: nowrap; color: var(--wo-dim); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.wo__range output { min-width: 4.5ch; text-align: right; color: var(--wo-ice); font-variant-numeric: tabular-nums; }
+.wo input[type='range'] { flex: 1; min-width: 0; accent-color: var(--wo-cyan); height: 28px; }
+.wo__seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--wo-line-bright); border-radius: 999px; padding: 3px; gap: 2px; }
+.wo__seg button, .wo__btn {
+  font: inherit; font-size: 12px; color: var(--wo-dim); background: transparent; border: 0;
+  border-radius: 999px; padding: 6px 12px; cursor: pointer; min-height: 32px;
+}
+.wo__seg button[aria-pressed='true'], .wo__btn[aria-pressed='true'] { background: rgba(0, 225, 255, .14); color: var(--wo-ice); box-shadow: inset 0 0 0 1px rgba(0, 225, 255, .45); }
+.wo__btn { border: 1px solid var(--wo-line-bright); }
+.wo__seg button:focus-visible, .wo__btn:focus-visible, .wo input:focus-visible { outline: 2px solid var(--wo-cyan); outline-offset: 2px; }
+.wo__readouts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; }
+.wo__readout { display: flex; flex-direction: column; gap: 2px; }
+.wo__readout span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--wo-dim); }
+.wo__readout b { font-weight: 500; color: var(--wo-ice); font-size: 14px; }
+.wo__readout b.is-warn { color: var(--wo-warn); }
+.wo__note { margin: 10px 0 0; color: var(--wo-dim); font-size: 11.5px; line-height: 1.5; }
+.wo__note b { color: var(--wo-text); font-weight: 500; }
+.wo__tag { display: inline-block; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--wo-line-bright); color: var(--wo-dim); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.wo [data-flow] { animation: wo-flow 1.4s linear infinite; }
+.wo[data-tier='reduced'] [data-flow], .wo[data-tier='static'] [data-flow] { animation: none; }
+@keyframes wo-flow { to { stroke-dashoffset: -24; } }
+@media (prefers-reduced-motion: reduce) { .wo [data-flow] { animation: none; } }

@@ -9,6 +9,18 @@ import HeroAnimatic from '../../../components/visuals/crt-vr/HeroAnimatic.astro'
 import HookBackground from '../../../components/visuals/crt-vr/HookBackground.astro';
 import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
 import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
+import PupilSwim from '../../../components/visuals/crt-vr/PupilSwim.astro';
+import GlareControl from '../../../components/visuals/crt-vr/GlareControl.astro';
+import FlatVsCone from '../../../components/interactives/crt-vr/FlatVsCone';
+import RayTracer from '../../../components/interactives/crt-vr/RayTracer';
+import RotateEye from '../../../components/interactives/crt-vr/RotateEye';
+import TierCompare from '../../../components/interactives/crt-vr/TierCompare';
+import ExplodedRelay from '../../../components/interactives/crt-vr/ExplodedRelay';
+import FringeToggle from '../../../components/interactives/crt-vr/FringeToggle';
+
+// Act 8 visuals and islands that replace their <Slot>.
+const act8Visuals = new Set(['pupil-swim', 'glare-control']);
+const act8Islands = new Set(['flat-vs-cone', 'rotate-eye', 'tier-compare', 'fringe-toggle']);
 
 const placeholder = '[copy pending]';
 ---
@@ -52,8 +64,24 @@ const placeholder = '[copy pending]';
             {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
             {/* Act 1 background (act-01/background). It mounts itself into the act; the VFX thread can move it into ActBackground. */}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
-            {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
-            {s.interactive && <Slot id={s.interactive} kind="interactive" />}
+            {s.visual === 'pupil-swim' && <PupilSwim tier="full" reducedMotion={false} />}
+            {s.visual === 'glare-control' && <GlareControl tier="full" reducedMotion={false} />}
+            {s.visual && s.visual !== 'hero-animatic' && !act8Visuals.has(s.visual) && <Slot id={s.visual} kind="visual" />}
+            {s.interactive === 'flat-vs-cone' && (
+              <>
+                <FlatVsCone client:visible tier="full" reducedMotion={false} />
+                <RayTracer client:visible tier="full" reducedMotion={false} />
+              </>
+            )}
+            {s.interactive === 'rotate-eye' && <RotateEye client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'tier-compare' && (
+              <>
+                <TierCompare client:visible tier="full" reducedMotion={false} />
+                <ExplodedRelay client:visible tier="full" reducedMotion={false} />
+              </>
+            )}
+            {s.interactive === 'fringe-toggle' && <FringeToggle client:visible tier="full" reducedMotion={false} />}
+            {s.interactive && !act8Islands.has(s.interactive) && <Slot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>

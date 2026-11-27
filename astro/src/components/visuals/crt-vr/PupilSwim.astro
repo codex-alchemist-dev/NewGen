@@ -1,0 +1,92 @@
+---
+/**
+ * CRT-VR · Act 8 · Pupil-swim correction (small visual).
+ * As the eye turns, the pupil shifts by millimetres. Without correction the world
+ * wobbles as you look around; the panel uses gaze coordinates to adjust its geometry
+ * every frame, so the horizon stays put. Toggle on/off. Auto-loops in full and reduced
+ * tiers; static tier shows the corrected state with ghosted gaze positions.
+ */
+import './tokens.css';
+import '../../interactives/crt-vr/wraparound/wraparound.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { id = 'crtvr-pupil-swim' } = Astro.props;
+---
+<figure class="wo crtvr pswim" id={id} data-pupil-swim data-on="true" aria-label="Pupil-swim correction">
+  <p class="wo__eyebrow">Visual · Pupil-swim correction</p>
+  <div class="wo__grid2">
+    <div class="wo__panel">
+      <h4>Your eye turns · <b>pupil shifts</b></h4>
+      <svg class="wo__svg" viewBox="0 0 300 180" role="img" aria-label="Top view of an eye turning; the pupil moves sideways as it rotates">
+        <g data-eye transform="rotate(0 150 120)">
+          <circle cx="150" cy="120" r="44" fill="#0b1018" stroke="#c8f6ff" stroke-opacity=".7" stroke-width="1.3" />
+          <path d="M128,80 Q150,63 172,80" fill="none" stroke="#c8f6ff" stroke-opacity=".7" stroke-width="1.3" />
+          <rect x="138" y="76" width="24" height="4" rx="2" fill="#123a4a" stroke="#00e1ff" stroke-opacity=".8" />
+          <line x1="150" y1="76" x2="150" y2="10" stroke="#00e1ff" stroke-opacity=".35" stroke-dasharray="3 4" />
+          <circle cx="150" cy="120" r="2.4" fill="#00e1ff" />
+        </g>
+        <g data-pupil-mark><circle cx="150" cy="78" r="3.2" fill="#ffb347" /></g>
+        <text x="150" y="176" text-anchor="middle" font-size="10" fill="#6a7fa8">pupil moves by millimetres as you look around</text>
+      </svg>
+    </div>
+    <div class="wo__panel">
+      <h4>What you see · <b data-state>world stays still</b></h4>
+      <svg class="wo__svg" viewBox="0 0 300 180" role="img" aria-label="A horizon and grid in the view; with correction off they wobble, with it on they hold still">
+        <rect width="300" height="180" fill="#020306" />
+        <g data-world>
+          <g stroke="#c8f6ff" stroke-opacity=".4" fill="none">
+            <line x1="-40" y1="100" x2="340" y2="100" stroke-opacity=".9" />
+            <line x1="-40" y1="125" x2="340" y2="125" /><line x1="-40" y1="152" x2="340" y2="152" />
+            <path d="M150,100 L-60,180 M150,100 L40,180 M150,100 L150,180 M150,100 L260,180 M150,100 L360,180" />
+          </g>
+          <rect x="128" y="62" width="44" height="38" fill="none" stroke="#00e1ff" stroke-width="1.4" />
+          <line x1="150" y1="40" x2="150" y2="62" stroke="#00e1ff" stroke-width="1.4" />
+        </g>
+        <line x1="150" y1="0" x2="150" y2="180" stroke="#ffb347" stroke-opacity=".25" stroke-dasharray="2 4" />
+      </svg>
+    </div>
+  </div>
+  <div class="wo__controls">
+    <div class="wo__seg" role="group" aria-label="Pupil-swim correction">
+      <button type="button" data-set="off" aria-pressed="false">Correction off</button>
+      <button type="button" data-set="on" aria-pressed="true">Correction on</button>
+    </div>
+  </div>
+  <p class="wo__note">The panel reads your gaze and adjusts its geometry every frame, so the world never wobbles.</p>
+</figure>
+
+<script>
+  import { onTier } from './lib/tier';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-pupil-swim]')) {
+    const eye = root.querySelector<SVGGElement>('[data-eye]')!;
+    const mark = root.querySelector<SVGGElement>('[data-pupil-mark]')!;
+    const world = root.querySelector<SVGGElement>('[data-world]')!;
+    const state = root.querySelector<HTMLElement>('[data-state]')!;
+    const btns = [...root.querySelectorAll<HTMLButtonElement>('[data-set]')];
+    let on = true; let tier = 'full'; let raf = 0; let t0 = 0; let visible = false;
+    const draw = (g: number) => {
+      eye.setAttribute('transform', `rotate(${g.toFixed(2)} 150 120)`);
+      const a = (g * Math.PI) / 180;
+      mark.setAttribute('transform', `translate(${(42 * Math.sin(a)).toFixed(2)} ${(42 - 42 * Math.cos(a)).toFixed(2)})`);
+      // uncorrected: the image swims with the pupil shift (exaggerated for clarity)
+      const swim = on ? 0 : Math.sin(a) * 22;
+      const tilt = on ? 0 : g * 0.12;
+      world.setAttribute('transform', `translate(${swim.toFixed(2)} ${(on ? 0 : Math.abs(Math.sin(a)) * 5).toFixed(2)}) rotate(${tilt.toFixed(2)} 150 100)`);
+    };
+    const frame = (now: number) => {
+      if (!t0) t0 = now;
+      draw(Math.sin((now - t0) / 1000 * 0.9) * 35);
+      raf = visible && tier !== 'static' ? requestAnimationFrame(frame) : 0;
+    };
+    const kick = () => { if (!raf && visible && tier !== 'static') raf = requestAnimationFrame(frame); };
+    const set = (v: boolean) => {
+      on = v; root.dataset.on = String(v);
+      btns.forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.set === 'on') === v)));
+      state.textContent = v ? 'world stays still' : 'world wobbles';
+      if (tier === 'static') draw(30);
+    };
+    btns.forEach((b) => b.addEventListener('click', () => set(b.dataset.set === 'on')));
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); }).observe(root);
+    onTier((t) => { tier = t; if (t === 'static') { cancelAnimationFrame(raf); raf = 0; draw(30); } else kick(); });
+  }
+</script>

@@ -23,3 +23,10 @@ Shared: `tokens.css` (aliases shell tokens, fonts stay swappable), `lib/scrub.ts
 - **static** (and `prefers-reduced-motion`): no scrubbing. The hero shows one composed frame with all three lines, the background is a CSS still, the stats are drawn.
 
 All three copy lines, captions and figures are real HTML/SVG text.
+
+## Act 8 · Wraparound Optics
+
+| Component | Section | What it is |
+|---|---|---|
+| `PupilSwim.astro` | `pupil-swim-correction` | Eye turns, the pupil shifts; correction off makes the view wobble, on holds it still. Static tier shows a held frame. |
+| `GlareControl.astro` | `glare-and-ghost-control` | Barrel cross-section: bare walls bounce stray light into the eye and lift black; Kurocoat lining and baffles absorb it. |

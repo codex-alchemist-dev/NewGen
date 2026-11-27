@@ -13,7 +13,7 @@ Interactive islands (React), one per interactive slot id. See `astro/README.md` 
 | `GridVsCrtFoveation.tsx` | `grid-vs-crt-foveation` | Same scene and foveated render. Grid panel: blocky periphery, fixed 120 Hz, 0% display time saved. CRT-VR: soft periphery, model refresh, beam time saved. Frames-in-25-ms strips. |
 | `EyeRoam.tsx` | `eye-roam` | Top-down eye at the centre of a 180°+ monocentric field; uniform sharpness wherever it lands, core and mid-zone carried with the gaze. Toggle a qualitative sweet-spot lens for contrast. Idle auto-roam. |
 | `SkipCoarsenessHz.tsx` | `skip-coarseness-hz` | One scan line: fine steps in the fovea, coarse vector jumps outside, deflection-vs-time staircase against a raster ramp, live Hz. |
-| `SaccadeTimeline.tsx` | `saccade-timeline` | Fixate → 40 ms saccade (coarsest skips, no fovea, illustrative peak) → land and catch up. Field view plus a refresh-vs-time trace. |
+| `SaccadeTimeline.tsx` | `saccade-timeline` | Motion-Adaptive Foveated Rendering (Saccade Banking): during a 20–80 ms saccade the fovea drops to minimum refresh and banks its beam time; at landing the bank is spent as a burst of extra full-res foveal refreshes. Passes run shorter in flight and longer during the burst; the whole screen averages the fixation refresh. |
 | `SlewCompare.tsx` | `slew-compare` | Lumped plates (spot ramps over the transit time) vs traveling-wave segmented plates fed by a delay line (spot steps). Qualitative, class labels only. |
 
 `CrtVrInteractive.astro` mounts the right island for a slot id (`client:visible`); `index.ts` lists the built ids so the page keeps `<Slot>` for the rest.
@@ -23,7 +23,7 @@ Interactive islands (React), one per interactive slot id. See `astro/README.md` 
 All numbers come from `lib/model.ts`, a straight port of the live page's §05 math:
 refresh = 120 Hz × (3,024 fixed-grid dots ÷ dots scanned), fovea r 70 / mid r 190 on a 72 × 42 grid,
 mid keep 1–4 + interlace, edge keep 2–8, 0.05 floor (2,400 Hz ceiling). Angular mapping, acuity formula,
-40 ms saccade and the 120 Hz grid baseline are coordinator-approved provisional values in the same file.
+the saccade-banking rates (fovea on 1 pass in 4 during the saccade, up to 3 extra foveal passes per frame at landing) and the 120 Hz grid baseline are coordinator-approved provisional values in the same file.
 
 ### Quality tiers
 

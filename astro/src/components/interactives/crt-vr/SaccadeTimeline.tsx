@@ -4,10 +4,12 @@
  * to the panel, so the panel drops the foveal region to minimum refresh during the
  * jump, banks that beam time, and spends it on a burst of extra full-res refreshes
  * at the landing spot. The panel still does one whole-screen raster pass per frame;
- * the bank only changes where the beam time goes.
+ * the bank only changes where the beam time goes. Passes run shorter during the
+ * saccade and longer during the burst, so the whole screen averages the fixation
+ * refresh across the cycle.
  *
  * Whole-screen refresh and the foveal share of beam time come from the shared model.
- * FOVEA_MIN_RATE and BURST_PASSES are provisional illustration values.
+ * FOVEA_MIN_RATE and BURST_PASSES are illustrative values.
  */
 import { useRef, useState } from 'react';
 import type { VfxSlotProps } from '../../../lib/motion/types';
@@ -24,9 +26,9 @@ const T_TOTAL = 200;            // ms of simulated time on the timeline
 const T_SAC = 60;               // saccade starts here
 const SLOWMO = 30;              // real ms per simulated ms
 const AGG = 0.6;                // fixation foveation (shared model)
-/** Provisional: during the saccade the foveal region is refreshed on 1 pass in 4. */
+/** Illustrative: during the saccade the foveal region is refreshed on 1 pass in 4. */
 const FOVEA_MIN_RATE = 0.25;
-/** Provisional: at landing, up to 3 extra foveal full-res refreshes per raster pass until the bank is empty. */
+/** Illustrative: at landing, up to 3 extra foveal full-res refreshes per raster pass until the bank is empty. */
 const BURST_PASSES = 3;
 const A = { x: FW * 0.26, y: FH * 0.6 }, B = { x: FW * 0.74, y: FH * 0.36 };
 
@@ -36,18 +38,23 @@ type Phase = 'fixation' | 'saccade' | 'burst' | 'settled';
 export default function SaccadeTimeline(_: Partial<VfxSlotProps>) {
   const [sacMs, setSacMs] = useState(40);
   const fix = countFrame(A.x, A.y, AGG);
-  const hz = fix.hz;                                  // whole-screen raster, unchanged throughout
+  const hz = fix.hz;                                  // whole-screen refresh at fixation (and cycle average)
   const frameMs = 1000 / hz;
   const fShare = fix.fovea / fix.drawn;               // foveal share of each pass's beam time
   const foveaPassMs = fShare * frameMs;               // one full-res foveal refresh
-  const bankedMs = (1 - FOVEA_MIN_RATE) * fShare * sacMs;   // beam time banked over the saccade
-  const burstRefreshes = Math.floor(bankedMs / foveaPassMs);  // extra full-res refreshes at landing
-  const burstMs = (burstRefreshes / BURST_PASSES) * frameMs;  // how long the burst lasts
+  const passSac = frameMs - (1 - FOVEA_MIN_RATE) * foveaPassMs;   // shorter passes in flight
+  const passBurst = frameMs + BURST_PASSES * foveaPassMs;         // longer passes during the burst
+  const bankedMs = (sacMs / passSac) * (1 - FOVEA_MIN_RATE) * foveaPassMs; // beam time banked over the saccade
+  const burstRefreshes = Math.floor(bankedMs / foveaPassMs);      // extra full-res refreshes at landing
+  const burstMs = (burstRefreshes / BURST_PASSES) * passBurst;    // how long the burst lasts
+  const hzSac = Math.round(1000 / passSac), hzBurst = Math.round(1000 / passBurst);
   const T_LAND = T_SAC + sacMs, T_END = T_LAND + burstMs;
 
   const phaseAt = (t: number): Phase => (t < T_SAC ? 'fixation' : t < T_LAND ? 'saccade' : t < T_END ? 'burst' : 'settled');
   /** Foveal refreshes per raster pass. */
   const rateAt = (t: number) => { const p = phaseAt(t); return p === 'saccade' ? FOVEA_MIN_RATE : p === 'burst' ? 1 + BURST_PASSES : 1; };
+  /** Whole-screen refresh (one raster pass per frame) at time t. */
+  const wholeAt = (t: number) => { const p = phaseAt(t); return p === 'saccade' ? hzSac : p === 'burst' ? hzBurst : hz; };
   /** Bank level (ms of beam time). */
   const bankAt = (t: number) => {
     if (t < T_SAC) return 0;
@@ -58,7 +65,7 @@ export default function SaccadeTimeline(_: Partial<VfxSlotProps>) {
 
   const simT = useRef(0);
   const dir = useRef(1);
-  const [snap, setSnap] = useState({ ph: 'fixation' as Phase, bank: 0, spent: 0 });
+  const [snap, setSnap] = useState({ ph: 'fixation' as Phase, bank: 0, spent: 0, whole: 0, fovHz: 0 });
 
   const rMax = 1 + BURST_PASSES;
   const tx = (t: number) => TX0 + (t / T_TOTAL) * (TX1 - TX0);
@@ -75,7 +82,7 @@ export default function SaccadeTimeline(_: Partial<VfxSlotProps>) {
     const u = ease((t - T_SAC) / sacMs);
     const gx = from.x + (to.x - from.x) * u, gy = from.y + (to.y - from.y) * u;
     const ph = phaseAt(t);
-    const passIdx = Math.floor(t / frameMs);
+    const passIdx = Math.floor(t / (1000 / wholeAt(t)));
 
     ctx.fillStyle = '#04050a'; ctx.fillRect(0, 0, W, H);
 
@@ -128,11 +135,16 @@ export default function SaccadeTimeline(_: Partial<VfxSlotProps>) {
     ctx.fillStyle = '#3a4a6a'; ctx.textAlign = 'center';
     for (let m = 0; m <= T_TOTAL; m += 20) { ctx.fillRect(tx(m), TY1, 1, 5); ctx.fillText(`${m} ms`, tx(m), TY1 + 18); }
 
-    // whole-screen raster: one pass per frame, constant
-    ctx.strokeStyle = 'rgba(185,200,255,.45)'; ctx.setLineDash([3, 5]);
-    ctx.beginPath(); ctx.moveTo(tx(0), tyR(1)); ctx.lineTo(tx(T_TOTAL), tyR(1)); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(185,200,255,.7)'; ctx.textAlign = 'right';
-    ctx.fillText(`WHOLE-SCREEN RASTER · ONE PASS · ${fmt(hz)} Hz`, TX1 - 8, tyR(1) + 14);
+    // whole-screen raster: one pass per frame; shorter passes in flight, longer during the burst
+    ctx.strokeStyle = 'rgba(185,200,255,.6)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    let pw = wholeAt(0); ctx.moveTo(tx(0), tyR(pw / hz));
+    for (let m = 0.25; m <= t; m += 0.25) { const w = wholeAt(m); if (w !== pw) { ctx.lineTo(tx(m), tyR(pw / hz)); ctx.lineTo(tx(m), tyR(w / hz)); pw = w; } }
+    ctx.lineTo(tx(t), tyR(pw / hz)); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
+    ctx.fillStyle = 'rgba(185,200,255,.8)'; ctx.textAlign = 'right';
+    ctx.fillText(`WHOLE-SCREEN RASTER · ONE PASS PER FRAME · AVERAGES ${fmt(hz)} Hz`, TX1 - 8, tyR(1) + 14);
+    if (t > T_SAC) { ctx.textAlign = 'left'; ctx.fillText(`${fmt(hzSac)} Hz`, tx(T_SAC) + 40, tyR(hzSac / hz) - 6); }
+    if (t > T_LAND) { ctx.textAlign = 'left'; ctx.fillText(`${fmt(hzBurst)} Hz`, tx(T_END) + 4, tyR(hzBurst / hz) + 12); }
 
     // bank level (filled area, yellow)
     const bMax = Math.max(1e-6, bankedMs);
@@ -162,11 +174,12 @@ export default function SaccadeTimeline(_: Partial<VfxSlotProps>) {
 
     if (frame % 4 === 0 || tier === 'static') {
       const spent = ph === 'burst' ? Math.round(burstRefreshes * ((t - T_LAND) / burstMs)) : ph === 'settled' ? burstRefreshes : 0;
-      setSnap({ ph, bank: bankAt(t), spent });
+      setSnap({ ph, bank: bankAt(t), spent, whole: wholeAt(t), fovHz: Math.round(wholeAt(t) * rateAt(t)) });
     }
   }, [sacMs]);
 
-  const foveaHzNow = Math.round(hz * rateAt(snap.ph === 'fixation' ? 0 : snap.ph === 'saccade' ? T_SAC : snap.ph === 'burst' ? T_LAND : T_TOTAL));
+  const foveaHzNow = snap.fovHz || hz;
+  const wholeNow = snap.whole || hz;
   const phColor = snap.ph === 'saccade' ? 'var(--crtvr-yellow)' : 'var(--crtvr-phosphor)';
 
   return (
@@ -178,7 +191,9 @@ export default function SaccadeTimeline(_: Partial<VfxSlotProps>) {
       readout={
         <>
           <Readout big k="Refresh now · fovea" v={fmt(foveaHzNow)} unit="Hz" color={phColor}
-            note={<>Whole screen stays at {fmt(hz)} Hz, one raster pass per frame.</>} />
+            note="Full-res refreshes of the foveal region per second." />
+          <Readout k="Whole-screen refresh" v={fmt(wholeNow)} unit="Hz" color="var(--crtvr-panel-cold)"
+            note={<>Whole screen averages {fmt(hz)} Hz across the cycle. Passes run shorter during the saccade and longer during the burst.</>} />
           <Readout k="Banked beam time" v={snap.bank.toFixed(1)} unit="ms" color="var(--crtvr-yellow)"
             note={<>{bankedMs.toFixed(1)} ms banked over a {sacMs} ms saccade.</>} />
           <Readout k="Burst at landing" v={`+${snap.ph === 'burst' || snap.ph === 'settled' ? snap.spent : burstRefreshes}`} unit="full-res refreshes" color="var(--crtvr-phosphor)"
@@ -186,7 +201,7 @@ export default function SaccadeTimeline(_: Partial<VfxSlotProps>) {
         </>
       }
       hint="Loops automatically: fixate, jump, land, and back. The headset sends gaze to the panel. With reduced motion, the whole timeline is shown at once."
-      foot={<><b>Illustrative.</b> Whole-screen refresh and the fovea's share of each pass ({Math.round(fShare * 100)}%) come from the shared model. During the saccade the fovea is refreshed on 1 pass in 4. At landing, up to {BURST_PASSES} extra foveal refreshes per pass until the bank is empty. These two rates are provisional.</>}
+      foot={<><b>Illustrative.</b> Whole-screen refresh and the fovea's share of each pass ({Math.round(fShare * 100)}%) come from the shared model. During the saccade the fovea is refreshed on 1 pass in 4. At landing, up to {BURST_PASSES} extra foveal refreshes per pass until the bank is empty. These two rates are illustrative.</>}
     >
       <div className="ix__screen" ref={wrapRef}>
         <canvas ref={canvasRef} aria-label={`Saccade banking. ${bankedMs.toFixed(1)} milliseconds of beam time banked during a ${sacMs} millisecond saccade, spent as ${burstRefreshes} extra full-resolution refreshes at the landing point. Whole screen stays at ${hz} hertz.`} />

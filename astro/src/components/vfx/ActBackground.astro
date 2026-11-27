@@ -1,0 +1,75 @@
+---
+/**
+ * ActBackground (slot act-NN/background).
+ *
+ * 1. Declares the act's built-in backdrop scene + tint. The global
+ *    <ScrollBackdrop> morphs act → act with a long, double-smoothed blend.
+ *    Scenes: phosphor (aurora glow) · mask (hex RGB/MCY subpixel lattice)
+ *            grid (VR perspective grid) · scan (raster beam + decay) · void (calm dust)
+ * 2. Optionally hosts a custom per-act background component in its default
+ *    slot (e.g. visuals/crt-vr/HookBackground.astro). It is shown in a fixed
+ *    full-viewport layer behind the act's content and crossfades in and out
+ *    with the act, over the built-in backdrop. The layer exposes the act's
+ *    scroll progress as the CSS var --act-progress (0…1) and as the
+ *    `act-progress` event (detail: { progress }) on the layer element, so
+ *    custom backgrounds can scrub without their own ScrollTrigger.
+ */
+import type { VfxSlotProps } from '../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> {
+  scene?: 'phosphor' | 'mask' | 'grid' | 'scan' | 'void';
+  tint?: string;
+}
+const { scene = 'phosphor', tint = '#00ff99' } = Astro.props;
+const custom = Astro.slots.has('default');
+---
+<div class="act-bg" data-vfx-bg data-scene={scene} data-tint={tint} aria-hidden="true">
+  {custom && (
+    <div class="act-bg__layer" data-act-bg-layer>
+      <slot />
+    </div>
+  )}
+</div>
+
+<style>
+  .act-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  .act-bg__layer {
+    position: fixed;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    will-change: opacity;
+  }
+  :global(html[data-vfx-tier='static']) .act-bg__layer { opacity: 1; visibility: visible; position: absolute; }
+</style>
+
+<script>
+  import { ready, clamp01, smooth } from './motion';
+  import { getTier } from './quality';
+
+  const layers = [...document.querySelectorAll<HTMLElement>('[data-act-bg-layer]')];
+  if (layers.length) {
+    const { gsap } = ready();
+    const items = layers.map((el) => ({ el, act: (el.closest('[data-act]') as HTMLElement) ?? el.parentElement!.parentElement!, o: -1 }));
+    gsap.ticker.add(() => {
+      if (getTier() === 'static') return;
+      const H = innerHeight;
+      for (const it of items) {
+        const r = it.act.getBoundingClientRect();
+        // fade in as the act's top rises past 60%→0%, out as its bottom leaves 100%→40%
+        const fin = smooth(clamp01((H * 0.6 - r.top) / (H * 0.6)));
+        const fout = smooth(clamp01((H - r.bottom) / (H * 0.6)));
+        const target = fin * (1 - fout);
+        it.o = it.o < 0 ? target : it.o + (target - it.o) * 0.12;
+        const vis = it.o > 0.002;
+        it.el.style.visibility = vis ? 'visible' : 'hidden';
+        it.el.style.opacity = it.o.toFixed(3);
+        if (vis) {
+          const progress = clamp01(-r.top / Math.max(1, r.height - H));
+          it.el.style.setProperty('--act-progress', progress.toFixed(4));
+          it.el.dispatchEvent(new CustomEvent('act-progress', { detail: { progress } }));
+        }
+      }
+    });
+  }
+</script>

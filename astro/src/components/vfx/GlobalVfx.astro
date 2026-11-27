@@ -1,0 +1,33 @@
+---
+/**
+ * GlobalVfx: drop once directly in <body>, not inside <VfxLayer>: the overlays
+ *  must sit above content, and VfxLayer is a z -2 stacking context.
+ *  · ScrollBackdrop     WebGL backdrop that morphs act → act
+ *  · ScanlineNoise      scanlines, grain, rolling refresh band
+ *  · PhosphorBloom      shared SVG bloom filters + glow utilities
+ *  · PersistenceCursor  phosphor-persistence pointer trail (full tier)
+ *  · section motion     smooth scrubbed reveals for every kit Section
+ * Every piece reads the shared quality tier and respects reduced motion.
+ */
+import './tokens.css';
+import './reveal.css';
+import ScrollBackdrop from './ScrollBackdrop.astro';
+import ScanlineNoise from './ScanlineNoise.astro';
+import PhosphorBloom from './PhosphorBloom.astro';
+import PersistenceCursor from './PersistenceCursor.astro';
+
+interface Props {
+  cursor?: boolean;
+  scanlines?: boolean;
+}
+const { cursor = true, scanlines = true } = Astro.props;
+---
+<PhosphorBloom />
+<ScrollBackdrop />
+{scanlines && <ScanlineNoise />}
+{cursor && <PersistenceCursor />}
+
+<script>
+  import { initSectionMotion } from './section-motion';
+  initSectionMotion();
+</script>

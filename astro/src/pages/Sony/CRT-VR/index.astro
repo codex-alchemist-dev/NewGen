@@ -8,6 +8,7 @@ import { acts } from '../../../data/crt-vr';
 import HeroAnimatic from '../../../components/visuals/crt-vr/HeroAnimatic.astro';
 import HookBackground from '../../../components/visuals/crt-vr/HookBackground.astro';
 import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
+import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
 
 const placeholder = '[copy pending]';
 ---
@@ -18,10 +19,11 @@ const placeholder = '[copy pending]';
   <div class="page-chrome">
     <p class="eyebrow">NewGen × Sony · 2nd® Gen preview · placeholder copy</p>
   </div>
+  <GlobalVfx />
   <ActRail />
   <main>
     {acts.map((act) => (
-      <ActWrapper id={act.id} number={act.number} transition={act.transition}>
+      <ActWrapper id={act.id} number={act.number} transition={act.transition} title={act.title}>
         <ActTitle number={act.number} title={act.title} subtitle={act.tagline} />
         {act.sections.map((s) => (
           <Section id={s.id} title={s.title}>

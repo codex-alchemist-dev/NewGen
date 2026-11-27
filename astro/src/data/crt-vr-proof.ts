@@ -4,7 +4,7 @@ export const comparisonRows = [
  {
   "label": "Peak Brightness",
   "cells": [
-   "~500–1000+ nits at phosphor — phosphor-saturation-limited, not gun-limited. Relay optics lose less than pancakes → at-eye advantage even at equal panel output.",
+   "~1,500 nits full field, 4,000+ nits peak at the faceplate, about 1,000+ nits at the eye — phosphor-saturation-limited, not gun-limited. Relay optics lose less than pancakes → at-eye advantage even at equal panel output.",
    "1000 nits panel-rated (Sony ECX344A); substantially less at eye through pancakes",
    "800–1500 nits",
    "Very high, coarse pitch",
@@ -193,9 +193,9 @@ export const specGroups: { name: string; rows: { label: string; value: string }[
     { label: 'Color engine', value: 'Puretone™' },
   ] },
   { name: 'Brightness', rows: [
-    { label: 'Full field', value: '~1,500 nits (proposed)' },
-    { label: 'Peak', value: '4,000+ nits (proposed)' },
-    { label: 'At eye', value: '~1,000+ nits (proposed)' },
+    { label: 'Full field', value: '~1,500 nits' },
+    { label: 'Peak', value: '4,000+ nits' },
+    { label: 'At eye', value: '~1,000+ nits' },
     { label: 'Black', value: 'True black (beam blanking ~10⁻⁵, Kurocoat wells)' },
   ] },
   { name: 'Electron optics', rows: [

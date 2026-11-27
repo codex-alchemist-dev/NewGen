@@ -60,7 +60,7 @@ Shared: `act4.css`, `lib/color.ts` (spectra, primaries, hull, sRGB preview, solv
 2. **Budget**: the pure set's highest luminance at that chromaticity (a drive hits 100%).
 3. **Recruitment**: past the budget, a bounded LP over all six (0 ≤ drive ≤ 1, exact XYZ) with pure tones free and
    others costed by xy distance from the target. Exact vertex enumeration, so drive levels are continuous and fade in.
-4. Subpixel peaks balance RGB → D65 (Y=1) and MCY → D65 (Y=1). Nits use the proposed 1,500-nit full-field peak.
+4. Subpixel peaks balance RGB → D65 (Y=1) and MCY → D65 (Y=1). Nits use the 1,500-nit full-field peak.
 
 Tiers: full (glow, pulses, fly-in), reduced (no filters), static/reduced-motion (no animation, composed frames).
 

@@ -127,7 +127,7 @@ export const acts: ActDef[] = [
   },
   {
     number: 5, id: 'brilliance', title: 'Brilliance', transition: 'default', tagline: 'Blinding light. Absolute black.', sections: [
-      { id: 'the-numbers', title: 'The numbers', kind: 'stats', eyebrow: 'The numbers', headline: 'Bright enough to squint.', footnote: "† Design targets at the faceplate, pending confirmation. Today's headsets deliver about 100–200 nits at the eye.", items: [
+      { id: 'the-numbers', title: 'The numbers', kind: 'stats', eyebrow: 'The numbers', headline: 'Bright enough to squint.', footnote: "† Design targets at the faceplate. Today's headsets deliver about 100–200 nits at the eye.", items: [
         { value: '1,500', unit: 'nits', label: 'Full screen' },
         { value: '4,000+', unit: 'nits', label: 'Highlights' },
         { value: '1,000+', unit: 'nits', label: 'At your eye' }] },

@@ -162,7 +162,7 @@ export default function PuretonePicker(props: Partial<VfxSlotProps>) {
           <div className="x4-readouts">
             <div className="x4-ro"><span>Pure set</span><strong>{res.pure.join(' + ') || '—'}</strong><small>{res.pure.length === 1 ? 'single subpixel' : `fewest tones that hit it`}{res.snapped ? ' · within 1 JND' : ''}</small></div>
             <div className="x4-ro"><span>Joined</span><strong style={{ color: res.recruited.length ? 'var(--x4-white)' : 'var(--x4-dimmer)' }}>{res.recruited.join(' + ') || 'none'}</strong><small>{res.recruited.length ? 'past the purity budget' : 'still pure'}</small></div>
-            <div className="x4-ro"><span>Luminance <i className="x4-tag">proposed</i></span><strong>{Math.round(nits).toLocaleString()}</strong><small>nits at the faceplate</small></div>
+            <div className="x4-ro"><span>Luminance</span><strong>{Math.round(nits).toLocaleString()}</strong><small>nits at the faceplate</small></div>
             <div className="x4-ro"><span>xy</span><strong style={{ fontSize: 22 }}>{res.xy[0].toFixed(3)}, {res.xy[1].toFixed(3)}</strong><small>CIE 1931</small></div>
           </div>
           <ul className="pt-ledger" aria-label="Subpixel drive levels">
@@ -181,7 +181,7 @@ export default function PuretonePicker(props: Partial<VfxSlotProps>) {
       </div>
 
       <p className="x4-note">
-        <em>The rule:</em> each colour is rendered with the closest pure tone, or the fewest tones that hit it exactly. Other tones join in only when luminance passes the pure set’s budget, and then only as much as needed (a bounded least-recruitment solve over all six, cost = distance from the target hue). Subpixel peaks are balanced so RGB and MCY each make D65 white. Nits use the proposed 1,500-nit full-field peak.
+        <em>The rule:</em> each colour is rendered with the closest pure tone, or the fewest tones that hit it exactly. Other tones join in only when luminance passes the pure set’s budget, and then only as much as needed (a bounded least-recruitment solve over all six, cost = distance from the target hue). Subpixel peaks are balanced so RGB and MCY each make D65 white. Nits use the 1,500-nit full-field peak.
       </p>
 
       <style>{`

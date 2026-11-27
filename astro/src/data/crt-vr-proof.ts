@@ -2,10 +2,6 @@
 export const comparisonHeads = ["CRT-VR (theoretical)", "MicroOLED", "OLED (TV-class)", "True RGB LED", "MiniLED LCD"];
 export const comparisonRows = [
  {
-  "label": "Metric",
-  "cells": []
- },
- {
   "label": "Peak Brightness",
   "cells": [
    "~500–1000+ nits at phosphor — phosphor-saturation-limited, not gun-limited. Relay optics lose less than pancakes → at-eye advantage even at equal panel output.",

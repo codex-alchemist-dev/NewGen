@@ -36,7 +36,7 @@ const glyphs: Record<string, string> = {
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 <nav class="act-rail" aria-label="Acts" data-act-rail>
-  <button class="act-rail__toggle" type="button" aria-expanded="false" aria-controls="act-rail-list" data-rail-toggle>
+  <button class="act-rail__toggle" type="button" aria-expanded="false" aria-controls="act-rail-list" aria-label={`Acts menu. Current: ${pad(acts[0].number)} ${acts[0].title}`} data-rail-toggle>
     <svg class="act-rail__ico" viewBox="0 0 24 24" aria-hidden="true" data-rail-ico set:html={glyphs[acts[0].transition] ?? glyphs.default}></svg>
     <span class="act-rail__cur"><b data-rail-num>{pad(acts[0].number)}</b> <span data-rail-name>{acts[0].title}</span></span>
     <span class="act-rail__caret" aria-hidden="true"></span>
@@ -94,7 +94,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .act-rail__list a:hover, .act-rail__list a:focus-visible { color: var(--text, #d8e4ff); }
   .act-rail__list a:hover .act-rail__t, .act-rail__list a:focus-visible .act-rail__t { max-width: 22ch; opacity: 1; }
   .act-rail__list a[aria-current] { color: var(--rail-hot); }
-  .act-rail__list a[aria-current] .act-rail__t { max-width: 22ch; opacity: 1; text-shadow: 0 0 12px color-mix(in srgb, var(--rail-hot) 60%, transparent); }
+  /* names show on hover or focus only, so they never cover the wide interactives */
+  .act-rail__list a[aria-current] .act-rail__t { text-shadow: 0 0 12px color-mix(in srgb, var(--rail-hot) 60%, transparent); }
   .act-rail__list a[aria-current] .act-rail__ico {
     border-color: var(--rail-hot);
     background: color-mix(in srgb, var(--rail-hot) 12%, var(--bg, #04050a));
@@ -102,14 +103,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   .act-rail__list a:focus-visible { outline: 1px dashed var(--rail-hot); outline-offset: 2px; }
   /* the label reads on a dark pill so it never fights the content behind it */
-  .act-rail__list a[aria-current]::before, .act-rail__list a:hover::before {
+  .act-rail__list a:hover::before, .act-rail__list a:focus-visible::before {
     content: ''; position: absolute; inset: 2px 0; z-index: -1; border-radius: 16px;
     background: color-mix(in srgb, var(--bg, #04050a) 82%, transparent);
   }
 
   /* ── phone: a pill in the top bar that opens the list ── */
   @media (max-width: 860px) {
-    .act-rail { top: 6px; right: 10px; transform: none; }
+    /* bottom-right, clear of the site MENU button that sits top-right */
+    .act-rail { top: auto; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); right: 12px; transform: none; }
     .act-rail__toggle {
       display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px 0 4px; cursor: pointer;
       color: var(--rail-hot); font: inherit; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
@@ -123,14 +125,16 @@ const pad = (n: number) => String(n).padStart(2, '0');
     .act-rail__cur span { display: inline-block; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
     @media (max-width: 480px) { .act-rail__cur span { display: none; } }
     .act-rail__caret { width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .3s; }
-    .act-rail.is-open .act-rail__caret { transform: translateY(1px) rotate(225deg); }
+    .act-rail__caret { transform: translateY(1px) rotate(225deg); }
+    .act-rail.is-open .act-rail__caret { transform: translateY(-2px) rotate(45deg); }
     .act-rail__list {
-      position: absolute; top: calc(100% + 8px); right: 0; width: min(78vw, 280px);
+      position: absolute; bottom: calc(100% + 8px); right: 0; width: min(78vw, 280px);
+      max-height: calc(100svh - 96px); overflow-y: auto;
       padding: 8px; gap: 0; border-radius: 10px;
       background: color-mix(in srgb, var(--bg2, #080b14) 96%, transparent);
       border: 1px solid var(--border, #1a2240);
       box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .9);
-      opacity: 0; visibility: hidden; transform: translateY(-6px);
+      opacity: 0; visibility: hidden; transform: translateY(6px);
       transition: opacity .25s, transform .25s var(--ease-newgen, ease), visibility 0s .25s;
     }
     .act-rail.is-open .act-rail__list { opacity: 1; visibility: visible; transform: none; transition: opacity .25s, transform .25s var(--ease-newgen, ease); }
@@ -174,6 +178,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       a.setAttribute('aria-current', 'true');
       num.textContent = a.dataset.num ?? '';
       name.textContent = a.dataset.name ?? '';
+      toggle.setAttribute('aria-label', `Acts menu. Current: ${a.dataset.num ?? ''} ${a.dataset.name ?? ''}`);
       ico.innerHTML = a.querySelector('svg')?.innerHTML ?? '';
     };
     const io = new IntersectionObserver(

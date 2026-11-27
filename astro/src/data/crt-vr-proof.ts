@@ -204,7 +204,7 @@ export const specGroups: { name: string; rows: { label: string; value: string }[
     { label: 'Landing', value: 'Focus-Well Hexagons + Hexa-Index closed loop' },
   ] },
   { name: 'Optics', rows: [
-    { label: 'Relay', value: 'Monocentric, faceplate = element 1' },
+    { label: 'Relay', value: 'Monocentric (elements 2+), faceplate = field element 1' },
     { label: 'FOV', value: 'Up to ~160° per eye, 200°+ binocular' },
     { label: 'Tiers', value: 'Sony · Sony G · G Master · G Master with ZEISS T*' },
     { label: 'CA correction', value: 'Per-beam hardware pre-warp' },

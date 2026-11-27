@@ -2,7 +2,7 @@
  * acuity-curve · Act 2 · Built for how eyes actually see.
  * The eye's acuity falls off fast from a ~2° fovea. Overlaid: the CRT-VR resolution
  * map (full-res core ±5°, interlaced mid-zone to ±20°, low-res edge) and the optics,
- * which stay uniformly sharp across 180°+ (no center boost). Drag to move the gaze.
+ * which stay uniformly sharp across the ±50° gaze cone (no center boost). Drag to move the gaze.
  */
 import { useMemo, useRef, useState } from 'react';
 import type { VfxSlotProps } from '../../../lib/motion/types';
@@ -115,14 +115,14 @@ export default function AcuityCurve(_: Partial<VfxSlotProps>) {
               <text x={xOf(d)} y={yOf(0) + 20} textAnchor="middle" className="ac__t">{d > 0 ? '+' : ''}{d}°</text>
             </g>
           ))}
-          <text x={L + PW / 2} y={VH - 8} textAnchor="middle" className="ac__t ac__t--axis">Angle across the 180°+ field</text>
+          <text x={L + PW / 2} y={VH - 8} textAnchor="middle" className="ac__t ac__t--axis">Angle across the binocular field</text>
           <text x={16} y={T + PH / 2} textAnchor="middle" className="ac__t ac__t--axis" transform={`rotate(-90 16 ${T + PH / 2})`}>Relative resolution</text>
 
           {/* headroom fill */}
           <path d={headroom} fill="url(#ac-head)" className="ac__fill" />
           {/* optics: uniform, no center boost */}
-          <line x1={xOf(-90)} x2={xOf(90)} y1={yOf(1.04)} y2={yOf(1.04)} stroke="#ffe135" strokeDasharray="2 6" strokeWidth="1.5" className="ac__optics" />
-          <text x={xOf(90)} y={yOf(1.04) - 8} textAnchor="end" className="ac__t" fill="#ffe135">Optics · uniform to ±90°, no center boost</text>
+          <line x1={xOf(-50)} x2={xOf(50)} y1={yOf(1.04)} y2={yOf(1.04)} stroke="#ffe135" strokeDasharray="2 6" strokeWidth="1.5" className="ac__optics" />
+          <text x={xOf(50)} y={yOf(1.04) - 8} textAnchor="end" className="ac__t" fill="#ffe135">Gaze-Cone optics · uniform across ±50°, no center boost</text>
           {/* CRT-VR map */}
           <path d={crtPath} fill="none" stroke="#00ff99" strokeWidth="2.5" filter={tier === 'full' ? 'url(#ac-glow)' : undefined} className="ac__line" pathLength={1} />
           {/* eye acuity */}

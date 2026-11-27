@@ -1,7 +1,7 @@
 /**
  * eye-roam · Act 2 · Real eye freedom.
- * Top-down: the eye at the centre of a 180°+ monocentric field. Wherever the eye
- * lands, the optics are equally sharp (no center boost) and the full-res core
+ * Top-down: the eye at the centre of a binocular 180°+ field. Gaze-Cone optics stay
+ * uniformly sharp across the ±50° cone the eye rotates through (no center boost), and the full-res core
  * follows the gaze. Toggle a conventional sweet-spot lens for contrast (qualitative).
  */
 import { useEffect, useRef, useState } from 'react';
@@ -16,7 +16,8 @@ const SPAN = 95; // ±95°: a 190° arc, "180°+"
 type Mode = 'crt' | 'lens';
 
 /** Qualitative sharpness: CRT-VR flat; a sweet-spot lens falls off away from straight-ahead. */
-const sharp = (mode: Mode, deg: number) => (mode === 'crt' ? 1 : Math.max(0.12, Math.cos((deg * Math.PI) / 180 * 1.25) ** 3));
+const GAZE_CONE = 50; // ±50°: the eye's rotation cone, uniformly sharp in Gaze-Cone optics
+const sharp = (mode: Mode, deg: number) => (mode === 'crt' ? (Math.abs(deg) <= GAZE_CONE ? 1 : Math.max(0.6, 1 - (Math.abs(deg) - GAZE_CONE) / 60)) : Math.max(0.12, Math.cos((deg * Math.PI) / 180 * 1.25) ** 3));
 const pt = (deg: number, r = RAD) => { const t = ((deg - 90) * Math.PI) / 180; return { x: CX + r * Math.cos(t), y: CY + r * Math.sin(t) }; };
 const arc = (d0: number, d1: number, r = RAD) => { const a = pt(d0, r), b = pt(d1, r); return `M${a.x},${a.y} A${r},${r} 0 ${Math.abs(d1 - d0) > 180 ? 1 : 0} 1 ${b.x},${b.y}`; };
 
@@ -82,16 +83,16 @@ export default function EyeRoam(_: Partial<VfxSlotProps>) {
       }
       readout={
         <>
-          <Readout big k="Field of view" v="180°+" color="var(--crtvr-phosphor)" note="One continuous wraparound field, no edge of a lens to look past." />
+          <Readout big k="Binocular field of view" v="180°+" color="var(--crtvr-phosphor)" note="One continuous wraparound field, no edge of a lens to look past." />
           <Readout k="Gaze angle" v={`${deg > 0 ? '+' : ''}${deg}°`} color="var(--crtvr-white)" />
-          <Readout k="Optics where you look" v={mode === 'crt' ? 'Uniform' : s > 0.8 ? 'Sharp' : s > 0.4 ? 'Softening' : 'Blurred'}
+          <Readout k="Optics where you look" v={mode === 'crt' ? (s >= 1 ? 'Uniform' : 'Softening') : s > 0.8 ? 'Sharp' : s > 0.4 ? 'Softening' : 'Blurred'}
             color={mode === 'crt' ? 'var(--crtvr-phosphor)' : s > 0.8 ? 'var(--crtvr-panel-cold)' : 'var(--crtvr-rose)'}
-            note={mode === 'crt' ? 'No center boost. Same sharpness at 0° and at 90°.' : 'Conventional sweet spot, drawn qualitatively for contrast.'} />
+            note={mode === 'crt' ? 'No center boost. Uniformly sharp across the ±50° gaze cone.' : 'Conventional sweet spot, drawn qualitatively for contrast.'} />
           <Readout k="Full-res core" v={mode === 'crt' ? 'Follows gaze' : 'Fixed'} color="var(--crtvr-blue)" note={`±${CORE_DEG}° core, ±${MID_DEG}° mid-zone, carried by the beam to wherever the eye lands.`} />
         </>
       }
       hint="Move around the eye, or drag the slider, to aim the gaze."
-      foot={<><b>Illustrative, top-down.</b> The sweet-spot curve is qualitative, not a measured lens. CRT-VR uses a monocentric relay centred on the eye, so every direction sees the same optics.</>}
+      foot={<><b>Illustrative, top-down.</b> The sweet-spot curve is qualitative, not a measured lens. CRT-VR uses Gaze-Cone optics: a curved-field eyepiece per eye, uniformly sharp across the ±50° gaze cone, with a Periphery Ring out to 160° per eye.</>}
     >
       <div ref={ref}>
         <svg className="ix-svg" viewBox={`0 0 ${VW} ${VH}`} role="img" onPointerMove={onMove} onPointerDown={onMove}
@@ -141,7 +142,7 @@ export default function EyeRoam(_: Partial<VfxSlotProps>) {
           <circle cx={pupil.x} cy={pupil.y} r="15" fill="url(#er-iris)" />
           <circle cx={pupil.x} cy={pupil.y} r="6" fill="#04050a" />
           <text x={CX} y={CY + eyeR + 22} textAnchor="middle" className="er__t er__t--lab">Eye at the centre of curvature</text>
-          <text x={CX} y={VH - 12} textAnchor="middle" className="er__t er__t--lab" fill="#ffe135">{mode === 'crt' ? 'Monocentric field · uniform sharpness · 180°+' : 'Sweet-spot lens · sharp center, soft edges'}</text>
+          <text x={CX} y={VH - 12} textAnchor="middle" className="er__t er__t--lab" fill="#ffe135">{mode === 'crt' ? 'Gaze-Cone · uniform sharpness across ±50°' : 'Sweet-spot lens · sharp center, soft edges'}</text>
         </svg>
       </div>
       <style>{`

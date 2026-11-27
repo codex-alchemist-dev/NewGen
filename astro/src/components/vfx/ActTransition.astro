@@ -491,7 +491,7 @@ const marks = labels.map((l: string) => (CERT_MARKS[l] ?? []).map((m) => ({ src:
           r.setAttribute('d', `M${c.cx},${c.cy} Q${mx.toFixed(1)},${my.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
           r.setAttribute('opacity', (seg(u, 0.02, 0.12) * (0.35 + rnd(i, 2) * 0.5) * (1 - seg(out, 0.4, 1))).toFixed(3));
         });
-        // monocentric shells expanding past the viewer: you are inside the dome
+        // shells expanding past the viewer: you are inside the dome
         shells.forEach((s, i) => {
           const t = (seg(u, 0.1, 1) * 1.6 + i / shells.length) % 1;
           const rx = Math.pow(t, 1.8) * diag * 1.3;

@@ -34,7 +34,7 @@ export const comparisonRows = [
  {
   "label": "Resolution",
   "cells": [
-   "Variable, beam-addressed — no fixed grid. PPI ceiling set by phosphor litho + color bleed; targeted competitive at 1000–2500+ PPI-class",
+   "Variable, beam-addressed — no fixed grid. PPI ceiling set by phosphor litho + color bleed; 24K per eye on a roughly 4″ tube is about 7,500 PPI",
    "Fixed ~4K/eye, 1000–2500+ PPI — current density leader",
    "Large-panel PPI",
    "Very low PPI",
@@ -64,7 +64,7 @@ export const comparisonRows = [
  {
   "label": "Burn-In",
   "cells": [
-   "QD + ALD passivation designed against it — unproven",
+   "Hexa-Index aging compensation, designed against it — unproven",
    "Real, documented on static HUDs in 2026 product",
    "Real",
    "Minimal",
@@ -115,15 +115,15 @@ export const comparisonRows = [
 export const openQuestions = [
  {
   "tier": "P0 Feasibility-Deciding",
-  "body": "Two miniature vacuum tubes + relay optics covering 100°+ FOV vs. 107–170 g shipping microOLED headsets. No honest mass/volume estimate exists yet. This is where \"smaller, thinner\" is proven or dies. Inputs needed: tube envelope wall thickness at wafer-level-sealed scale, relay lens element count/mass, HV supply mass."
+  "body": "Two miniature vacuum tubes + relay optics covering 160° per eye and 200°+ binocular FOV vs. 107–170 g shipping microOLED headsets. No honest mass/volume estimate exists yet. This is where \"smaller, thinner\" is proven or dies. Inputs needed: tube envelope wall thickness at wafer-level-sealed scale, relay lens element count/mass, HV supply mass."
  },
  {
   "tier": "P0 Feasibility-Deciding",
-  "body": "The actual PPI limit of the whole system. Model beam scatter at short throw + QD stripe pitch vs. cross-talk. Gun and yoke carry 100–1000× margin; this subsystem sets max resolution."
+  "body": "The actual PPI limit of the whole system. Model beam scatter at short throw + QD stripe pitch vs. cross-talk. Gun and MEMS deflection plates carry 100–1000× margin; this subsystem sets max resolution."
  },
  {
   "tier": "P0 Feasibility-Deciding",
-  "body": "The 500–1000+ nit estimates hinge on QD-phosphor saturation/degradation limits under e-beam flux. Needs a literature review of cathodoluminescent QD data at minimum; ideally lab data."
+  "body": "The 1,500 nit full-field, 4,000+ nit peak and 1,000+ nit at-eye targets hinge on QD-phosphor saturation/degradation limits under e-beam flux. Needs a literature review of cathodoluminescent QD data at minimum; ideally lab data."
  },
  {
   "tier": "P1 Architecture-Completing",
@@ -151,7 +151,7 @@ export const openQuestions = [
  },
  {
   "tier": "P2 Productization",
-  "body": "Litho phosphor striping + MEMS electrostatic yoke + QD emitters + wafer vacuum sealing have never been combined in one device. Identify closest analog processes: FED post-mortems, MEMS bolometer lines, QD-OLED deposition."
+  "body": "Litho phosphor striping + MEMS electrostatic deflection plates + QD emitters + wafer vacuum sealing have never been combined in one device. Identify closest analog processes: FED post-mortems, MEMS bolometer lines, QD-OLED deposition."
  },
  {
   "tier": "P2 Productization",
@@ -161,10 +161,10 @@ export const openQuestions = [
 export const liveFootnotes = [
  "† TRL 2–3 throughout. All figures are physics-grounded estimates extrapolated from real component technologies (SEM/TEM Schottky columns, e-beam lithography, MEMS wafer-level packaging, cathodoluminescent QD research) — never measured specs of this device, because this device has not been built.",
  "† Refresh & brightness ceilings are headroom statements, not commitments. Electrostatic deflection is multi-MHz-drivable and Schottky current headroom is 10²–10⁴× — but the shipped ceiling would be set by phosphor decay/saturation, which needs lab data (open questions №3).",
- "† Foveation refresh figures in the §05 simulator are illustrations of the conversion mechanism (peripheral scan savings → central refresh), computed from a notional 120 Hz full-field baseline. They are not performance claims.",
- "† Chromaticity diagram in §06 is a geometric schematic, not CIE-accurate; final primary wavelengths are unlocked (open question №6). The structural claim — a hexagon through six primaries contains every triangle through three — is geometry, not projection.",
+ "† Foveation refresh figures in the Act 3 vari-refresh simulator are illustrations of the conversion mechanism (peripheral scan savings → central refresh), computed from a notional 120 Hz full-field baseline. They are not performance claims.",
+ "† Gamut figures in Act 4 are CIE 1931 calculations; final primary wavelengths are still unlocked (open question №6). The structural claim — a hexagon through six primaries contains every triangle through three — is geometry, not projection.",
  "† Cathodoluminescent quantum-dot phosphors are active research, not fantasy — but unproven at product scale. ALD passivation against e-beam degradation is design intent, not demonstrated lifetime.",
- "† MicroOLED ties on blacks and leads outright on maturity, packaging, and proven density. Comparison rows state this without hedging; the asymmetry (theory vs. shipping product) is disclosed at the top of §07.",
+ "† MicroOLED ties on blacks and leads outright on maturity, packaging, and proven density. Comparison rows state this without hedging; the asymmetry (theory vs. shipping product) is disclosed at the top of this act.",
  "† \"6 guns, 6 dots\": classic Trinitron \"single gun\" marketing = one assembly, three converged beams, purely geometric color separation via aperture grille. CRT-VR extends the same converged-assembly principle to six beams with a litho-patterned grille — no mechanical wires, no damper-wire shadows.",
  "† Adaptive drive strategy (purity at low luminance, recruitment at high luminance) originates in the XCD-LED display concept and is applied here as firmware/driver logic. See /Sony/XCD-LED for the originating architecture."
 ];
@@ -180,7 +180,8 @@ export const specGroups: { name: string; rows: { label: string; value: string }[
     { label: 'Pixel grid', value: 'None visible' },
   ] },
   { name: 'Refresh & motion', rows: [
-    { label: 'Refresh', value: '226 Hz min / 800+ Hz aggressive / 2200+ Hz corner gaze' },
+    { label: 'Refresh', value: '226 Hz min / 800+ Hz aggressive / 2,400+ Hz corner gaze' },
+    { label: 'Motion-adaptive', value: '2,400+ Hz at minimum aggression, 3,000+ Hz at maximum' },
     { label: 'Response', value: '<1 µs' },
     { label: 'Motion blur', value: 'Zero (impulse emission)' },
     { label: 'Dwell', value: '~0.5 ns per dot' },
@@ -200,7 +201,7 @@ export const specGroups: { name: string; rows: { label: string; value: string }[
   ] },
   { name: 'Electron optics', rows: [
     { label: 'Source', value: 'Schottky ZrO/W field emission, 6 converged beams' },
-    { label: 'Beam voltage', value: '~2–3 kV' },
+    { label: 'Beam voltage', value: '~2–10 kV' },
     { label: 'Landing', value: 'Focus-Well Hexagons + Hexa-Index closed loop' },
   ] },
   { name: 'Optics', rows: [
@@ -216,7 +217,7 @@ export const specGroups: { name: string; rows: { label: string; value: string }[
   { name: 'Lifetime & safety', rows: [
     { label: 'Vacuum', value: 'Wafer-sealed, NEG getters' },
     { label: 'Burn-in', value: 'Hexa-Index aging compensation' },
-    { label: 'X-ray', value: 'Negligible at 2–10 kV, absorbed by the faceplate' },
+    { label: 'X-ray', value: 'Negligible at 2–10 kV, fully absorbed by the glass envelope' },
     { label: 'HV', value: 'Potted temple modules with a fail-safe beam kill' },
   ] },
 ];

@@ -37,7 +37,7 @@ export default function EyeRoam(_: Partial<VfxSlotProps>) {
       if (tier === 'full' || now - last > 33) {
         last = now;
         const t = Math.max(0, now - t0) / 1000;
-        // fixations + quick jumps, like a real eye
+        // hold, then move smoothly to the next look direction
         const k = Math.floor(t / 1.6), f = (t / 1.6) % 1;
         const targets = [-30, 55, -80, 15, 85, -55, 0];
         const a = targets[k % targets.length], b = targets[(k + 1) % targets.length];

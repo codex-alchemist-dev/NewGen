@@ -86,7 +86,7 @@ export const acts: ActDef[] = [
         { value: '226 Hz', label: 'Minimum' },
         { value: '800+ Hz', label: 'Aggressive foveation' },
         { value: '2200+ Hz', label: 'Looking into a corner' }] },
-      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'saccade-timeline', eyebrow: 'Saccade banking', headline: 'It banks the blink of a glance.', body: [
+      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'motion-adaptive-timeline', eyebrow: 'Saccade banking', headline: 'It banks the blink of a glance.', body: [
         'During a saccade, the 20–80 ms jump between fixations, your vision is briefly suppressed. The headset already sends gaze to the panel, so CRT-VR drops the fovea to minimum refresh mid-jump, banks that beam time, and spends it as a burst of full-resolution refreshes at the landing spot. The place you look is already sharp the instant you arrive.'] },
       { id: 'traveling-wave-deflection', title: 'Traveling-Wave Deflection', interactive: 'slew-compare', eyebrow: 'Traveling-Wave Deflection', headline: 'Steering at the speed of the beam.', body: [
         'The deflection plates are split into segments whose field travels with the electrons, which allows GHz-class beam steering.'] },

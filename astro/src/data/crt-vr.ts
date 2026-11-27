@@ -236,7 +236,7 @@ export const acts: ActDef[] = [
   {
     number: 12, id: 'proof', title: 'Proof', transition: 'default', tagline: 'The proof.', sections: [
       { id: 'versus', title: 'Versus', kind: 'comparison', interactive: 'comparison-table', eyebrow: 'Versus', headline: 'CRT-VR vs. everything.' },
-      { id: 'full-specs', title: 'Full specs', kind: 'specs', eyebrow: 'Specs', headline: 'Every number.', items: [] },
+      { id: 'full-specs', title: 'Full specs', kind: 'specs', eyebrow: 'Specs', headline: 'Every number.', footnote: '† Design targets, TRL 2–3.' },
       { id: 'engineering-honesty', title: 'Engineering honesty', kind: 'honesty', eyebrow: 'Honesty', headline: "What we don't know yet." },
     ],
   },

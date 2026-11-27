@@ -9,7 +9,8 @@ import HookBackground from '../../../components/visuals/crt-vr/HookBackground.as
 import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
 import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
 import { acts } from '../../../data/crt-vr';
-import { comparisonHeads, comparisonRows, openQuestions, liveFootnotes } from '../../../data/crt-vr-proof';
+import { comparisonHeads, comparisonRows, openQuestions, liveFootnotes, specGroups } from '../../../data/crt-vr-proof';
+import SpecTable from '../../../components/kit/SpecTable.astro';
 
 const placeholder = '[copy pending]';
 ---
@@ -43,7 +44,7 @@ const placeholder = '[copy pending]';
             {s.kind === 'comparison' && (
               <ComparisonTable caption="CRT-VR vs. everything" columns={comparisonHeads} rows={comparisonRows} />
             )}
-            {s.kind === 'specs' && <p>{placeholder}</p>}
+            {s.kind === 'specs' && specGroups.map((g) => <SpecTable caption={g.name} rows={g.rows} />)}
             {s.kind === 'honesty' && (
               <>
                 <ol class="open-questions">

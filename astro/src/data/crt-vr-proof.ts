@@ -168,3 +168,55 @@ export const liveFootnotes = [
  "† \"6 guns, 6 dots\": classic Trinitron \"single gun\" marketing = one assembly, three converged beams, purely geometric color separation via aperture grille. CRT-VR extends the same converged-assembly principle to six beams with a litho-patterned grille — no mechanical wires, no damper-wire shadows.",
  "† Adaptive drive strategy (purity at low luminance, recruitment at high luminance) originates in the XCD-LED display concept and is applied here as firmware/driver logic. See /Sony/XCD-LED for the originating architecture."
 ];
+
+/** Full specs, two columns per group. Every value is a design target. */
+export const specGroups: { name: string; rows: { label: string; value: string }[] }[] = [
+  { name: 'Panel', rows: [
+    { label: 'Type', value: 'Side-fire foveated CRT, one per eye' },
+    { label: 'Screen', value: '~4″ dome faceplate, 4:3' },
+    { label: 'Resolution', value: '24K-class per eye (foveal)' },
+    { label: 'Pixel pitch', value: '~3.4 µm' },
+    { label: 'Subpixel', value: '6 triangular subpixels per hex pixel (RGB + inverted MCY), ~2 µm side' },
+    { label: 'Pixel grid', value: 'None visible' },
+  ] },
+  { name: 'Refresh & motion', rows: [
+    { label: 'Refresh', value: '226 Hz min / 800+ Hz aggressive / 2200+ Hz corner gaze' },
+    { label: 'Response', value: '<1 µs' },
+    { label: 'Motion blur', value: 'Zero (impulse emission)' },
+    { label: 'Dwell', value: '~0.5 ns per dot' },
+    { label: 'Deflection', value: 'Traveling-wave electrostatic MEMS' },
+  ] },
+  { name: 'Color', rows: [
+    { label: 'Primaries', value: 'RGBMCY (B 450 · C 490 · G 520 · Y 575 · R 635 nm · two-peak M)' },
+    { label: 'Gamut', value: '~170–185% DCI-P3 (CIE 1931 xy)' },
+    { label: 'Color depth', value: '12 bits per primary' },
+    { label: 'Color engine', value: 'Puretone™' },
+  ] },
+  { name: 'Brightness', rows: [
+    { label: 'Full field', value: '~1,500 nits (proposed)' },
+    { label: 'Peak', value: '4,000+ nits (proposed)' },
+    { label: 'At eye', value: '~1,000+ nits (proposed)' },
+    { label: 'Black', value: 'True black (beam blanking ~10⁻⁵, Kurocoat wells)' },
+  ] },
+  { name: 'Electron optics', rows: [
+    { label: 'Source', value: 'Schottky ZrO/W field emission, 6 converged beams' },
+    { label: 'Beam voltage', value: '~2–3 kV' },
+    { label: 'Landing', value: 'Focus-Well Hexagons + Hexa-Index closed loop' },
+  ] },
+  { name: 'Optics', rows: [
+    { label: 'Relay', value: 'Monocentric, faceplate = element 1' },
+    { label: 'FOV', value: 'Up to ~160° per eye, 200°+ binocular' },
+    { label: 'Tiers', value: 'Sony · Sony G · G Master · G Master with ZEISS T*' },
+    { label: 'CA correction', value: 'Per-beam hardware pre-warp' },
+  ] },
+  { name: 'Interface', rows: [
+    { label: 'Link', value: 'Intel Eventide iDP, foveated framebuffer + gaze input' },
+    { label: 'Bandwidth', value: '~10–20× lower than full-res' },
+  ] },
+  { name: 'Lifetime & safety', rows: [
+    { label: 'Vacuum', value: 'Wafer-sealed, NEG getters' },
+    { label: 'Burn-in', value: 'Hexa-Index aging compensation' },
+    { label: 'X-ray', value: 'Negligible at 2–10 kV, absorbed by the faceplate' },
+    { label: 'HV', value: 'Potted temple modules with a fail-safe beam kill' },
+  ] },
+];

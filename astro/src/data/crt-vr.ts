@@ -86,8 +86,8 @@ export const acts: ActDef[] = [
         { value: '226 Hz', label: 'Minimum' },
         { value: '800+ Hz', label: 'Aggressive foveation' },
         { value: '2200+ Hz', label: 'Looking into a corner' }] },
-      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'saccade-timeline', eyebrow: 'Motion-adaptive', headline: 'It knows when the world moves.', body: [
-        'Motion-Adaptive Foveated Rendering tunes foveation to motion. When the scene pans or your head turns, the skip-scan coarsens outside the fovea, where motion already hides detail, and the whole-screen refresh climbs from 227 Hz toward 836 Hz. When things settle, it relaxes and fills the detail back in. The fovea never drops below full resolution.'] },
+      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'saccade-timeline', eyebrow: 'Motion-adaptive', headline: 'When everything moves, go all speed.', body: [
+        'Resolution matters less when everything is moving. During fast motion, like a whip-pan or a quick head turn, Motion-Adaptive Foveated Rendering drops the entire screen, fovea included, to stage-3 foveation. With the coarsest skips everywhere, the whole-screen refresh rockets toward 2,400 Hz. When motion settles, full three-zone foveation and every bit of detail come straight back.'] },
       { id: 'traveling-wave-deflection', title: 'Traveling-Wave Deflection', interactive: 'slew-compare', eyebrow: 'Traveling-Wave Deflection', headline: 'Steering at the speed of the beam.', body: [
         'The deflection plates are split into segments whose field travels with the electrons, which allows GHz-class beam steering.'] },
       { id: 'charge-dense-dwell', title: 'Charge-Dense Dwell', eyebrow: 'Charge-Dense Dwell', headline: 'Half a nanosecond per dot.', body: [

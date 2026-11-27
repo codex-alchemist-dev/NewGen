@@ -1,0 +1,231 @@
+---
+/**
+ * CRT-VR · Act 1 · "The reveal" stats block.
+ *
+ * Giant figures drawn on by an electron beam, in three passes:
+ *   1. vector trace: the glyph outlines are stroked on,
+ *   2. raster fill: a beam spot paints the fill line by line,
+ *   3. phosphor decay: the fill cools from hot white to its primary.
+ * Then the label types in. Each card fires once when it scrolls into view.
+ *
+ * Tiers: full (all passes + glow), reduced (trace + fade), static (drawn).
+ */
+import './tokens.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+export interface RevealStat {
+  value: string;
+  /** Lower-case unit set in the mono face (the display face is all-caps, so "µs" would read "µS"). */
+  unit?: string;
+  label: string;
+  /** CSS colour, or 'six' for the RGBMCY gradient. */
+  color?: string;
+}
+
+interface Props extends Partial<VfxSlotProps> {
+  items?: RevealStat[];
+  id?: string;
+}
+
+const {
+  tier = 'full',
+  id = 'crtvr-reveal',
+  items = [
+    { value: '<1', unit: 'µs', label: 'Fastest display tech in the world', color: '#00ff99' },
+    { value: '0', label: 'Zero motion blur', color: '#00b4ff' },
+    { value: '180°+', label: '180°+ FOV', color: '#ffe135' },
+    { value: '24K', label: '24K per eye', color: '#ff3c6e' },
+    { value: '∞:1', label: 'True Black', color: '#f0f4ff' },
+    { value: '6', label: '6 primaries', color: 'six' },
+  ],
+} = Astro.props;
+
+const LINES = 28;           // raster lines per figure
+const VB_W = 600, VB_H = 260;
+const Y0 = 40, Y1 = 236;    // raster band (covers cap height)
+---
+
+<div class:list={['crtvr', 'reveal', { 'is-static': tier === 'static' }]} id={id} data-reveal-stats>
+  <div class="grid">
+    {items.map((it, n) => {
+      const six = it.color === 'six';
+      const col = six ? `url(#${id}-six-${n})` : it.color ?? '#00ff99';
+      const glowCol = six ? '#cc44ff' : it.color ?? '#00ff99';
+      return (
+        <figure class="card" style={`--c:${glowCol}; --n:${n}`} data-card>
+          <span class="corner tl" /><span class="corner br" />
+          <span class="idx">{String(n + 1).padStart(2, '0')}</span>
+          <svg viewBox={`0 0 ${VB_W} ${VB_H}`} role="img" aria-label={`${it.value}${it.unit ? ` ${it.unit}` : ''}: ${it.label}`}>
+            <defs>
+              {six && (
+                <linearGradient id={`${id}-six-${n}`} x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#ff2d20" /><stop offset=".2" stop-color="#ffe135" />
+                  <stop offset=".4" stop-color="#00ff99" /><stop offset=".6" stop-color="#00e1ff" />
+                  <stop offset=".8" stop-color="#3a6bff" /><stop offset="1" stop-color="#ff3cc8" />
+                </linearGradient>
+              )}
+              <clipPath id={`${id}-clip-${n}`}>
+                <rect data-r="done" x="0" y={Y0} width={VB_W} height="0" />
+                <rect data-r="line" x="0" y={Y0} width="0" height={(Y1 - Y0) / LINES + 0.5} />
+              </clipPath>
+              <filter id={`${id}-glow-${n}`} x="-20%" y="-30%" width="140%" height="160%">
+                <feGaussianBlur stdDeviation="6" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <pattern id={`${id}-scan-${n}`} width="4" height={(Y1 - Y0) / LINES} patternUnits="userSpaceOnUse" y={Y0}>
+                <rect width="4" height="1.4" fill="#04050a" opacity=".6" />
+              </pattern>
+            </defs>
+            <g class="fig" font-size="216" text-anchor="middle">
+              <g clip-path={`url(#${id}-clip-${n})`}>
+                <text x={VB_W / 2} y="222" fill={col} data-fill>{it.value}{it.unit && <tspan class="unit" dx="10">{it.unit}</tspan>}</text>
+                <text x={VB_W / 2} y="222" fill="#f4fff9" data-hot opacity="0">{it.value}{it.unit && <tspan class="unit" dx="10">{it.unit}</tspan>}</text>
+                <text x={VB_W / 2} y="222" fill={`url(#${id}-scan-${n})`}>{it.value}{it.unit && <tspan class="unit" dx="10">{it.unit}</tspan>}</text>
+              </g>
+              <text x={VB_W / 2} y="222" fill="none" stroke={glowCol} stroke-width="2" data-trace class="trace">{it.value}{it.unit && <tspan class="unit" dx="10">{it.unit}</tspan>}</text>
+            </g>
+            <ellipse data-beam cx="0" cy={Y0} rx="16" ry="5" fill="#f4fff9" opacity="0" />
+          </svg>
+          <figcaption data-label data-text={it.label}>{it.label}</figcaption>
+        </figure>
+      );
+    })}
+  </div>
+</div>
+
+<style>
+  .reveal { position: relative; margin: var(--s-6, 48px) 0; width: var(--wide-w, 100%); margin-left: var(--wide-x, 0px); }
+  .grid {
+    display: grid; gap: 1px; background: var(--crtvr-line);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid var(--crtvr-line);
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    position: relative; margin: 0; padding: 28px 22px 24px;
+    background: color-mix(in srgb, var(--crtvr-bg) 82%, transparent);
+    backdrop-filter: blur(2px);
+    display: grid; gap: 10px; align-content: start;
+  }
+  .card svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .fig { font-family: var(--crtvr-font-display); letter-spacing: .01em; }
+  .unit { font-family: var(--crtvr-font-mono); font-size: 92px; font-weight: 300; letter-spacing: 0; text-transform: none; }
+  .trace { stroke-dasharray: 1400; stroke-dashoffset: var(--trace, 1400); opacity: var(--trace-o, 1); }
+  :global(html[data-vfx-tier='full']) .card .trace,
+  :global(html[data-vfx-tier='full']) .card [data-beam] { filter: drop-shadow(0 0 6px var(--c)); }
+  :global(html[data-vfx-tier='full']) .card [data-fill] { filter: drop-shadow(0 0 calc(var(--afterglow, 0) * 18px) var(--c)); }
+  figcaption {
+    font-family: var(--crtvr-font-mono); font-size: 11px; letter-spacing: .24em; text-transform: uppercase;
+    color: var(--crtvr-text); min-height: 2.6em; line-height: 1.5;
+  }
+  figcaption::after { content: '▌'; color: var(--c); opacity: var(--caret, 0); margin-left: .2em; }
+  .idx { position: absolute; top: 12px; left: 14px; font-family: var(--crtvr-font-mono); font-size: 10px; letter-spacing: .2em; color: var(--crtvr-text-dimmer); }
+  .corner { position: absolute; width: 10px; height: 10px; border-color: var(--c); border-style: solid; opacity: .6; }
+  .corner.tl { top: 8px; right: 8px; border-width: 1px 1px 0 0; }
+  .corner.br { bottom: 8px; left: 8px; border-width: 0 0 1px 1px; }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from './lib/tier';
+  import { clamp, seg, easeOut, easeInOut } from './lib/scrub';
+
+  const LINES = 28, VB_W = 600, Y0 = 40, Y1 = 236;
+  const LH = (Y1 - Y0) / LINES;
+
+  function setupCard(card: HTMLElement, index: number, getTier: () => VfxTier) {
+    const done = card.querySelector('[data-r="done"]')!;
+    const line = card.querySelector('[data-r="line"]')!;
+    const hot = card.querySelector('[data-hot]')!;
+    const beam = card.querySelector('[data-beam]')!;
+    const label = card.querySelector('[data-label]') as HTMLElement;
+    const text = label.dataset.text || '';
+    let played = false;
+
+    const paint = (t: number, tier: VfxTier) => {
+      // t in seconds since start
+      const full = tier === 'full';
+      const traceT = easeInOut(seg(t, 0, full ? 0.9 : 0.6));
+      card.style.setProperty('--trace', String(1400 * (1 - traceT)));
+      const fillT = full ? seg(t, 0.55, 1.55) : easeOut(seg(t, 0.4, 0.9));
+      if (full) {
+        const pos = fillT * LINES;
+        const li = Math.min(LINES - 1, Math.floor(pos));
+        const frac = fillT >= 1 ? 1 : pos - li;
+        done.setAttribute('height', String(li * LH));
+        line.setAttribute('y', String(Y0 + li * LH));
+        line.setAttribute('width', String(frac * VB_W));
+        const on = fillT > 0 && fillT < 1;
+        beam.setAttribute('opacity', on ? '1' : '0');
+        beam.setAttribute('cx', String(frac * VB_W));
+        beam.setAttribute('cy', String(Y0 + li * LH + LH / 2));
+        // phosphor decay: hot white just behind the beam, cooling to the primary
+        hot.setAttribute('opacity', String(clamp(1 - seg(t, 1.0, 2.2)) * (fillT > 0 ? 0.85 : 0)));
+        card.style.setProperty('--afterglow', String(clamp(1 - seg(t, 1.4, 2.6)) * 0.9 + 0.25));
+      } else {
+        done.setAttribute('height', String(fillT * (Y1 - Y0)));
+        line.setAttribute('width', '0');
+        beam.setAttribute('opacity', '0');
+        hot.setAttribute('opacity', '0');
+      }
+      card.style.setProperty('--trace-o', String(1 - 0.75 * seg(t, full ? 1.6 : 1, full ? 2.4 : 1.4)));
+      // label types in
+      const typeT = seg(t, full ? 1.3 : 0.7, full ? 2.1 : 1.1);
+      const nChars = Math.round(typeT * text.length);
+      label.textContent = text.slice(0, nChars) || ' ';
+      label.style.setProperty('--caret', typeT > 0 && t < 3.2 ? String(Math.round(t * 3) % 2) : '0');
+    };
+
+    const finish = () => paint(99, getTier());
+
+    const play = () => {
+      if (played) return;
+      played = true;
+      const tier = getTier();
+      if (tier === 'static') { finish(); return; }
+      const delay = index * 0.16;
+      const t0 = performance.now() + delay * 1000;
+      const step = (now: number) => {
+        const t = (now - t0) / 1000;
+        if (t >= 0) paint(t, tier);
+        if (t < 3.4) requestAnimationFrame(step); else finish();
+      };
+      requestAnimationFrame(step);
+    };
+
+    return { play, finish, reset: () => { if (!played) paint(-1, getTier()); }, get played() { return played; } };
+  }
+
+  /** Widen out of the narrow text column to the act's content width. */
+  function widen(root: HTMLElement) {
+    const box = (root.closest('.act__inner') as HTMLElement | null) ?? root.parentElement!;
+    const fit = () => {
+      root.style.setProperty('--wide-x', '0px');
+      root.style.setProperty('--wide-w', '100%');
+      const b = box.getBoundingClientRect(), r = root.getBoundingClientRect();
+      root.style.setProperty('--wide-w', `${b.width}px`);
+      root.style.setProperty('--wide-x', `${b.left - r.left}px`);
+    };
+    fit(); window.addEventListener('resize', fit);
+  }
+
+  function init(root: HTMLElement) {
+    widen(root);
+    let tier: VfxTier = 'full';
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('[data-card]')).map((c, i) => setupCard(c, i, () => tier));
+    let io: IntersectionObserver | null = null;
+    onTier((t) => {
+      tier = t;
+      if (t === 'static') { io?.disconnect(); cards.forEach((c) => c.finish()); return; }
+      cards.forEach((c) => c.reset());
+      if (!io) {
+        io = new IntersectionObserver((entries) => {
+          if (entries.some((e) => e.isIntersecting)) { cards.forEach((c) => c.play()); io?.disconnect(); }
+        }, { threshold: 0.35 });
+        io.observe(root);
+      }
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-reveal-stats]').forEach(init);
+</script>

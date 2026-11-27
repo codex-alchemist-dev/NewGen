@@ -1,0 +1,658 @@
+---
+/**
+ * CRT-VR · Act 1 Hook · Hero animatic "Ahead of its time"
+ *
+ * A scroll-scrubbed SVG mini film (≈8 screens of scroll):
+ *   1950s glow → Trinitron → Watchman → BVM → flat-panel takeover →
+ *   the tube returns (6 converged RGBMCY beams) → side-fire tubes in a headset →
+ *   zoom to the eye: monocentric relay, light wrapping 180°+ → hero line.
+ *
+ * Stylized line art only. Product names appear as captions; no logos are copied.
+ * Quality tiers: full (glow filters, photon flow), reduced (no filters), static
+ * (single composed frame, no scroll scrub). prefers-reduced-motion → static.
+ */
+import './tokens.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> {
+  /** Scroll length of the film, in viewport heights. */
+  length?: number;
+  captions?: { a: string; b: string; c: string; d: string; end: string };
+  lines?: { left: string; ahead: string; hero: string };
+  id?: string;
+}
+
+const {
+  length = 820,
+  captions = {
+    a: '1950s · The first glow',
+    b: '1968 · Trinitron',
+    c: '1982 · Watchman',
+    d: 'BVM · The studio standard',
+    end: 'CRT-VR · Gaze-native',
+  },
+  lines = {
+    left: 'The industry left it behind.',
+    ahead: 'It was simply ahead of its time.',
+    hero: "Look anywhere. It's already there.",
+  },
+  id = 'crtvr-hero',
+  tier = 'full',
+} = Astro.props;
+// tier is the SSR starting point; at runtime the shell's quality store drives it.
+
+// Words that carry the phosphor accent in each line.
+const accentWords = new Set(['ahead', 'of', 'its', 'time.', 'already', 'there.']);
+const words = (s: string) => s.split(' ');
+
+// ── Eye scene geometry (computed at build time) ────────────────────────────
+const EX = 800, EY = 440;            // eye centre of rotation (monocentric centre)
+const A0 = 170, A1 = 370;            // 200° span through the top (SVG angles)
+const pt = (r: number, deg: number) => {
+  const a = (deg * Math.PI) / 180;
+  return [+(EX + r * Math.cos(a)).toFixed(1), +(EY + r * Math.sin(a)).toFixed(1)];
+};
+const arc = (r: number) => {
+  const [x1, y1] = pt(r, A0); const [x2, y2] = pt(r, A1);
+  return `M${x1},${y1} A${r},${r} 0 1 1 ${x2},${y2}`;
+};
+const RAYS = 25;
+const rays = Array.from({ length: RAYS }, (_, i) => {
+  const deg = A0 + ((A1 - A0) * i) / (RAYS - 1);
+  const [x1, y1] = pt(274, deg); const [x2, y2] = pt(98, deg);
+  return { x1, y1, x2, y2, i };
+});
+const ticks = Array.from({ length: 21 }, (_, i) => {
+  const deg = A0 + 10 * i;
+  const major = i % 5 === 0;
+  const [x1, y1] = pt(312, deg); const [x2, y2] = pt(major ? 332 : 322, deg);
+  return { x1, y1, x2, y2, major };
+});
+const beamColors = ['#ff2d20', '#00ff99', '#3a6bff', '#00e1ff', '#ff3cc8', '#ffe135']; // R G B C M Y
+const smpte = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0'];
+const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#101018', '#c0c0c0'];
+---
+
+<section class:list={["crtvr hero-anim", { "is-static": tier === "static" }]} id={id} style={`--len:${length}vh`} data-hero-anim aria-label="Ahead of its time: the CRT story, from the first glow to CRT-VR">
+  <div class="stage">
+    <svg class="film" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <filter id={`${id}-glow`} x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+          <feGaussianBlur stdDeviation="5" result="b1" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="b2" />
+          <feMerge><feMergeNode in="b2" /><feMergeNode in="b1" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <filter id={`${id}-soft`} x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="40" />
+        </filter>
+        <radialGradient id={`${id}-mono`} cx="50%" cy="48%" r="65%">
+          <stop offset="0" stop-color="#eafff4" />
+          <stop offset=".45" stop-color="#7dffc6" />
+          <stop offset="1" stop-color="#0b4d33" />
+        </radialGradient>
+        <radialGradient id={`${id}-bloom`} cx="50%" cy="50%" r="50%">
+          <stop offset="0" stop-color="#00ff99" stop-opacity=".55" />
+          <stop offset=".4" stop-color="#00ff99" stop-opacity=".16" />
+          <stop offset="1" stop-color="#00ff99" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1a2a8a" />
+          <stop offset=".45" stop-color="#cc44ff" />
+          <stop offset=".72" stop-color="#ff3c6e" />
+          <stop offset="1" stop-color="#ff7a00" />
+        </linearGradient>
+        <linearGradient id={`${id}-cold`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#d6e0ff" stop-opacity=".22" />
+          <stop offset=".5" stop-color="#b9c8ff" stop-opacity=".07" />
+          <stop offset="1" stop-color="#b9c8ff" stop-opacity=".03" />
+        </linearGradient>
+        <linearGradient id={`${id}-smear`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#e8eeff" stop-opacity="0" />
+          <stop offset="1" stop-color="#e8eeff" stop-opacity=".85" />
+        </linearGradient>
+        <pattern id={`${id}-scan`} width="4" height="4" patternUnits="userSpaceOnUse">
+          <rect width="4" height="1.6" fill="#000" opacity=".45" />
+        </pattern>
+        <pattern id={`${id}-grille`} width="6" height="6" patternUnits="userSpaceOnUse">
+          <rect x="0" width="2" height="6" fill="#ff2d20" />
+          <rect x="2" width="2" height="6" fill="#00ff99" />
+          <rect x="4" width="2" height="6" fill="#3a6bff" />
+        </pattern>
+        <clipPath id={`${id}-clipA`}><rect x="600" y="280" width="290" height="230" rx="46" /></clipPath>
+        <clipPath id={`${id}-clipB`}><rect x="540" y="280" width="420" height="300" rx="10" /></clipPath>
+        <clipPath id={`${id}-clipC`}><rect x="715" y="290" width="170" height="120" rx="8" /></clipPath>
+        <clipPath id={`${id}-clipD`}><rect x="555" y="270" width="490" height="300" rx="5" /></clipPath>
+      </defs>
+
+      <!-- faint NewGen signature grid -->
+      <g class="sig-grid" opacity=".05" stroke="#6a7fa8" stroke-width="1">
+        {Array.from({ length: 17 }, (_, i) => <line x1={i * 100} y1="0" x2={i * 100} y2="900" />)}
+        {Array.from({ length: 10 }, (_, i) => <line x1="0" y1={i * 100} x2="1600" y2={i * 100} />)}
+      </g>
+
+      <!-- ══ A · 1950s TV ══════════════════════════════════════════════ -->
+      <g data-k="A" class="era" opacity="0">
+        <ellipse data-k="A-bloom" cx="745" cy="395" rx="420" ry="300" fill={`url(#${id}-bloom)`} opacity="0" />
+        <g class="ink" stroke="#6a7fa8">
+          <rect class="draw" pathLength="1" x="560" y="235" width="480" height="400" rx="38" />
+          <rect class="draw" pathLength="1" x="584" y="262" width="322" height="266" rx="56" />
+          <circle class="draw" pathLength="1" cx="968" cy="318" r="24" />
+          <circle class="draw" pathLength="1" cx="968" cy="318" r="7" />
+          <circle class="draw" pathLength="1" cx="968" cy="398" r="24" />
+          <line class="draw" pathLength="1" x1="968" y1="398" x2="980" y2="382" />
+          {Array.from({ length: 9 }, (_, i) => <line class="draw" pathLength="1" x1="934" y1={452 + i * 16} x2="1004" y2={452 + i * 16} />)}
+          <path class="draw" pathLength="1" d="M612,635 L594,712 M988,635 L1006,712" />
+          <path class="draw" pathLength="1" d="M800,235 Q800,224 812,224 Q824,224 824,235 M806,226 L716,108 M818,226 L902,98" />
+          <circle class="draw" pathLength="1" cx="714" cy="105" r="4" />
+          <circle class="draw" pathLength="1" cx="904" cy="95" r="4" />
+        </g>
+        <g clip-path={`url(#${id}-clipA)`}>
+          <rect x="600" y="280" width="290" height="230" fill="#020604" />
+          <g data-k="A-raster" transform="translate(745 395) scale(0 0) translate(-745 -395)">
+            <rect x="600" y="280" width="290" height="230" fill={`url(#${id}-mono)`} />
+            <g stroke="#064a2f" stroke-width="3" fill="none" opacity=".7">
+              <circle cx="745" cy="392" r="78" />
+              <circle cx="745" cy="392" r="40" />
+              <line x1="600" y1="392" x2="890" y2="392" />
+              <line x1="745" y1="280" x2="745" y2="510" />
+            </g>
+            {[0, 1, 2, 3, 4].map((i) => <rect x={665 + i * 32} y="470" width="32" height="22" fill="#064a2f" opacity={0.15 + i * 0.18} />)}
+            <rect x="600" y="280" width="290" height="230" fill={`url(#${id}-scan)`} />
+          </g>
+          <rect data-k="A-flash" x="600" y="280" width="290" height="230" fill="#f4fff9" opacity="0" />
+        </g>
+        <circle data-k="A-dot" cx="745" cy="395" r="0" fill="#f4fff9" class="glow" />
+        <rect class="glass" x="600" y="280" width="290" height="230" rx="46" />
+      </g>
+
+      <!-- ══ B · Trinitron ═════════════════════════════════════════════ -->
+      <g data-k="B" class="era" opacity="0">
+        <ellipse cx="750" cy="430" rx="460" ry="300" fill={`url(#${id}-bloom)`} opacity=".35" />
+        <g class="ink" stroke="#6a7fa8">
+          <rect class="draw" pathLength="1" x="500" y="250" width="600" height="380" rx="18" />
+          <rect class="draw" pathLength="1" x="528" y="268" width="444" height="324" rx="14" />
+          {[0, 1, 2, 3].map((i) => <rect class="draw" pathLength="1" x="1000" y={300 + i * 34} width="70" height="18" rx="3" />)}
+          <circle class="draw" pathLength="1" cx="1035" cy="480" r="18" />
+          <circle class="draw" pathLength="1" cx="1035" cy="540" r="10" />
+          <path class="draw" pathLength="1" d="M720,630 L700,680 L900,680 L880,630" />
+        </g>
+        <g clip-path={`url(#${id}-clipB)`}>
+          <g data-k="B-screen" transform="translate(750 430) scale(1 0) translate(-750 -430)">
+            <rect x="540" y="280" width="420" height="300" fill={`url(#${id}-sky)`} />
+            <circle cx="750" cy="470" r="70" fill="#ffe135" opacity=".9" />
+            {[0, 1, 2, 3, 4, 5].map((i) => <rect x="540" y={478 + i * 18} width="420" height={6 + i} fill="#120424" opacity=".85" />)}
+            <rect x="540" y="280" width="420" height="300" fill={`url(#${id}-grille)`} opacity=".22" style="mix-blend-mode:multiply" />
+            <line x1="540" y1="380" x2="960" y2="380" stroke="#000" stroke-width="1" opacity=".45" />
+            <line x1="540" y1="480" x2="960" y2="480" stroke="#000" stroke-width="1" opacity=".45" />
+            <rect x="540" y="280" width="420" height="300" fill={`url(#${id}-scan)`} opacity=".5" />
+          </g>
+        </g>
+        <rect class="glass" x="540" y="280" width="420" height="300" rx="10" />
+      </g>
+
+      <!-- ══ C · Watchman ══════════════════════════════════════════════ -->
+      <g data-k="C" class="era" opacity="0">
+        <ellipse cx="800" cy="360" rx="240" ry="200" fill={`url(#${id}-bloom)`} opacity=".3" />
+        <g class="ink" stroke="#6a7fa8">
+          <rect class="draw" pathLength="1" x="690" y="262" width="220" height="360" rx="26" />
+          <path class="draw" pathLength="1" d="M902,272 L1012,118" />
+          <circle class="draw" pathLength="1" cx="1014" cy="115" r="5" />
+          <circle class="draw" pathLength="1" cx="862" cy="468" r="17" />
+          <line class="draw" pathLength="1" x1="862" y1="468" x2="872" y2="456" />
+          {Array.from({ length: 6 }, (_, i) => <line class="draw" pathLength="1" x1="722" y1={508 + i * 16} x2="878" y2={508 + i * 16} />)}
+        </g>
+        <!-- x-ray: the flat tube, gun fired from the side, viewed face-on -->
+        <path class="xray" d="M715,410 L885,410 L842,452 L812,456 L812,492 L788,492 L788,456 L758,452 Z" />
+        <g clip-path={`url(#${id}-clipC)`}>
+          <g data-k="C-screen" transform="translate(800 350) scale(1 0) translate(-800 -350)">
+            <rect x="715" y="290" width="170" height="120" fill={`url(#${id}-mono)`} />
+            <g fill="none" stroke="#064a2f" stroke-width="2" opacity=".7">
+              <rect x="745" y="310" width="110" height="80" rx="4" />
+              <rect x="770" y="330" width="60" height="40" rx="3" />
+            </g>
+            <rect x="715" y="290" width="170" height="120" fill={`url(#${id}-scan)`} />
+          </g>
+        </g>
+        <rect class="glass" x="715" y="290" width="170" height="120" rx="8" />
+      </g>
+
+      <!-- ══ D · BVM broadcast monitor ═════════════════════════════════ -->
+      <g data-k="D" class="era" opacity="0">
+        <ellipse data-k="D-bloom" cx="800" cy="420" rx="480" ry="320" fill={`url(#${id}-bloom)`} opacity=".35" />
+        <g data-k="D-body">
+          <g class="ink" stroke="#6a7fa8">
+            <rect class="draw" pathLength="1" x="520" y="240" width="560" height="410" rx="8" />
+            <rect class="draw" pathLength="1" x="498" y="250" width="22" height="390" rx="3" />
+            <rect class="draw" pathLength="1" x="1080" y="250" width="22" height="390" rx="3" />
+            {[280, 610].map((y) => <><circle class="draw" pathLength="1" cx="509" cy={y} r="4" /><circle class="draw" pathLength="1" cx="1091" cy={y} r="4" /></>)}
+            <line class="draw" pathLength="1" x1="520" y1="588" x2="1080" y2="588" />
+            {Array.from({ length: 12 }, (_, i) => <rect class="draw" pathLength="1" x={560 + i * 34} y="604" width="24" height="14" rx="2" />)}
+            <circle class="draw" pathLength="1" cx="990" cy="612" r="12" />
+          </g>
+          <circle cx="1046" cy="612" r="7" fill="#ff2d20" class="glow" data-k="D-tally" />
+          <g clip-path={`url(#${id}-clipD)`}>
+            <g data-k="D-screen" transform="translate(800 420) scale(1 0) translate(-800 -420)">
+              {smpte.map((c, i) => <rect x={555 + i * 70} y="270" width="70.5" height="200" fill={c} />)}
+              {smpteRev.map((c, i) => <rect x={555 + i * 70} y="470" width="70.5" height="26" fill={c} />)}
+              <rect x="555" y="496" width="88" height="74" fill="#00214c" />
+              <rect x="643" y="496" width="88" height="74" fill="#f0f0f0" />
+              <rect x="731" y="496" width="88" height="74" fill="#32006a" />
+              <rect x="819" y="496" width="226" height="74" fill="#0b0b10" />
+              <rect x="555" y="270" width="490" height="300" fill={`url(#${id}-scan)`} opacity=".55" />
+            </g>
+          </g>
+          <rect class="glass" x="555" y="270" width="490" height="300" rx="5" />
+          <rect data-k="D-dim" x="497" y="238" width="606" height="414" fill="#04050a" opacity="0" />
+        </g>
+      </g>
+
+      <!-- ══ E · Flat-panel takeover ═══════════════════════════════════ -->
+      <g data-k="E" opacity="0">
+        {[
+          { x: 110, y: 150, w: 660, h: 372, from: [-900, 0] },
+          { x: 830, y: 150, w: 660, h: 372, from: [900, 0] },
+          { x: 110, y: 572, w: 420, h: 236, from: [-700, 300] },
+          { x: 590, y: 572, w: 420, h: 236, from: [0, 500] },
+          { x: 1070, y: 572, w: 420, h: 236, from: [700, 300] },
+        ].map((pnl, i) => (
+          <g data-k={`E-p${i}`} data-fx={pnl.from[0]} data-fy={pnl.from[1]} class="panel">
+            <rect x={pnl.x} y={pnl.y} width={pnl.w} height={pnl.h} fill={`url(#${id}-cold)`} stroke="#b9c8ff" stroke-opacity=".55" stroke-width="1.5" />
+            <rect x={pnl.x + 8} y={pnl.y + 8} width={pnl.w - 16} height={pnl.h - 16} fill="none" stroke="#b9c8ff" stroke-opacity=".18" />
+            <line x1={pnl.x + pnl.w * 0.42} y1={pnl.y + pnl.h + 1} x2={pnl.x + pnl.w * 0.58} y2={pnl.y + pnl.h + 1} stroke="#b9c8ff" stroke-opacity=".6" stroke-width="3" />
+            {/* sample-and-hold smear: the moving ball is never crisp on a flat panel */}
+            <rect data-k={`E-smear${i}`} x={pnl.x + 40} y={pnl.y + pnl.h / 2 - 12} width="120" height="24" rx="12" fill={`url(#${id}-smear)`} opacity=".7" />
+          </g>
+        ))}
+      </g>
+
+      <!-- ══ F · The tube returns ══════════════════════════════════════ -->
+      <g data-k="F" opacity="0">
+        <g data-k="F-move">
+          <ellipse cx="1062" cy="430" rx="160" ry="260" fill={`url(#${id}-bloom)`} data-k="F-bloom" opacity="0" />
+          <g class="ink tube glow" stroke="#00ff99">
+            <path class="draw" pathLength="1" d="M1060,250 Q1088,430 1060,610" stroke-width="3" />
+            <path class="draw" pathLength="1" d="M1060,250 C950,256 790,384 706,400 L524,400 Q502,430 524,460 L706,460 C790,476 950,604 1060,610" />
+            <path class="draw" pathLength="1" d="M694,384 L742,376 L742,484 L694,476 Z" stroke-opacity=".55" />
+            <path class="draw" pathLength="1" d="M560,412 L560,448 M584,408 L584,452 M610,412 L610,448 M636,416 L636,444" stroke-opacity=".6" />
+            <path class="draw" pathLength="1" d="M504,412 L486,412 M504,424 L482,424 M504,436 L482,436 M504,448 L486,448" stroke-opacity=".6" />
+          </g>
+          <g data-k="F-beams" opacity="0">
+            {beamColors.map((c, i) => <line data-k={`F-beam${i}`} x1="640" y1={420 + i * 4} x2="1066" y2="430" stroke={c} stroke-width="1.6" class="glow" />)}
+            <circle data-k="F-spot" cx="1066" cy="430" r="6" fill="#f4fff9" class="glow" />
+          </g>
+        </g>
+      </g>
+
+      <!-- ══ G · Side-fire tubes inside a headset (top-down) ═══════════ -->
+      <g data-k="G" opacity="0">
+        <g data-k="G-zoom">
+          <g class="ink thin" stroke="#6a7fa8">
+            <ellipse class="draw" pathLength="1" cx="800" cy="600" rx="165" ry="215" />
+            <path class="draw" pathLength="1" d="M784,392 L800,360 L816,392" />
+            <path class="draw" pathLength="1" d="M636,570 Q616,600 636,632 M964,570 Q984,600 964,632" />
+          </g>
+          <g class="ink thin" stroke="#d8e4ff" stroke-opacity=".7">
+            <path class="draw" pathLength="1" d="M598,470 L598,342 Q598,292 648,292 L952,292 Q1002,292 1002,342 L1002,470 Q900,486 836,470 L800,440 L764,470 Q700,486 598,470 Z" />
+            <path class="draw" pathLength="1" d="M598,430 C548,640 640,836 800,836 C960,836 1052,640 1002,430" stroke-opacity=".35" />
+          </g>
+          {[0, 1].map((m) => (
+            <g transform={m ? 'translate(1600 0) scale(-1 1)' : undefined} class="ink thin glow" stroke="#00ff99">
+              <circle class="draw" pathLength="1" cx="870" cy="440" r="20" stroke="#6a7fa8" />
+              <path class="draw" pathLength="1" d="M811.7,418.8 A62,62 0 0 1 928.3,418.8" stroke-width="3" />
+              <path class="draw" pathLength="1" d="M811.7,418.8 L794.8,412.6 A80,80 0 0 1 945.2,412.6 L990,412.6 Q996,419 990,426 L938,426 L928.3,418.8" />
+            </g>
+          ))}
+        </g>
+      </g>
+
+      <!-- ══ H · The eye: light wraps 180°+ ════════════════════════════ -->
+      <g data-k="H" opacity="0">
+        <ellipse cx={EX} cy={EY - 80} rx="520" ry="360" fill={`url(#${id}-bloom)`} opacity=".5" data-k="H-bloom" />
+        <g data-k="H-shells" class="ink thin" stroke="#00ff99">
+          <path class="draw" pathLength="1" d={arc(150)} stroke-opacity=".28" />
+          <path class="draw" pathLength="1" d={arc(190)} stroke-opacity=".38" />
+          <path class="draw" pathLength="1" d={arc(232)} stroke-opacity=".48" />
+        </g>
+        <g data-k="H-rays" class="ink thin" stroke="#00ff99">
+          {rays.map((r) => <line class="draw ray" pathLength="1" x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} stroke-opacity={0.22 + 0.25 * Math.sin((r.i / (RAYS - 1)) * Math.PI)} />)}
+        </g>
+        <g data-k="H-photons" class="photons" stroke="#eafff4">
+          {rays.map((r) => <line pathLength="1" x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} />)}
+        </g>
+        <path data-k="H-dome" class="draw glow" pathLength="1" d={arc(278)} fill="none" stroke="#00ff99" stroke-width="7" stroke-linecap="round" />
+        <path data-k="H-fovea" d="" fill="none" stroke="#eafff4" stroke-width="12" stroke-linecap="round" class="glow" opacity="0" />
+        <g data-k="H-ticks" class="ink thin" stroke="#6a7fa8">
+          {ticks.map((t) => <line class="draw" pathLength="1" x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke-opacity={t.major ? 0.9 : 0.5} />)}
+        </g>
+        <text data-k="H-fov" x={EX} y="84" class="mono-svg" text-anchor="middle" fill="#00ff99" opacity="0">FOV 0°</text>
+        <text data-k="H-core" x="0" y="0" class="mono-svg small" text-anchor="middle" fill="#eafff4" opacity="0">full-res core</text>
+        <!-- eye -->
+        <circle cx={EX} cy={EY} r="88" fill="#04050a" stroke="#6a7fa8" stroke-width="2" />
+        <g data-k="H-gaze" transform={`rotate(0 ${EX} ${EY})`}>
+          <path d={`M${EX - 46},${EY - 72} Q${EX},${EY - 118} ${EX + 46},${EY - 72}`} fill="none" stroke="#d8e4ff" stroke-opacity=".7" stroke-width="2" />
+          <line x1={EX - 34} y1={EY - 62} x2={EX + 34} y2={EY - 62} stroke="#00b4ff" stroke-width="5" stroke-linecap="round" />
+          <ellipse cx={EX} cy={EY - 54} rx="26" ry="10" fill="none" stroke="#d8e4ff" stroke-opacity=".5" stroke-width="1.5" />
+          <circle cx={EX} cy={EY + 72} r="5" fill="#ff3c6e" opacity=".8" />
+        </g>
+        <circle cx={EX} cy={EY} r="3" fill="#6a7fa8" />
+      </g>
+
+      <!-- global match-cut flash -->
+      <rect data-k="flash" x="0" y="0" width="1600" height="900" fill="#eafff4" opacity="0" />
+    </svg>
+
+    <!-- CRT glass: scanlines + vignette (CSS) -->
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <!-- captions -->
+    <div class="captions" aria-hidden="true">
+      <p data-k="cap-a" class="cap"><span class="tick"></span>{captions.a}</p>
+      <p data-k="cap-b" class="cap"><span class="tick"></span>{captions.b}</p>
+      <p data-k="cap-c" class="cap"><span class="tick"></span>{captions.c}</p>
+      <p data-k="cap-d" class="cap"><span class="tick"></span>{captions.d}</p>
+      <p data-k="cap-end" class="cap"><span class="tick"></span>{captions.end}</p>
+    </div>
+
+    <!-- synced copy (real HTML text, readable by screen readers) -->
+    <div class="copy">
+      <p class="line line-left" data-k="line-left">
+        {words(lines.left).map((w, i) => <span class="w" style={`--i:${i}`}>{w}</span>)}
+      </p>
+      <p class="line line-ahead" data-k="line-ahead">
+        {words(lines.ahead).map((w, i) => <span class={`w${accentWords.has(w) ? ' acc' : ''}`} style={`--i:${i}`}>{w}</span>)}
+      </p>
+      <h2 class="line line-hero" data-k="line-hero">
+        {words(lines.hero).map((w, i, all) => <><span class={`w${accentWords.has(w) ? ' acc' : ''}`} style={`--i:${i}`}>{w}</span>{w.endsWith('.') && i < all.length - 1 && <br />}</>)}
+      </h2>
+    </div>
+
+    <div class="cue" data-k="cue" aria-hidden="true"><span>Scroll to power on</span><i></i></div>
+  </div>
+</section>
+
+<style>
+  .hero-anim {
+    position: relative;
+    /* full-bleed out of the act column (measured in JS), respecting the shared sidebar offset */
+    width: var(--bleed-w, 100%);
+    margin-left: var(--bleed-x, 0px);
+    max-width: none;
+    height: var(--len, 820vh);
+    background: var(--crtvr-bg);
+    color: var(--crtvr-text);
+  }
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .film { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .film :global(.ink) { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .film :global(.ink.thin) { stroke-width: 1.6; }
+  .film :global(.draw) { stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--d, 1)); }
+  .film :global(.glass) { fill: none; stroke: #2a3860; stroke-width: 1.5; }
+  .film :global(.xray) { fill: none; stroke: #00ff99; stroke-opacity: .35; stroke-width: 1.2; stroke-dasharray: 5 6; }
+  .film :global(.photons line) { stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: .035 .14; stroke-dashoffset: var(--flow, 0); opacity: var(--po, 0); }
+  .film :global(.mono-svg) { font-family: var(--crtvr-font-mono); font-size: 22px; letter-spacing: .28em; }
+  .film :global(.mono-svg.small) { font-size: 13px; letter-spacing: .2em; }
+
+  /* glow is a full-tier luxury */
+  :global(html[data-vfx-tier='full']) .film :global(.glow) { filter: var(--glow-url); }
+
+  .scanlines {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply; opacity: .55;
+  }
+  .vignette {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.75) 100%);
+  }
+
+  .captions { position: absolute; z-index: 2; left: clamp(16px, 5vw, 72px); top: clamp(72px, 12vh, 120px); }
+  .cap {
+    position: absolute; white-space: nowrap; margin: 0;
+    font-family: var(--crtvr-font-mono); font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--crtvr-phosphor); opacity: 0;
+    transform: translateX(calc((1 - var(--o, 0)) * -12px));
+    display: flex; align-items: center; gap: 12px;
+  }
+  .cap .tick { width: 28px; height: 1px; background: currentColor; box-shadow: 0 0 8px currentColor; }
+
+  .copy {
+    position: absolute; z-index: 3; left: 0; right: 0; bottom: clamp(48px, 11vh, 120px);
+    display: grid; justify-items: center; align-items: end; text-align: center; padding: 0 16px; pointer-events: none;
+  }
+  .line { grid-area: 1 / 1; margin: 0; opacity: var(--o, 0); }
+  .w {
+    --w: clamp(0, calc(var(--t, 0) * (var(--n, 6) + 2) - var(--i)), 1);
+    display: inline-block; margin: 0 .14em;
+    opacity: var(--w);
+    transform: translateY(calc((1 - var(--w)) * .5em));
+    filter: blur(calc((1 - var(--w)) * 6px));
+  }
+  .line-left, .line-ahead {
+    font-family: var(--crtvr-font-display); font-weight: 400; letter-spacing: .02em;
+    font-size: clamp(34px, 5.4vw, 78px); line-height: 1; color: var(--crtvr-white);
+  }
+  .line-left { color: var(--crtvr-panel-cold); }
+  .line-hero {
+    font-family: var(--crtvr-font-display); font-weight: 400; letter-spacing: .01em;
+    font-size: clamp(44px, 8.4vw, 128px); line-height: .95; color: var(--crtvr-white);
+  }
+  .acc { color: var(--crtvr-phosphor); text-shadow: 0 0 calc(var(--glow, 1) * 24px) rgba(0,255,153,.55); }
+
+  .cue {
+    position: absolute; z-index: 3; left: 50%; bottom: 40px; transform: translateX(-50%);
+    font-family: var(--crtvr-font-mono); font-size: 10px; letter-spacing: .32em; text-transform: uppercase;
+    color: var(--crtvr-text-dim); display: grid; justify-items: center; gap: 12px; opacity: var(--o, 1);
+  }
+  .cue i { width: 1px; height: 38px; background: linear-gradient(var(--crtvr-phosphor), transparent); animation: cue 2.2s var(--crtvr-ease-out) infinite; transform-origin: top; }
+  @keyframes cue { 0% { transform: scaleY(0); } 60% { transform: scaleY(1); } 100% { transform: scaleY(1); opacity: 0; } }
+
+  /* ── static tier: one composed frame, all three lines readable ── */
+  .hero-anim.is-static { height: auto; }
+  .hero-anim.is-static .stage { position: relative; height: auto; min-height: 100vh; }
+  .hero-anim.is-static .copy { position: relative; bottom: auto; padding: 62vh 16px 72px; gap: 14px; }
+  .hero-anim.is-static .line { grid-area: auto; opacity: 1; }
+  .hero-anim.is-static .w { --w: 1; }
+  .hero-anim.is-static .line-left, .hero-anim.is-static .line-ahead { font-size: clamp(22px, 3vw, 40px); }
+  .hero-anim.is-static .cue { display: none; }
+  .hero-anim.is-static .film { height: 100vh; }
+
+  @media (prefers-reduced-motion: reduce) { .cue i { animation: none; } }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from './lib/tier';
+  import { scrubLoop, stickyProgress, seg, window4, easeOut, easeInOut, expoOut, lerp, clamp } from './lib/scrub';
+
+  const EX = 800, EY = 440;
+
+  function init(root: HTMLElement) {
+    const svg = root.querySelector('svg.film') as SVGSVGElement;
+    const $ = <T extends Element = SVGElement>(k: string) => root.querySelector(`[data-k="${k}"]`) as T;
+    const glowId = `${root.id}-glow`;
+    root.style.setProperty('--glow-url', `url(#${glowId})`);
+
+    const el = {
+      A: $('A'), Ab: $('A-bloom'), Ar: $('A-raster'), Af: $('A-flash'), Ad: $('A-dot'),
+      B: $('B'), Bs: $('B-screen'), C: $('C'), Cs: $('C-screen'),
+      D: $('D'), Ds: $('D-screen'), Dd: $('D-dim'), Db: $('D-bloom'), Dt: $('D-tally'),
+      E: $('E'), F: $('F'), Fm: $('F-move'), Fb: $('F-beams'), Fbl: $('F-bloom'), Fs: $('F-spot'),
+      beams: Array.from({ length: 6 }, (_, i) => $(`F-beam${i}`)),
+      G: $('G'), Gz: $('G-zoom'),
+      H: $('H'), Hs: $('H-shells'), Hr: $('H-rays'), Hp: $('H-photons'), Hd: $('H-dome'), Hf: $('H-fovea'),
+      Ht: $('H-ticks'), Hfov: $('H-fov'), Hcore: $('H-core'), Hg: $('H-gaze'), Hbl: $('H-bloom'),
+      flash: $('flash'),
+      panels: Array.from({ length: 5 }, (_, i) => $(`E-p${i}`)),
+      smears: Array.from({ length: 5 }, (_, i) => $(`E-smear${i}`)),
+      caps: ['a', 'b', 'c', 'd', 'end'].map((k) => $<HTMLElement>(`cap-${k}`)),
+      lines: ['left', 'ahead', 'hero'].map((k) => $<HTMLElement>(`line-${k}`)),
+      cue: $<HTMLElement>('cue'),
+    };
+    el.lines.forEach((l) => l.style.setProperty('--n', String(l.querySelectorAll('.w').length)));
+
+    let quality: VfxTier = 'full';
+    const op = (n: Element, v: number) => n.setAttribute('opacity', v.toFixed(3));
+    const d = (n: Element, v: number) => (n as SVGElement).style.setProperty('--d', v.toFixed(4));
+    const sc = (n: Element, cx: number, cy: number, sx: number, sy: number) =>
+      n.setAttribute('transform', `translate(${cx} ${cy}) scale(${sx.toFixed(4)} ${sy.toFixed(4)}) translate(${-cx} ${-cy})`);
+    const tri = (x: number) => 1 - Math.abs(((x % 2) + 2) % 2 - 1); // 0→1→0 triangle wave
+    const polar = (r: number, deg: number) => {
+      const a = (deg * Math.PI) / 180;
+      return [EX + r * Math.cos(a), EY + r * Math.sin(a)];
+    };
+
+    function render(p: number) {
+      // ── cue
+      el.cue.style.setProperty('--o', (1 - seg(p, 0, 0.025)).toFixed(3));
+
+      // ── A · 1950s: line art draws, then the classic power-on (dot → line → raster)
+      op(el.A, window4(p, 0.015, 0.04, 0.19, 0.212));
+      d(el.A, easeOut(seg(p, 0.015, 0.085)));
+      const a = seg(p, 0.085, 0.155);
+      const dotP = seg(a, 0, 0.22), lineP = seg(a, 0.22, 0.5), openP = seg(a, 0.5, 1);
+      el.Ad.setAttribute('r', (dotP > 0 ? 2 + 7 * easeOut(dotP) : 0).toFixed(2));
+      op(el.Ad, dotP * (1 - lineP));
+      const sx = lineP > 0 ? Math.max(0.004, easeOut(lineP)) : 0;
+      const sy = lineP > 0 ? Math.max(0.008, expoOut(openP)) : 0;
+      sc(el.Ar, 745, 395, sx, sy);
+      op(el.Af, lineP * (1 - openP) * 0.9);
+      op(el.Ab, (dotP * 0.25 + Math.sin(Math.PI * openP) * 0.8 + (openP >= 1 ? 0.45 : openP * 0.45)) * (lineP > 0 || dotP > 0 ? 1 : 0));
+
+      // ── B · Trinitron, C · Watchman, D · BVM: channel-flip cuts
+      op(el.B, window4(p, 0.205, 0.225, 0.292, 0.312)); d(el.B, easeOut(seg(p, 0.2, 0.245)));
+      sc(el.Bs, 750, 430, 1, Math.max(0.006, expoOut(seg(p, 0.215, 0.245))));
+      op(el.C, window4(p, 0.302, 0.322, 0.372, 0.392)); d(el.C, easeOut(seg(p, 0.298, 0.34)));
+      sc(el.Cs, 800, 350, 1, Math.max(0.006, expoOut(seg(p, 0.312, 0.34))));
+      op(el.D, window4(p, 0.385, 0.405, 0.575, 0.6)); d(el.D, easeOut(seg(p, 0.38, 0.425)));
+      sc(el.Ds, 800, 420, 1, Math.max(0.006, expoOut(seg(p, 0.395, 0.425))));
+      const dim = seg(p, 0.47, 0.565);
+      op(el.Dd, dim * 0.82); op(el.Db, 0.35 * (1 - dim)); op(el.Dt, 1 - dim * 0.7);
+
+      // ── E · flat panels slide in and take over; their motion is smeared
+      op(el.E, window4(p, 0.445, 0.455, 0.575, 0.605));
+      el.panels.forEach((g, i) => {
+        const t = easeOut(seg(p, 0.448 + i * 0.012, 0.51 + i * 0.012));
+        const fx = +(g.dataset.fx || 0) * (1 - t), fy = +(g.dataset.fy || 0) * (1 - t);
+        g.setAttribute('transform', `translate(${fx.toFixed(1)} ${fy.toFixed(1)})`);
+        g.setAttribute('opacity', t.toFixed(3));
+      });
+      el.smears.forEach((s, i) => {
+        const w = +(el.panels[i].querySelector('rect')!.getAttribute('width') || 400);
+        const x0 = +(el.panels[i].querySelector('rect')!.getAttribute('x') || 0);
+        s.setAttribute('x', (x0 + 30 + tri(p * 26 + i * 0.37) * (w - 180)).toFixed(1));
+      });
+
+      // ── F · the tube returns, six converged beams paint the faceplate
+      const fIn = seg(p, 0.605, 0.62), fOut = seg(p, 0.735, 0.755);
+      op(el.F, fIn * (1 - fOut));
+      d(el.F, easeInOut(seg(p, 0.61, 0.672)));
+      const beamsOn = seg(p, 0.664, 0.69);
+      op(el.Fb, beamsOn); op(el.Fbl, beamsOn * 0.6);
+      const ty = 272 + tri(p * 70) * 316;
+      const tx = 1060 + 18 * Math.sin(((ty - 250) / 360) * Math.PI); // ride the faceplate curve
+      el.beams.forEach((b) => { b.setAttribute('x2', tx.toFixed(1)); b.setAttribute('y2', ty.toFixed(1)); });
+      el.Fs.setAttribute('cx', tx.toFixed(1)); el.Fs.setAttribute('cy', ty.toFixed(1));
+      // shrink + slide toward the right-eye tube position for the match cut
+      const shrink = easeInOut(seg(p, 0.715, 0.755));
+      el.Fm.setAttribute('transform', `translate(${lerp(0, 870 - 800 * 0.18, shrink).toFixed(1)} ${lerp(0, 430 - 430 * 0.18, shrink).toFixed(1)}) scale(${lerp(1, 0.18, shrink).toFixed(4)})`);
+
+      // flash at the cut
+      op(el.flash, Math.sin(Math.PI * seg(p, 0.742, 0.758)) * 0.22 + Math.sin(Math.PI * seg(p, 0.835, 0.85)) * 0.16);
+
+      // ── G · headset (top-down) draws on, then the camera dives to the right eye
+      op(el.G, window4(p, 0.745, 0.76, 0.835, 0.855));
+      d(el.G, easeOut(seg(p, 0.745, 0.8)));
+      const z = easeInOut(seg(p, 0.795, 0.852));
+      const s = lerp(1, 4.4, z);
+      const tx2 = lerp(870, EX, z), ty2 = lerp(440, EY, z);
+      el.Gz.setAttribute('transform', `translate(${tx2.toFixed(1)} ${ty2.toFixed(1)}) scale(${s.toFixed(4)}) translate(-870 -440)`);
+
+      // ── H · the eye: monocentric shells, the dome, light from 180°+
+      op(el.H, seg(p, 0.835, 0.858));
+      d(el.Hs, easeOut(seg(p, 0.845, 0.89)));
+      d(el.Hd, easeInOut(seg(p, 0.842, 0.885)));
+      d(el.Hr, easeOut(seg(p, 0.86, 0.91)));
+      d(el.Ht, easeOut(seg(p, 0.87, 0.915)));
+      const fov = Math.round(200 * easeOut(seg(p, 0.87, 0.925)));
+      el.Hfov.textContent = fov >= 180 ? 'FOV 180°+' : `FOV ${fov}°`;
+      op(el.Hfov, seg(p, 0.868, 0.88));
+      const photons = quality === 'full' ? seg(p, 0.895, 0.92) : 0;
+      el.Hp.style.setProperty('--po', photons.toFixed(3));
+      el.Hp.style.setProperty('--flow', (-p * 34).toFixed(3));
+      op(el.Hbl, 0.25 + 0.35 * seg(p, 0.86, 0.92));
+
+      // ── I · look anywhere: the gaze roams, the core follows, the field is already lit
+      const g = seg(p, 0.905, 1);
+      const gaze = -90 + 78 * Math.sin(g * Math.PI * 2 * 1.25) * easeOut(seg(g, 0, 0.15));
+      el.Hg.setAttribute('transform', `rotate(${(gaze + 90).toFixed(2)} ${EX} ${EY})`);
+      const [fx1, fy1] = polar(278, gaze - 11), [fx2, fy2] = polar(278, gaze + 11);
+      el.Hf.setAttribute('d', `M${fx1.toFixed(1)},${fy1.toFixed(1)} A278,278 0 0 1 ${fx2.toFixed(1)},${fy2.toFixed(1)}`);
+      const coreOn = seg(p, 0.9, 0.925);
+      op(el.Hf, coreOn);
+      const [lx, ly] = polar(352, gaze);
+      el.Hcore.setAttribute('x', lx.toFixed(1)); el.Hcore.setAttribute('y', (ly + 4).toFixed(1));
+      op(el.Hcore, coreOn * 0.9);
+
+      // ── captions
+      const capW = [
+        window4(p, 0.1, 0.12, 0.185, 0.205),
+        window4(p, 0.225, 0.24, 0.29, 0.305),
+        window4(p, 0.325, 0.34, 0.37, 0.385),
+        window4(p, 0.415, 0.43, 0.47, 0.5),
+        seg(p, 0.875, 0.9),
+      ];
+      el.caps.forEach((c, i) => { c.style.opacity = capW[i].toFixed(3); c.style.setProperty('--o', capW[i].toFixed(3)); });
+
+      // ── copy, word by word, locked to the beats
+      const L = [
+        { t: seg(p, 0.478, 0.53), o: 1 - seg(p, 0.582, 0.605) },
+        { t: seg(p, 0.628, 0.69), o: 1 - seg(p, 0.738, 0.76) },
+        { t: seg(p, 0.905, 0.965), o: 1 },
+      ];
+      el.lines.forEach((l, i) => {
+        l.style.setProperty('--t', L[i].t.toFixed(4));
+        l.style.setProperty('--o', (L[i].t > 0 ? L[i].o : 0).toFixed(3));
+      });
+      el.lines[2].style.setProperty('--glow', (0.4 + 0.6 * clamp(1 - Math.abs(Math.sin(g * Math.PI * 2.5)) * 0.5)).toFixed(3));
+    }
+
+    // full-bleed: escape whatever column the slot sits in
+    const bleed = () => {
+      const nav = parseFloat(getComputedStyle(document.body).marginLeft) || 0;
+      const vw = document.documentElement.clientWidth - nav;
+      root.style.setProperty('--bleed-w', `${vw}px`);
+      root.style.setProperty('--bleed-x', '0px');
+      const left = root.getBoundingClientRect().left;
+      root.style.setProperty('--bleed-x', `${nav - left}px`);
+    };
+    bleed(); window.addEventListener('resize', bleed);
+
+    // portrait screens: tighter framing instead of a tiny letterboxed film
+    const fit = () => {
+      const portrait = window.innerWidth / window.innerHeight < 1;
+      // portrait: frame the action-safe core of the film (x 460–1140) so the subject stays big
+      svg.setAttribute('viewBox', portrait ? '460 40 680 800' : '0 0 1600 900');
+      svg.setAttribute('preserveAspectRatio', portrait ? 'xMidYMid meet' : 'xMidYMid slice');
+    };
+    fit(); window.addEventListener('resize', fit);
+
+    let stop: (() => void) | null = null;
+    onTier((q) => {
+      quality = q;
+      stop?.(); stop = null;
+      root.classList.toggle('is-static', q === 'static');
+      if (q === 'static') { render(0.955); return; }
+      stop = scrubLoop(root, stickyProgress, render, { smoothing: q === 'full' ? 0.14 : 0.3 });
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-hero-anim]').forEach(init);
+</script>

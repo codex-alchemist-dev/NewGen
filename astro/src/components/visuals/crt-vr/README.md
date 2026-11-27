@@ -23,3 +23,11 @@ Shared: `tokens.css` (aliases shell tokens, fonts stay swappable), `lib/scrub.ts
 - **static** (and `prefers-reduced-motion`): no scrubbing. The hero shows one composed frame with all three lines, the background is a CSS still, the stats are drawn.
 
 All three copy lines, captions and figures are real HTML/SVG text.
+
+## Act 7 · The Machine
+
+| Component | Slot | What it is |
+|---|---|---|
+| `BlueprintBackground.astro` | `act-07/background` | Cyan drafting sheet: minor/major grid, zone letters, registration marks, title block, slow plotter sweep. Mounted through ActWrapper's `background` slot. |
+
+The Act 7 interactives live in `interactives/crt-vr/` (see its README).

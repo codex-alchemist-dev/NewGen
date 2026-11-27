@@ -9,8 +9,21 @@ import HeroAnimatic from '../../../components/visuals/crt-vr/HeroAnimatic.astro'
 import HookBackground from '../../../components/visuals/crt-vr/HookBackground.astro';
 import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
 import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
+import ExplodedTube from '../../../components/interactives/crt-vr/ExplodedTube.astro';
+import GunShootout from '../../../components/interactives/crt-vr/GunShootout.astro';
+import BeamFunnel from '../../../components/interactives/crt-vr/BeamFunnel.astro';
+import HexaEmission from '../../../components/interactives/crt-vr/HexaEmission.astro';
+import HexaSensors from '../../../components/interactives/crt-vr/HexaSensors.astro';
+import HexaFeatures from '../../../components/interactives/crt-vr/HexaFeatures.astro';
+import PitchCalc from '../../../components/interactives/crt-vr/PitchCalc.astro';
+import BlueprintBackground from '../../../components/visuals/crt-vr/BlueprintBackground.astro';
 
 const placeholder = '[copy pending]';
+/* Act 7 · The Machine interactives (slot id → component). Hexa-Index mounts emission, sensors and features. */
+const act7: Record<string, any> = {
+  'exploded-tube': ExplodedTube, 'gun-shootout': GunShootout, 'beam-funnel': BeamFunnel,
+  'hexa-emission': HexaEmission, 'pitch-calc': PitchCalc,
+};
 ---
 <BaseLayout
   title="SONY CRT-VR — 2nd® Gen preview"
@@ -24,6 +37,7 @@ const placeholder = '[copy pending]';
   <main>
     {acts.map((act) => (
       <ActWrapper id={act.id} number={act.number} transition={act.transition} title={act.title}>
+        {act.number === 7 && <BlueprintBackground slot="background" tier="full" reducedMotion={false} />}
         <ActTitle number={act.number} title={act.title} subtitle={act.tagline} />
         {act.sections.map((s) => (
           <Section id={s.id} title={s.title}>
@@ -53,7 +67,10 @@ const placeholder = '[copy pending]';
             {/* Act 1 background (act-01/background). It mounts itself into the act; the VFX thread can move it into ActBackground. */}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
             {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
-            {s.interactive && <Slot id={s.interactive} kind="interactive" />}
+            {s.interactive && act7[s.interactive] && (() => { const C = act7[s.interactive!]; return <C tier="full" reducedMotion={false} />; })()}
+            {s.interactive === 'hexa-emission' && <HexaSensors tier="full" reducedMotion={false} />}
+            {s.interactive === 'hexa-emission' && <HexaFeatures tier="full" reducedMotion={false} />}
+            {s.interactive && !act7[s.interactive] && <Slot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>

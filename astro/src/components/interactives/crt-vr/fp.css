@@ -1,0 +1,34 @@
+/* foveated-pipeline · the chain of five stages above the raster pass */
+.fp-chain {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px;
+  margin: 0 0 16px; padding: 0; list-style: none; counter-reset: fp;
+}
+.fp-node {
+  position: relative; display: grid; align-content: start; gap: 4px;
+  padding: 10px 12px 12px; border: 1px solid var(--crtvr-line); border-top: 2px solid var(--crtvr-phosphor);
+  border-radius: 3px; background: color-mix(in srgb, var(--crtvr-bg) 72%, transparent);
+}
+.fp-node__n { font-size: 10px; letter-spacing: .2em; color: var(--crtvr-phosphor); }
+.fp-node__t { font-family: var(--crtvr-font-display); font-weight: 400; font-size: 19px; line-height: 1.05; letter-spacing: .02em; color: var(--crtvr-white, #f0f4ff); }
+.fp-node__s { font-size: 10.5px; line-height: 1.5; color: var(--crtvr-text-dim); }
+.fp-node:nth-child(3) { border-top-color: var(--crtvr-yellow); }
+.fp-node:nth-child(3) .fp-node__n { color: var(--crtvr-yellow); }
+/* connector: a dashed signal line that flows left to right */
+.fp-node:not(:last-child)::after {
+  content: ''; position: absolute; top: 50%; right: -15px; width: 16px; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--crtvr-phosphor) 0 4px, transparent 4px 8px);
+  background-size: 8px 2px; box-shadow: 0 0 8px color-mix(in srgb, var(--crtvr-phosphor) 60%, transparent);
+}
+.fp-chain.is-live .fp-node:not(:last-child)::after { animation: fp-flow .5s linear infinite; }
+@keyframes fp-flow { to { background-position: 8px 0; } }
+.fp-legend .lg { margin-top: 10px; }
+@media (max-width: 860px) {
+  .fp-chain { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .fp-node { grid-template-columns: auto 1fr; column-gap: 10px; }
+  .fp-node__s { grid-column: 2; }
+  .fp-node:not(:last-child)::after { top: auto; bottom: -11px; right: auto; left: 24px; width: 2px; height: 10px;
+    background: repeating-linear-gradient(180deg, var(--crtvr-phosphor) 0 4px, transparent 4px 8px); background-size: 2px 8px; }
+  .fp-chain.is-live .fp-node:not(:last-child)::after { animation-name: fp-flow-v; }
+  @keyframes fp-flow-v { to { background-position: 0 8px; } }
+}
+@media (prefers-reduced-motion: reduce) { .fp-chain.is-live .fp-node:not(:last-child)::after { animation: none; } }

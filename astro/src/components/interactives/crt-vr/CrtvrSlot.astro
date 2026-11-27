@@ -14,6 +14,7 @@ import MotionLineageChart from './MotionLineageChart.astro';
 import MotionBlurCompare from './MotionBlurCompare.astro';
 import ComparisonTable from './ComparisonTable.astro';
 import ContributionMap from '../../visuals/crt-vr/ContributionMap.astro';
+import FoveatedPipeline from './FoveatedPipeline';
 
 interface Props { id: string; kind: SlotKind }
 const { id, kind } = Astro.props;
@@ -28,4 +29,5 @@ const p = { tier: 'full' as const, reducedMotion: false };
   : id === 'motion-lineage-chart' ? <MotionLineageChart {...p} />
   : id === 'motion-blur-compare' ? <MotionBlurCompare {...p} />
   : id === 'comparison-table' ? <ComparisonTable {...p} />
+  : id === 'foveated-pipeline' ? <FoveatedPipeline client:visible {...p} />
   : <Slot id={id} kind={kind} />}

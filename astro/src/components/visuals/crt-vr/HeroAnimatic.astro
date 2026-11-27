@@ -5,7 +5,7 @@
  * A scroll-scrubbed SVG mini film (≈8 screens of scroll):
  *   1950s glow → Trinitron → Watchman → BVM → flat-panel takeover →
  *   the tube returns (6 converged RGBMCY beams) → side-fire tubes in a headset →
- *   zoom to the eye: monocentric relay, light wrapping 180°+ → hero line.
+ *   zoom to the eye: Gaze-Cone eyepiece + Periphery Ring, 160° per eye → hero line.
  *
  * Stylized line art only. Product names appear as captions; no logos are copied.
  * Quality tiers: full (glow filters, photon flow), reduced (no filters), static
@@ -46,28 +46,76 @@ const accentWords = new Set(['ahead', 'of', 'its', 'time.', 'already', 'there.']
 const words = (s: string) => s.split(' ');
 
 // ── Eye scene geometry (computed at build time) ────────────────────────────
-const EX = 800, EY = 440;            // eye centre of rotation (monocentric centre)
-const A0 = 170, A1 = 370;            // 200° span through the top (SVG angles)
-const pt = (r: number, deg: number) => {
-  const a = (deg * Math.PI) / 180;
-  return [+(EX + r * Math.cos(a)).toFixed(1), +(EY + r * Math.sin(a)).toFixed(1)];
+// Top-down section through one eye, gaze straight up. β is the view angle from
+// the forward axis (+ right). Gaze-Cone optics: a curved-field aspheric eyepiece
+// (E2–E5) sharp across the ±50° eye-rotation cone, a Periphery Ring for 55–80°,
+// and the shallow concave faceplate cap as field element E1. 160° per eye.
+const EX = 800, EY = 440;            // eye centre of rotation
+const P = (r: number, b: number) => {
+  const a = (b * Math.PI) / 180;
+  return [+(EX + r * Math.sin(a)).toFixed(1), +(EY - r * Math.cos(a)).toFixed(1)];
 };
-const arc = (r: number) => {
-  const [x1, y1] = pt(r, A0); const [x2, y2] = pt(r, A1);
-  return `M${x1},${y1} A${r},${r} 0 1 1 ${x2},${y2}`;
+// Faceplate cap: shallow, concave toward the eye (centre of curvature on the eye side).
+const CAP_R = 680, CAP_CY = 898;     // top of the cap at y = 218 (222 from the eye)
+const capR = (al: number) => {
+  const c = Math.cos((al * Math.PI) / 180), k = EY - CAP_CY;
+  return k * c + Math.sqrt(k * k * c * c - k * k + CAP_R * CAP_R);
 };
-const RAYS = 25;
-const rays = Array.from({ length: RAYS }, (_, i) => {
-  const deg = A0 + ((A1 - A0) * i) / (RAYS - 1);
-  const [x1, y1] = pt(274, deg); const [x2, y2] = pt(98, deg);
-  return { x1, y1, x2, y2, i };
+const capPt = (al: number) => P(capR(al), al);
+const CAP_EDGE = 57;
+const capPath = (() => {
+  const [x1, y1] = capPt(-CAP_EDGE), [x2, y2] = capPt(CAP_EDGE);
+  return `M${x1},${y1} A${CAP_R},${CAP_R} 0 0 1 ${x2},${y2}`;
+})();
+// band between two angle-dependent radii, β from b0 to b1 (closed outline)
+const band = (b0: number, b1: number, rin: (b: number) => number, rout: (b: number) => number, n = 24) => {
+  const out: string[] = [], back: string[] = [];
+  for (let i = 0; i <= n; i++) {
+    const b = b0 + ((b1 - b0) * i) / n;
+    out.push(P(rout(b), b).join(','));
+    back.unshift(P(rin(b), b).join(','));
+  }
+  return `M${out.join(' L')} L${back.join(' L')} Z`;
+};
+// Gaze-Cone eyepiece: four XA aspheric elements, thicker at the centre (positive power)
+const EP = 52;
+const u2 = (b: number) => (b / EP) ** 2;
+const eyepiece = [
+  band(-EP, EP, (b) => 106 + 10 * u2(b), (b) => 121 + 4 * u2(b)),
+  band(-EP, EP, (b) => 127 + 8 * u2(b), (b) => 141 + 3 * u2(b)),
+  band(-EP, EP, (b) => 147 + 5 * u2(b), (b) => 159 + 2 * u2(b)),
+  band(-EP, EP, (b) => 164 + 3 * u2(b), (b) => 173 + u2(b)),
+];
+// Periphery Ring: a thin prism ring beside the eyepiece, 55–80° on each side
+const ringOut = (b: number) => 146 + (10 * (Math.abs(b) - 56)) / 24;
+const ring = [band(56, 80, () => 136, ringOut), band(-80, -56, () => 136, ringOut)];
+const facets = [-76, -72, -68, -64, -60, 60, 64, 68, 72, 76].map((b) => {
+  const [x1, y1] = P(136, b), [x2, y2] = P(ringOut(b), b);
+  return { x1, y1, x2, y2 };
 });
-const ticks = Array.from({ length: 21 }, (_, i) => {
-  const deg = A0 + 10 * i;
-  const major = i % 5 === 0;
-  const [x1, y1] = pt(312, deg); const [x2, y2] = pt(major ? 332 : 322, deg);
-  return { x1, y1, x2, y2, major };
+// annular sectors: the sharp gaze cone and the peripheral bands
+const sector = (b0: number, b1: number, r0: number, r1: number) => band(b0, b1, () => r0, () => r1, 20);
+// chief rays: cap → optic → eye centre. The eyepiece magnifies the central cap
+// (α = 0.7β) into the ±50° cone; the ring bends the outer cap (α 38–56°) into 55–80°.
+const ray = (b: number) => {
+  const ring = Math.abs(b) > 52;
+  const al = ring ? Math.sign(b) * (38 + (Math.abs(b) - 56) * 0.75) : 0.7 * b;
+  const [px, py] = capPt(al), [qx, qy] = P(ring ? 150 : 176, b), [rx, ry] = P(96, b);
+  return { d: `M${px},${py} L${qx},${qy} L${rx},${ry}`, ring };
+};
+const rays = [-80, -74, -66, -58, -48, -40, -32, -24, -16, -8, 0, 8, 16, 24, 32, 40, 48, 58, 66, 74, 80].map((b, i) => ({ ...ray(b), i }));
+const ticks = Array.from({ length: 17 }, (_, i) => {
+  const b = -80 + 10 * i;
+  const major = b === 0 || Math.abs(b) === 50 || Math.abs(b) === 80;
+  const [x1, y1] = P(322, b); const [x2, y2] = P(major ? 344 : 334, b);
+  return { x1, y1, x2, y2, major, edge: Math.abs(b) === 80 };
 });
+// arcs for curved labels (left → right, clockwise on screen)
+const arcPath = (r: number, b0: number, b1: number) => {
+  const [x1, y1] = P(r, b0), [x2, y2] = P(r, b1);
+  return `M${x1},${y1} A${r},${r} 0 0 1 ${x2},${y2}`;
+};
+const [l50x, l50y] = P(358, 50), [r50x, r50y] = P(358, -50);
 const beamColors = ['#ff2d20', '#00ff99', '#3a6bff', '#00e1ff', '#ff3cc8', '#ffe135']; // R G B C M Y
 const smpte = ['#c0c0c0', '#c0c000', '#00c0c0', '#00c000', '#c000c0', '#c00000', '#0000c0'];
 const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#101018', '#c0c0c0'];
@@ -305,27 +353,54 @@ const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#10101
         </g>
       </g>
 
-      <!-- ══ H · The eye: light wraps 180°+ ════════════════════════════ -->
+      <!-- ══ H · The eye: Gaze-Cone eyepiece + Periphery Ring, 160° per eye ══ -->
       <g data-k="H" opacity="0">
         <ellipse cx={EX} cy={EY - 80} rx="520" ry="360" fill={`url(#${id}-bloom)`} opacity=".5" data-k="H-bloom" />
-        <g data-k="H-shells" class="ink thin" stroke="#00ff99">
-          <path class="draw" pathLength="1" d={arc(150)} stroke-opacity=".28" />
-          <path class="draw" pathLength="1" d={arc(190)} stroke-opacity=".38" />
-          <path class="draw" pathLength="1" d={arc(232)} stroke-opacity=".48" />
+        <defs>
+          <path id={`${id}-lbl-ep`} d={arcPath(190, -48, 48)} />
+          <path id={`${id}-lbl-rr`} d={arcPath(200, 50, 90)} />
+          <path id={`${id}-lbl-rl`} d={arcPath(200, -90, -50)} />
+          <path id={`${id}-lbl-dr`} d={arcPath(170, 56, 82)} />
+          <path id={`${id}-lbl-dl`} d={arcPath(170, -82, -56)} />
+        </defs>
+        <g data-k="H-zones">
+          <path d={sector(-50, 50, 92, 176)} fill="#00ff99" fill-opacity=".07" />
+          <path d={sector(55, 80, 92, 160)} fill="#00e1ff" fill-opacity=".06" />
+          <path d={sector(-80, -55, 92, 160)} fill="#00e1ff" fill-opacity=".06" />
         </g>
-        <g data-k="H-rays" class="ink thin" stroke="#00ff99">
-          {rays.map((r) => <line class="draw ray" pathLength="1" x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} stroke-opacity={0.22 + 0.25 * Math.sin((r.i / (RAYS - 1)) * Math.PI)} />)}
+        <g data-k="H-rays" class="ink thin">
+          {rays.map((r) => <path class="draw ray" pathLength="1" d={r.d} stroke={r.ring ? '#00e1ff' : '#00ff99'} stroke-opacity={r.ring ? 0.4 : 0.22 + 0.25 * Math.cos((Math.abs(r.i - 10) / 10) * (Math.PI / 2))} />)}
         </g>
         <g data-k="H-photons" class="photons" stroke="#eafff4">
-          {rays.map((r) => <line pathLength="1" x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} />)}
+          {rays.map((r) => <path pathLength="1" d={r.d} fill="none" />)}
         </g>
-        <path data-k="H-dome" class="draw glow" pathLength="1" d={arc(278)} fill="none" stroke="#00ff99" stroke-width="7" stroke-linecap="round" />
+        <!-- Gaze-Cone eyepiece, E2–E5 -->
+        <g data-k="H-optics" class="ink thin" stroke="#00ff99">
+          {eyepiece.map((d, i) => <path class="draw" pathLength="1" d={d} fill="#00ff99" fill-opacity={0.05 + i * 0.012} stroke-opacity={0.55 + i * 0.1} />)}
+        </g>
+        <!-- Periphery Ring, 55–80° -->
+        <g data-k="H-ring" class="ink thin" stroke="#00e1ff">
+          {ring.map((d) => <path class="draw" pathLength="1" d={d} fill="#00e1ff" fill-opacity=".08" stroke-opacity=".85" />)}
+          {facets.map((f) => <line class="draw" pathLength="1" x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2} stroke-opacity=".5" />)}
+        </g>
+        <!-- faceplate cap, field element E1 -->
+        <path data-k="H-dome" class="draw glow" pathLength="1" d={capPath} fill="none" stroke="#00ff99" stroke-width="7" stroke-linecap="round" />
         <path data-k="H-fovea" d="" fill="none" stroke="#eafff4" stroke-width="12" stroke-linecap="round" class="glow" opacity="0" />
         <g data-k="H-ticks" class="ink thin" stroke="#6a7fa8">
-          {ticks.map((t) => <line class="draw" pathLength="1" x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke-opacity={t.major ? 0.9 : 0.5} />)}
+          {ticks.map((t) => <line class="draw" pathLength="1" x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={t.edge ? '#00e1ff' : t.major ? '#00ff99' : undefined} stroke-opacity={t.major ? 0.9 : 0.5} />)}
         </g>
-        <text data-k="H-fov" x={EX} y="84" class="mono-svg" text-anchor="middle" fill="#00ff99" opacity="0">FOV 0°</text>
-        <text data-k="H-core" x="0" y="0" class="mono-svg small" text-anchor="middle" fill="#eafff4" opacity="0">full-res core</text>
+        <g data-k="H-labels" opacity="0" class="lbl">
+          <text x={EX} y="204" class="mono-svg small" text-anchor="middle" fill="#00ff99" fill-opacity=".85">FACEPLATE · E1</text>
+          <text class="mono-svg small" fill="#eafff4"><textPath href={`#${id}-lbl-ep`} startOffset="50%" text-anchor="middle">GAZE-CONE EYEPIECE · ±50° SHARP</textPath></text>
+          <text class="mono-svg tiny" fill="#00e1ff"><textPath href={`#${id}-lbl-rr`} startOffset="50%" text-anchor="middle">PERIPHERY RING</textPath></text>
+          <text class="mono-svg tiny" fill="#00e1ff"><textPath href={`#${id}-lbl-rl`} startOffset="50%" text-anchor="middle">PERIPHERY RING</textPath></text>
+          <text class="mono-svg tiny" fill="#00e1ff" fill-opacity=".8"><textPath href={`#${id}-lbl-dr`} startOffset="50%" text-anchor="middle">55–80°</textPath></text>
+          <text class="mono-svg tiny" fill="#00e1ff" fill-opacity=".8"><textPath href={`#${id}-lbl-dl`} startOffset="50%" text-anchor="middle">55–80°</textPath></text>
+          <text x={l50x + 6} y={l50y} class="mono-svg tiny" fill="#00ff99">50°</text>
+          <text x={r50x - 6} y={r50y} class="mono-svg tiny" text-anchor="end" fill="#00ff99">50°</text>
+        </g>
+        <text data-k="H-fov" x={EX} y="76" class="mono-svg" text-anchor="middle" fill="#00ff99" opacity="0">FOV 0°</text>
+        <text data-k="H-core" x="0" y="0" class="mono-svg small lbl" text-anchor="middle" fill="#eafff4" opacity="0">full-res core</text>
         <!-- eye -->
         <circle cx={EX} cy={EY} r="88" fill="#04050a" stroke="#6a7fa8" stroke-width="2" />
         <g data-k="H-gaze" transform={`rotate(0 ${EX} ${EY})`}>
@@ -397,9 +472,11 @@ const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#10101
   .film :global(.draw) { stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--d, 1)); }
   .film :global(.glass) { fill: none; stroke: #2a3860; stroke-width: 1.5; }
   .film :global(.xray) { fill: none; stroke: #00ff99; stroke-opacity: .35; stroke-width: 1.2; stroke-dasharray: 5 6; }
-  .film :global(.photons line) { stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: .035 .14; stroke-dashoffset: var(--flow, 0); opacity: var(--po, 0); }
+  .film :global(.photons line), .film :global(.photons path) { stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: .035 .14; stroke-dashoffset: var(--flow, 0); opacity: var(--po, 0); }
   .film :global(.mono-svg) { font-family: var(--crtvr-font-mono); font-size: 22px; letter-spacing: .28em; }
   .film :global(.mono-svg.small) { font-size: 13px; letter-spacing: .2em; }
+  .film :global(.mono-svg.tiny) { font-size: 11px; letter-spacing: .16em; }
+  .film :global(.lbl text), .film :global(text.lbl) { paint-order: stroke; stroke: #04050a; stroke-width: 4px; stroke-linejoin: round; }
 
   /* glow is a full-tier luxury */
   :global(html[data-vfx-tier='full']) .film :global(.glow) { filter: var(--glow-url); }
@@ -487,7 +564,7 @@ const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#10101
       E: $('E'), F: $('F'), Fm: $('F-move'), Fb: $('F-beams'), Fbl: $('F-bloom'), Fs: $('F-spot'),
       beams: Array.from({ length: 6 }, (_, i) => $(`F-beam${i}`)),
       G: $('G'), Gz: $('G-zoom'),
-      H: $('H'), Hs: $('H-shells'), Hr: $('H-rays'), Hp: $('H-photons'), Hd: $('H-dome'), Hf: $('H-fovea'),
+      H: $('H'), Hs: $('H-optics'), Hring: $('H-ring'), Hz: $('H-zones'), Hl: $('H-labels'), Hr: $('H-rays'), Hp: $('H-photons'), Hd: $('H-dome'), Hf: $('H-fovea'),
       Ht: $('H-ticks'), Hfov: $('H-fov'), Hcore: $('H-core'), Hg: $('H-gaze'), Hbl: $('H-bloom'),
       flash: $('flash'),
       panels: Array.from({ length: 5 }, (_, i) => $(`E-p${i}`)),
@@ -504,10 +581,18 @@ const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#10101
     const sc = (n: Element, cx: number, cy: number, sx: number, sy: number) =>
       n.setAttribute('transform', `translate(${cx} ${cy}) scale(${sx.toFixed(4)} ${sy.toFixed(4)}) translate(${-cx} ${-cy})`);
     const tri = (x: number) => 1 - Math.abs(((x % 2) + 2) % 2 - 1); // 0→1→0 triangle wave
-    const polar = (r: number, deg: number) => {
-      const a = (deg * Math.PI) / 180;
-      return [EX + r * Math.cos(a), EY + r * Math.sin(a)];
+    // β = view angle from the forward axis (gaze straight up = 0°)
+    const pol = (r: number, b: number) => {
+      const a = (b * Math.PI) / 180;
+      return [EX + r * Math.sin(a), EY - r * Math.cos(a)];
     };
+    // shallow concave faceplate cap (must match the build-time geometry)
+    const CAP_R = 680, CAP_CY = 898;
+    const capR = (al: number) => {
+      const c = Math.cos((al * Math.PI) / 180), k = EY - CAP_CY;
+      return k * c + Math.sqrt(k * k * c * c - k * k + CAP_R * CAP_R);
+    };
+    const capPt = (al: number) => pol(capR(al), al);
 
     function render(p: number) {
       // ── cue
@@ -575,29 +660,33 @@ const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#10101
       const tx2 = lerp(870, EX, z), ty2 = lerp(440, EY, z);
       el.Gz.setAttribute('transform', `translate(${tx2.toFixed(1)} ${ty2.toFixed(1)}) scale(${s.toFixed(4)}) translate(-870 -440)`);
 
-      // ── H · the eye: monocentric shells, the dome, light from 180°+
+      // ── H · the eye: faceplate cap, Gaze-Cone eyepiece, Periphery Ring, 160° per eye
       op(el.H, seg(p, 0.835, 0.858));
-      d(el.Hs, easeOut(seg(p, 0.845, 0.89)));
       d(el.Hd, easeInOut(seg(p, 0.842, 0.885)));
+      d(el.Hs, easeOut(seg(p, 0.845, 0.89)));
+      d(el.Hring, easeOut(seg(p, 0.858, 0.9)));
+      op(el.Hz, seg(p, 0.86, 0.9));
       d(el.Hr, easeOut(seg(p, 0.86, 0.91)));
       d(el.Ht, easeOut(seg(p, 0.87, 0.915)));
-      const fov = Math.round(200 * easeOut(seg(p, 0.87, 0.925)));
-      el.Hfov.textContent = fov >= 180 ? 'FOV 180°+' : `FOV ${fov}°`;
+      op(el.Hl, seg(p, 0.878, 0.902));
+      const fov = Math.round(160 * easeOut(seg(p, 0.87, 0.925)));
+      el.Hfov.textContent = fov >= 160 ? 'FOV 160° PER EYE' : `FOV ${fov}°`;
       op(el.Hfov, seg(p, 0.868, 0.88));
       const photons = quality === 'full' ? seg(p, 0.895, 0.92) : 0;
       el.Hp.style.setProperty('--po', photons.toFixed(3));
       el.Hp.style.setProperty('--flow', (-p * 34).toFixed(3));
       op(el.Hbl, 0.25 + 0.35 * seg(p, 0.86, 0.92));
 
-      // ── I · look anywhere: the gaze roams, the core follows, the field is already lit
+      // ── I · look anywhere: the eye roams the ±50° gaze cone, the core follows on the faceplate
       const g = seg(p, 0.905, 1);
-      const gaze = -90 + 78 * Math.sin(g * Math.PI * 2 * 1.25) * easeOut(seg(g, 0, 0.15));
-      el.Hg.setAttribute('transform', `rotate(${(gaze + 90).toFixed(2)} ${EX} ${EY})`);
-      const [fx1, fy1] = polar(278, gaze - 11), [fx2, fy2] = polar(278, gaze + 11);
-      el.Hf.setAttribute('d', `M${fx1.toFixed(1)},${fy1.toFixed(1)} A278,278 0 0 1 ${fx2.toFixed(1)},${fy2.toFixed(1)}`);
+      const gaze = 46 * Math.sin(g * Math.PI * 2 * 1.25) * easeOut(seg(g, 0, 0.15));
+      el.Hg.setAttribute('transform', `rotate(${gaze.toFixed(2)} ${EX} ${EY})`);
+      const al = 0.7 * gaze; // the eyepiece maps cap angle α = 0.7β into view angle β
+      const [fx1, fy1] = capPt(al - 4), [fx2, fy2] = capPt(al + 4);
+      el.Hf.setAttribute('d', `M${fx1.toFixed(1)},${fy1.toFixed(1)} A${CAP_R},${CAP_R} 0 0 1 ${fx2.toFixed(1)},${fy2.toFixed(1)}`);
       const coreOn = seg(p, 0.9, 0.925);
       op(el.Hf, coreOn);
-      const [lx, ly] = polar(352, gaze);
+      const [lx, ly] = pol(capR(al) + 44, al);
       el.Hcore.setAttribute('x', lx.toFixed(1)); el.Hcore.setAttribute('y', (ly + 4).toFixed(1));
       op(el.Hcore, coreOn * 0.9);
 

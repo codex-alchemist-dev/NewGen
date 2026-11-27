@@ -36,7 +36,7 @@ const glyphs: Record<string, string> = {
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 <nav class="act-rail" aria-label="Acts" data-act-rail>
-  <button class="act-rail__toggle" type="button" aria-expanded="false" aria-controls="act-rail-list" data-rail-toggle>
+  <button class="act-rail__toggle" type="button" aria-expanded="false" aria-controls="act-rail-list" aria-label={`Acts menu, current: ${acts[0].title}`} data-rail-toggle>
     <svg class="act-rail__ico" viewBox="0 0 24 24" aria-hidden="true" data-rail-ico set:html={glyphs[acts[0].transition] ?? glyphs.default}></svg>
     <span class="act-rail__cur"><b data-rail-num>{pad(acts[0].number)}</b> <span data-rail-name>{acts[0].title}</span></span>
     <span class="act-rail__caret" aria-hidden="true"></span>
@@ -173,6 +173,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       links.forEach((el) => el.removeAttribute('aria-current'));
       a.setAttribute('aria-current', 'true');
       num.textContent = a.dataset.num ?? '';
+      toggle.setAttribute('aria-label', `Acts menu, current: ${a.dataset.name ?? ''}`);
       name.textContent = a.dataset.name ?? '';
       ico.innerHTML = a.querySelector('svg')?.innerHTML ?? '';
     };

@@ -88,7 +88,7 @@ export const acts: ActDef[] = [
   },
   {
     number: 3, id: 'velocity', title: 'Velocity', transition: 'warp', tagline: 'One screen. Thousands of refreshes a second.', sections: [
-      { id: 'vari-refresh', title: 'Vari-refresh', interactive: 'skip-coarseness-hz', kind: 'stats', eyebrow: 'Vari-refresh', headline: 'The less it draws, the faster it gets.', footnote: 'Design targets, to be recomputed at 24K.', body: [
+      { id: 'vari-refresh', title: 'Vari-refresh', interactive: 'skip-coarseness-hz', kind: 'stats', eyebrow: 'Vari-refresh', headline: 'The less it draws, the faster it gets.', footnote: 'Figures from the NewGen scan model. Design targets, to be recomputed at 24K.', body: [
         "CRT-VR refreshes the whole screen in a single raster pass. Where detail isn't needed, the beam takes bigger jumps, so the frame finishes sooner and the screen refreshes faster. 2,400+ Hz when you look into a corner, where the high-res region is clipped to about a quarter."], items: [
         { value: '226 Hz', label: 'Minimum' },
         { value: '800+ Hz', label: 'Aggressive foveation' },
@@ -192,7 +192,7 @@ export const acts: ActDef[] = [
       { id: 'cone-in-cone-out', title: 'Cone in, cone out', interactive: 'flat-vs-cone', eyebrow: 'Cone', headline: 'Born a cone.', body: [
         "A flat panel has to stretch a rectangle around your eye, which is where distortion and the screen-in-a-box feel come from. A CRT's light already leaves as a cone. CRT-VR's optics simply turn that cone around to wrap your eye. The panel the industry tried to leave behind was simply ahead of its time."] },
       { id: 'gaze-cone-optics', title: 'Gaze-Cone optics', interactive: 'rotate-eye', eyebrow: 'Gaze-Cone', headline: 'Sharp across the cone your eye sweeps.', body: [
-        'A curved-field aspheric eyepiece per eye, uniformly sharp across the ±50° cone the eye can rotate through, with softening only out in peripheral vision to 160° per eye.',
+        'A curved-field aspheric eyepiece per eye, uniformly sharp across the ±50° cone the eye can rotate through, with softening only in peripheral vision.',
         'Beyond the cone, a thin Periphery Ring covers 55–80°, giving 160° per eye, where your vision is peripheral anyway.'] },
       { id: 'faceplate-is-first-lens', title: 'The faceplate is the first lens', eyebrow: 'First lens', headline: 'One less lens.', body: [
         'The dome faceplate doubles as the first optical element.'] },
@@ -231,7 +231,7 @@ export const acts: ActDef[] = [
       { id: 'heat-and-power', title: 'Heat and power', eyebrow: 'Power', headline: 'Power only where there\'s light.', body: [
         'Power is drawn only where pixels are lit.'] },
       { id: 'weight-and-balance', title: 'Weight and balance', eyebrow: 'Weight', headline: 'Balanced on your head.', body: [
-        'Design target: about 300 g per eye. The glass cap is about 140 g, the gun and yoke about 100 g, and the optics about 60 g. The side-fired guns run back toward the temples, so the mass sits close to the head\'s center. The full-stack weight is open question №1.'] },
+        'Design target: about 300 g per eye for the panel module (glass cap about 140 g, side-fired gun and deflection about 100 g, optics about 60 g). The side-fired guns run back toward the temples, so the mass sits close to the head\'s center. The full-stack weight is open question №1.'] },
     ],
   },
   {
@@ -241,7 +241,7 @@ export const acts: ActDef[] = [
       { id: 'vacuum-lifetime', title: 'Vacuum lifetime', eyebrow: 'Vacuum', headline: 'A vacuum that stays a vacuum.', body: [
         'Non-evaporable getters (NEG) keep the vacuum by soaking up gas over the panel\'s whole life, the same approach long-life vacuum tubes and FEDs use. Getter capacity against outgassing is open question №9.'] },
       { id: 'durability', title: 'Durability', eyebrow: 'Durability', headline: 'Tough by shape.', body: [
-        'The shallow cap bows into the vacuum, so it carries the vacuum load in tension, like a membrane, at about 0.5 MPa. Chemically strengthened glass and vacuum-side ribs outside the active area hold it.'] },
+        'The shallow cap bows into the vacuum, so it carries the vacuum load in tension, like a membrane, at about 1–2 MPa, far below strengthened glass's limit. Chemically strengthened glass and vacuum-side ribs outside the active area hold it.'] },
     ],
   },
   {

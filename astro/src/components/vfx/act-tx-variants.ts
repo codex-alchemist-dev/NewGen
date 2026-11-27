@@ -851,9 +851,10 @@ export function timelapseVariant(): VariantImpl {
 }
 
 /* ═══ Act 11 · Certified · seals ═════════════════════════════
- * Certification seals stamp in one after another, each landing with a
+ * Certification seals stamp in one after another, each carrying the
+ * certifier's official mark (crt-vr-cert-marks.ts), each landing with a
  * shock ring and a kick, then a shimmer runs across the whole set. */
-export function sealsVariant(labels: string[]): VariantImpl {
+export function sealsVariant(labels: string[], marks: { src: string; dark: boolean }[][] = []): VariantImpl {
   const items = labels.length ? labels : ['Certified'];
   let seals: { g: SVGGElement; ring: SVGElement; x: number; y: number; r: number; shock: SVGElement }[] = [];
   let root: SVGGElement, shine: SVGElement, shineClip: SVGElement;
@@ -893,9 +894,17 @@ export function sealsVariant(labels: string[]): VariantImpl {
         const t = mk('text', { 'font-family': mono(), 'font-size': Math.max(7, r * 0.13), fill: '#e4e8f0', 'letter-spacing': 1 }, sg);
         const tp = mk('textPath', { href: `#${pid}`, startOffset: '0', textLength: (2 * Math.PI * rr * 0.94).toFixed(1), lengthAdjust: 'spacingAndGlyphs' }, t);
         tp.textContent = txt.toUpperCase() + ' · ';
-        // center: hexagon with a check
-        mk('polygon', { points: hexPts(0, 0, r * 0.34), fill: 'none', stroke: '#ffffff', 'stroke-width': 1.6 }, sg);
-        mk('path', { d: `M${-r * 0.14},${r * 0.01} L${-r * 0.03},${r * 0.12} L${r * 0.16},${-r * 0.12}`, fill: 'none', stroke: '#ffffff', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, sg);
+        const m = marks[i] ?? [];
+        if (m.length) {
+          // center: the certifier's official mark on a sticker disc
+          mk('circle', { r: r * 0.58, fill: m.every((k) => k.dark) ? '#0d111c' : '#f4f6fa', stroke: '#ffffff', 'stroke-width': 1.2 }, sg);
+          const bw = r * 0.9, bh = r * 0.62, w = bw / m.length;
+          m.forEach((k, j) => mk('image', { href: k.src, x: -bw / 2 + j * w, y: -bh / 2, width: w, height: bh, preserveAspectRatio: 'xMidYMid meet' }, sg));
+        } else {
+          // center: hexagon with a check
+          mk('polygon', { points: hexPts(0, 0, r * 0.34), fill: 'none', stroke: '#ffffff', 'stroke-width': 1.6 }, sg);
+          mk('path', { d: `M${-r * 0.14},${r * 0.01} L${-r * 0.03},${r * 0.12} L${r * 0.16},${-r * 0.12}`, fill: 'none', stroke: '#ffffff', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, sg);
+        }
         const shock = mk('circle', { cx: x, cy: y, fill: 'none', stroke: '#ffffff', 'stroke-width': 1.5, class: 'tx-add' }, g);
         mk('circle', { cx: x, cy: y, r }, shineClip);
         seals.push({ g: sg, ring, x, y, r, shock });
@@ -1054,13 +1063,13 @@ export function raceVariant(): VariantImpl {
   };
 }
 
-export const BESPOKE: Record<string, (labels: string[]) => VariantImpl> = {
+export const BESPOKE: Record<string, (labels: string[], marks?: { src: string; dark: boolean }[][]) => VariantImpl> = {
   flare: () => flareVariant(),
   whip: () => whipVariant(),
   blueprint: () => blueprintVariant(),
   cone: () => coneVariant(),
   shield: () => shieldVariant(),
   timelapse: () => timelapseVariant(),
-  seals: (l) => sealsVariant(l),
+  seals: (l, m) => sealsVariant(l, m),
   race: () => raceVariant(),
 };

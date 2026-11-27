@@ -2,8 +2,9 @@
 /**
  * CRT-VR · Act 11 · "Certified, top to bottom." — the badge wall.
  *
- * Original NewGen badge tiles, text only: no certifier logos or marks. Each tile
- * names the target certification and a one-word category. Tiles rise in on a
+ * NewGen badge tiles carrying each certifier's official mark (src/data/crt-vr-cert-marks.ts,
+ * sources in src/assets/crt-vr/certs/README.md). Each tile names the target
+ * certification and a one-word category. Tiles rise in on a
  * stagger and a foil shimmer sweeps across each one; the foil rim drifts and
  * follows the pointer on hover.
  *
@@ -12,6 +13,7 @@
  */
 import './tokens.css';
 import type { VfxSlotProps } from '../../../lib/motion/types';
+import { CERT_MARKS } from '../../../data/crt-vr-cert-marks';
 
 interface Props extends Partial<VfxSlotProps> { id?: string; items?: { label: string }[] }
 const { id = 'crtvr-certs', items = [] } = Astro.props;
@@ -28,7 +30,7 @@ const SPLIT: Record<string, { cat: string; top?: string; main: string; big?: str
   'Calman Verified': { cat: 'Calibration', main: 'Calman', sub: 'Verified' },
   'TÜV Rheinland Low Blue Light (Hardware) + Eye Comfort': { cat: 'Comfort', top: 'TÜV Rheinland', main: 'Low Blue Light', sub: 'Hardware + Eye Comfort' },
 };
-const tiles = items.map((i) => ({ label: i.label, ...(SPLIT[i.label] ?? { cat: 'Certified', main: i.label }) }));
+const tiles = items.map((i) => ({ label: i.label, ...(SPLIT[i.label] ?? { cat: 'Certified', main: i.label }), marks: CERT_MARKS[i.label] ?? [] }));
 ---
 <div class="crtvr cbw" id={id} data-cbw>
   <ul class="cbw-grid">
@@ -39,6 +41,11 @@ const tiles = items.map((i) => ({ label: i.label, ...(SPLIT[i.label] ?? { cat: '
             <span class="cbw-cat">{t.cat}</span>
             <span class="cbw-idx">№{String(n + 1).padStart(2, '0')}</span>
           </div>
+          {t.marks.length > 0 && (
+            <div class:list={['cbw-mark', { 'cbw-mark--dark': t.marks.every((m) => m.dark) }]} aria-hidden="true">
+              {t.marks.map((m) => <img src={m.src} alt="" loading="lazy" decoding="async" style={m.zoom ? `transform:scale(${m.zoom})` : undefined} />)}
+            </div>
+          )}
           <div class="cbw-name" aria-hidden="true">
             {t.top && <span class="cbw-top">{t.top}</span>}
             <span class="cbw-main">{t.main}</span>
@@ -79,7 +86,7 @@ const tiles = items.map((i) => ({ label: i.label, ...(SPLIT[i.label] ?? { cat: '
 
   .cbw-face {
     position: relative; overflow: hidden; border-radius: 9px; min-height: 210px; height: 100%;
-    display: grid; grid-template-rows: auto 1fr auto; gap: 10px; padding: 16px 18px 14px;
+    display: grid; grid-template-rows: auto auto 1fr auto; gap: 10px; padding: 16px 18px 14px;
     background:
       radial-gradient(120% 90% at var(--mx) var(--my), rgba(240, 244, 255, .07), transparent 60%),
       repeating-linear-gradient(135deg, rgba(240,244,255,.025) 0 1px, transparent 1px 7px),
@@ -87,6 +94,14 @@ const tiles = items.map((i) => ({ label: i.label, ...(SPLIT[i.label] ?? { cat: '
   }
   .cbw-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--crtvr-text-dim); }
   .cbw-cat { color: var(--crtvr-white); border: 1px solid var(--crtvr-line-bright); padding: 3px 8px; border-radius: 999px; }
+  /* the official mark, on a sticker plate so dark-ink marks read on the dark tile */
+  .cbw-mark {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    height: 72px; padding: 8px 12px; border-radius: 6px;
+    background: #f4f6fa; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 4px 14px rgba(0,0,0,.35);
+  }
+  .cbw-mark--dark { background: #0d111c; box-shadow: inset 0 0 0 1px var(--crtvr-line-bright); }
+  .cbw-mark img { display: block; min-width: 0; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; flex: 0 1 auto; }
   .cbw-name { display: grid; align-content: center; gap: 2px; }
   .cbw-top { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--crtvr-text-dim); }
   .cbw-main { font-family: var(--crtvr-font-display); font-size: clamp(30px, 3.2vw, 40px); line-height: .95; color: var(--crtvr-white); letter-spacing: .02em; }

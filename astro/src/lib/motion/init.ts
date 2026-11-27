@@ -7,7 +7,9 @@ let started = false;
 export function initMotion(): void {
   if (started || typeof window === 'undefined') return;
   started = true;
-  const { reducedMotion } = vfxQuality.getSnapshot();
+  // Re-assert the tier attribute on first load (the store also does this at module load).
+  const { reducedMotion, tier } = vfxQuality.getSnapshot();
+  document.documentElement.dataset.vfxTier = tier;
   startSmoothScroll(reducedMotion);
   vfxQuality.start();
 }

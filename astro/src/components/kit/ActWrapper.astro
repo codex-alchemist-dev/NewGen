@@ -1,0 +1,21 @@
+---
+import Slot from './Slot.astro';
+import type { TransitionVariant } from '../../data/slots';
+
+interface Props {
+  id: string;
+  number: number;
+  /** Act transition variant: default | eye | warp | six-beam | rays. */
+  transition?: TransitionVariant;
+}
+const { id, number, transition = 'default' } = Astro.props;
+const num = String(number).padStart(2, '0');
+---
+<section class="act" id={id} data-act={num} data-transition={transition}>
+  <Slot id={`act-${num}/transition`} kind="vfx" note={`variant: ${transition}`} />
+  <div class="ng-grid" aria-hidden="true"></div>
+  <Slot id={`act-${num}/background`} kind="vfx" />
+  <div class="act__inner">
+    <slot />
+  </div>
+</section>

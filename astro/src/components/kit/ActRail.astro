@@ -1,0 +1,27 @@
+---
+import { acts } from '../../data/crt-vr';
+
+/* Fixed progress rail. A small script marks the act in view. */
+---
+<nav class="act-rail" aria-label="Acts">
+  <ol>
+    {acts.map((a) => (
+      <li><a href={`#${a.id}`} data-rail={a.id}><span>{String(a.number).padStart(2, '0')}</span> {a.title}</a></li>
+    ))}
+  </ol>
+</nav>
+<script>
+  const links = new Map<string, HTMLElement>();
+  document.querySelectorAll<HTMLAnchorElement>('[data-rail]').forEach((a) => links.set(a.dataset.rail!, a));
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        links.forEach((el) => el.removeAttribute('aria-current'));
+        links.get(e.target.id)?.setAttribute('aria-current', 'true');
+      });
+    },
+    { rootMargin: '-45% 0px -45% 0px' },
+  );
+  document.querySelectorAll('.act').forEach((s) => io.observe(s));
+</script>

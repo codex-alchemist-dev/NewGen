@@ -1,0 +1,20 @@
+---
+/** Cells are strings, or booleans rendered as a check or dash. */
+interface Row { label: string; cells: (string | boolean)[] }
+interface Props { caption?: string; columns: string[]; rows: Row[] }
+const { caption, columns, rows } = Astro.props;
+---
+<div class="comparison" role="region" aria-label={caption ?? 'Comparison'} tabindex="0">
+  <table>
+    {caption && <caption class="eyebrow">{caption}</caption>}
+    <thead><tr><th scope="col"></th>{columns.map((c) => <th scope="col">{c}</th>)}</tr></thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr>
+          <th scope="row">{r.label}</th>
+          {r.cells.map((c) => <td>{c === true ? '✓' : c === false ? '—' : c}</td>)}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

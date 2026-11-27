@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ActRail from '../../../components/kit/ActRail.astro';
+import {
+  ActWrapper, ActTitle, Section, Slot, StatCard, Badge, SpecTable, ComparisonTable, CertificationWall, Footnote, Callout,
+} from '../../../components/kit';
+import { acts } from '../../../data/crt-vr';
+
+const placeholder = '[copy pending]';
+---
+<BaseLayout
+  title="SONY CRT-VR — 2nd® Gen preview"
+  description="Preview scaffold for the 2nd® Gen CRT-VR page. Placeholder copy."
+>
+  <div class="page-chrome">
+    <p class="eyebrow">NewGen × Sony · 2nd® Gen preview · placeholder copy</p>
+  </div>
+  <ActRail />
+  <main>
+    {acts.map((act) => (
+      <ActWrapper id={act.id} number={act.number} transition={act.transition}>
+        <ActTitle number={act.number} title={act.title} subtitle={act.tagline} />
+        {act.sections.map((s) => (
+          <Section id={s.id} title={s.title}>
+            {s.kind === 'hero' && (
+              <>
+                <Badge kind="trl" label="TRL 2–3" />
+                <p>{placeholder}</p>
+              </>
+            )}
+            {s.kind !== 'stats' && s.kind !== 'badges' && s.kind !== 'comparison' && s.kind !== 'specs' && (
+              <p>{placeholder}</p>
+            )}
+            {s.kind === 'stats' && (
+              <div class="stat-grid">
+                {(s.items ?? []).map((i) => <StatCard label={i.label} />)}
+              </div>
+            )}
+            {s.kind === 'badges' && (
+              <CertificationWall items={s.items ?? []} footnote={s.footnote} />
+            )}
+            {s.kind === 'comparison' && (
+              <ComparisonTable caption="Versus" columns={s.columns ?? []} rows={(s.items ?? []).map((i) => ({ label: i.label, cells: i.cells ?? [] }))} />
+            )}
+            {s.kind === 'specs' && <SpecTable caption="Full specs" rows={[]} />}
+            {s.visual && <Slot id={s.visual} kind="visual" />}
+            {s.interactive && <Slot id={s.interactive} kind="interactive" />}
+          </Section>
+        ))}
+      </ActWrapper>
+    ))}
+  </main>
+</BaseLayout>
+<style>
+  .page-chrome { position: sticky; top: 0; z-index: 10; padding: var(--s-2) var(--gutter); background: color-mix(in srgb, var(--bg) 85%, transparent); }
+  .stat-grid { display: grid; gap: var(--s-2); grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin: var(--s-3) 0; }
+  main { padding-right: 0; }
+</style>

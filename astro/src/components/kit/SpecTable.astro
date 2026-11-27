@@ -1,0 +1,13 @@
+---
+interface Row { label: string; value: string; note?: string }
+interface Props { caption?: string; rows: Row[] }
+const { caption, rows } = Astro.props;
+---
+<table class="spec-table">
+  {caption && <caption class="eyebrow">{caption}</caption>}
+  <tbody>
+    {rows.map((r) => (
+      <tr><th scope="row">{r.label}</th><td>{r.value}{r.note && <small> {r.note}</small>}</td></tr>
+    ))}
+  </tbody>
+</table>

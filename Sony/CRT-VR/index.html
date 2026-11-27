@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SONY CRT-VR — Vector-Scanned Miniature CRT for VR</title>
+<title>SONY CRT-VR — Random-Access Miniature CRT for VR</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Noto+Serif+Display:ital,wght@0,200;0,300;1,200;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -992,13 +992,13 @@
   <div class="header-content">
     <div class="sony-mark">SONY SEMICONDUCTOR SOLUTIONS — ADVANCED DISPLAY RESEARCH</div>
     <div class="main-title">SONY <span class="glow-pulse">CRT-VR</span></div>
-    <div class="subtitle">Vector-Scanned Miniature Cathode Ray Tube for Virtual Reality</div>
+    <div class="subtitle">Random-Access Beam Miniature Cathode Ray Tube for Virtual Reality</div>
     <div class="keynote-line">CATHODE. RAY. TUBE. — <em>THE IMMERSIVE PHOTON-NATIVE DISPLAY</em></div>
     <div class="header-tags">
       <span class="tag warn">TRL 2–3 — THEORY / DESIGN STUDY</span>
       <span class="tag hot">SCHOTTKY ZrO/W GUN</span>
       <span class="tag hot">ELECTROSTATIC MEMS DEFLECTION</span>
-      <span class="tag hot">VECTOR / RANDOM-ACCESS SCAN</span>
+      <span class="tag hot">RANDOM-ACCESS SKIP-SCAN</span>
       <span class="tag">QD NANOPHOSPHOR · ALD-PASSIVATED</span>
       <span class="tag">RGBMCY 6-PRIMARY</span>
       <span class="tag">WAFER-LEVEL VACUUM + NEG</span>
@@ -1030,8 +1030,8 @@
     </div>
     <div class="spec-cell">
       <div class="spec-key">Addressing Model</div>
-      <div class="spec-val big accent2">VECTOR</div>
-      <div class="spec-sub">Random-access beam steering (oscilloscope / Vectrex lineage). No fixed raster, no fixed grid — resolution is a scan plan, not a panel property.</div>
+      <div class="spec-val big accent2">SKIP-SCAN</div>
+      <div class="spec-sub">Random-access beam steering. The beam reads an ordinary rendered framebuffer, jumps past the dots foveation skips, and never dwells on them. No fixed raster, no fixed grid — resolution is a scan plan, not a panel property.</div>
     </div>
     <div class="spec-cell">
       <div class="spec-key">Refresh Ceiling</div>
@@ -1066,7 +1066,7 @@
     <div class="spec-cell wide">
       <div class="spec-key">The Structural Advantage</div>
       <div class="spec-val">Hardware-Native Foveated Rendering</div>
-      <div class="spec-sub">Fixed-grid panels must refresh every physical pixel every frame — foveation there saves GPU only. A vector-scanned beam physically skips low-priority space: peripheral resolution savings convert <span class="hl">directly into central refresh-rate gains</span>. No flat panel can replicate this at the hardware level.</div>
+      <div class="spec-sub">Fixed-grid panels must refresh every physical pixel every frame — foveation there saves GPU only. A skip-scanning beam physically jumps over low-priority dots: peripheral resolution savings convert <span class="hl">directly into central refresh-rate gains</span>. No flat panel can replicate this at the hardware level.</div>
     </div>
   </div>
 </div>
@@ -1143,7 +1143,7 @@
       <circle cx="866" cy="170" r="5" fill="#6a7fa8"/>
       <text x="852" y="212" font-family="DM Mono, monospace" font-size="9" letter-spacing="1.5" fill="#6a7fa8">EYE</text>
     </svg>
-    <div class="tube-caption">Fig. 01 — Schematic, not to scale. One assembly per eye. Beam paths animated for illustration; real scan order is the vector scheduler's problem (§04).</div>
+    <div class="tube-caption">Fig. 01 — Schematic, not to scale. One assembly per eye. Beam paths animated for illustration; real scan order is the scan scheduler's problem (§04).</div>
   </div>
 
   <div class="layer-stack">
@@ -1295,15 +1295,15 @@
 <!-- ══ SECTION 4 — SCANNING MODEL ══ -->
 <div class="section" id="s-scan">
   <div class="section-label">04 — Addressing Model</div>
-  <div class="section-title">RASTER vs VECTOR — WHY THE BEAM DOESN'T SWEEP</div>
-  <div class="section-intro">A fixed raster wastes beam time sweeping low-priority space at constant density. Vector / random-access steering (oscilloscope, radar, Vectrex lineage) jumps the beam point-to-point and <strong>skips sparse regions entirely</strong> — the enabler of hardware-native foveation (§05). Toggle the modes; the frame-time budget on the right is the whole argument.</div>
+  <div class="section-title">RASTER vs SKIP-SCAN — WHY THE BEAM DOESN'T SWEEP</div>
+  <div class="section-intro">A fixed raster wastes beam time sweeping low-priority space at constant density. Random-access steering jumps the beam straight to the dots each frame needs and <strong>skips the regions foveation drops entirely</strong>, without dwelling on them — the enabler of hardware-native foveation (§05). The beam reads an ordinary rendered framebuffer from the GPU; nothing upstream of the tube renders vectors. Toggle the modes; the frame-time budget on the right is the whole argument.</div>
 
   <div class="demo-block">
     <div class="demo-head">
       <div class="demo-title">Interactive · Scan Model Simulator</div>
       <div class="demo-controls">
         <button class="demo-btn raster" id="btnRaster">Raster Scan</button>
-        <button class="demo-btn active" id="btnVector">Vector Scan</button>
+        <button class="demo-btn active" id="btnSkip">Skip-Scan</button>
       </div>
     </div>
     <div class="demo-body">
@@ -1314,12 +1314,12 @@
       <div class="demo-readout">
         <div class="readout-item">
           <div class="r-key">Mode</div>
-          <div class="r-val" id="scanMode" style="color:var(--accent)">VECTOR</div>
+          <div class="r-val" id="scanMode" style="color:var(--accent)">SKIP-SCAN</div>
         </div>
         <div class="readout-item">
           <div class="r-key">Beam Dwell Points / Frame</div>
           <div class="r-val" id="scanPoints">—</div>
-          <div class="r-note">Raster must visit every grid position; vector visits only where content lives.</div>
+          <div class="r-note">Raster must visit every grid position; skip-scan visits only the dots the frame lights.</div>
         </div>
         <div class="readout-item">
           <div class="r-key">Frame-Time Budget Used</div>
@@ -1328,7 +1328,7 @@
         </div>
         <div class="readout-item">
           <div class="r-key">Lineage</div>
-          <div class="r-val" style="font-size:20px; color:var(--text-dim)" id="scanLineage">OSCILLOSCOPE · VECTREX</div>
+          <div class="r-val" style="font-size:20px; color:var(--text-dim)" id="scanLineage">FRAMEBUFFER · SKIP-SCAN</div>
         </div>
       </div>
     </div>
@@ -1386,7 +1386,7 @@
     <div class="tier-card">
       <div class="tier-name" style="color:var(--accent2)">MIDGROUND</div>
       <div class="tier-tag" style="border-color:var(--accent2); color:var(--accent2)">Temporal Cuts Live Here</div>
-      <div class="tier-body">Low resolution, AI-upscaled, <strong>interlaced / temporally subsampled</strong>. Acuity is low and motion sensitivity has already fallen from its peripheral peak — the one safe place to cut temporal corners. Vector addressing means "interlace" can be any per-region subsampling pattern, not just alternating lines.</div>
+      <div class="tier-body">Low resolution, AI-upscaled, <strong>interlaced / temporally subsampled</strong>. Acuity is low and motion sensitivity has already fallen from its peripheral peak — the one safe place to cut temporal corners. Random-access addressing means "interlace" can be any per-region subsampling pattern, not just alternating lines.</div>
     </div>
     <div class="tier-card">
       <div class="tier-name" style="color:var(--accent3)">FAR PERIPHERY</div>
@@ -1657,7 +1657,7 @@
   </details>
   <details class="oq">
     <summary><span class="oq-num" style="color:var(--accent3)">07</span><span class="oq-title">Scan scheduler design</span><span class="oq-caret">▶</span></summary>
-    <div class="oq-body">Vector scan-plan generation per frame: foveal density map → point list → deflection DAC waveform. Tier boundaries, temporal subsampling patterns for the midground. <strong>Also software-prototypable.</strong></div>
+    <div class="oq-body">Scan-plan generation per frame: foveal density map → point list → deflection DAC waveform. Tier boundaries, temporal subsampling patterns for the midground. <strong>Also software-prototypable.</strong></div>
   </details>
 
   <div class="oq-tier" style="color:var(--accent2)">P2 <span class="oq-sub">Productization</span></div>
@@ -1733,7 +1733,7 @@
     });
   });
 
-  /* ── SCAN SIMULATOR (raster vs vector) ── */
+  /* ── SCAN SIMULATOR (raster vs skip-scan) ── */
   var scanCanvas = document.getElementById('scanCanvas');
   var sctx = scanCanvas.getContext('2d');
   var SW = scanCanvas.width, SH = scanCanvas.height;
@@ -1742,40 +1742,29 @@
   var scanBudgetEl = document.getElementById('scanBudget');
   var scanLineageEl = document.getElementById('scanLineage');
   var btnRaster = document.getElementById('btnRaster');
-  var btnVector = document.getElementById('btnVector');
-  var mode = 'vector';
+  var btnSkip = document.getElementById('btnSkip');
+  var mode = 'skip';
 
-  // Vector content: a wireframe "ship" + starfield (Vectrex homage)
-  var vecSegs = [];
-  (function buildVectorScene() {
-    var cx = SW * 0.5, cy = SH * 0.52, s = 60;
-    var ship = [[0,-1.2],[0.8,1],[0.35,0.6],[-0.35,0.6],[-0.8,1],[0,-1.2]];
-    for (var i = 0; i < ship.length - 1; i++) {
-      vecSegs.push([cx + ship[i][0]*s, cy + ship[i][1]*s, cx + ship[i+1][0]*s, cy + ship[i+1][1]*s]);
-    }
-    // asteroids
-    function rock(ax, ay, r, n) {
-      var pts = [];
-      for (var k = 0; k <= n; k++) {
-        var a = (k % n) / n * Math.PI * 2;
-        var rr = r * (0.7 + 0.3 * Math.sin(k * 3.7 + ax));
-        pts.push([ax + Math.cos(a)*rr, ay + Math.sin(a)*rr]);
-      }
-      for (var j = 0; j < pts.length - 1; j++) vecSegs.push([pts[j][0], pts[j][1], pts[j+1][0], pts[j+1][1]]);
-    }
-    rock(140, 110, 45, 8);
-    rock(560, 90, 32, 7);
-    rock(610, 320, 50, 9);
-    rock(110, 330, 28, 7);
-  })();
+  // Rendered-frame content: lit dots of an ordinary framebuffer image (filled shapes sampled to the dot grid)
   var vecPoints = [];
-  vecSegs.forEach(function (sg) {
-    var len = Math.hypot(sg[2]-sg[0], sg[3]-sg[1]);
-    var n = Math.max(2, Math.round(len / 7));
-    for (var i = 0; i <= n; i++) {
-      vecPoints.push([sg[0] + (sg[2]-sg[0]) * i/n, sg[1] + (sg[3]-sg[1]) * i/n]);
+  (function buildFrameDots() {
+    var step = 7;
+    var shapes = [
+      { x: SW * 0.5, y: SH * 0.52, r: 60 },
+      { x: 140, y: 110, r: 45 },
+      { x: 560, y: 90, r: 32 },
+      { x: 610, y: 320, r: 50 },
+      { x: 110, y: 330, r: 28 }
+    ];
+    for (var y = step / 2; y < SH; y += step) {
+      for (var x = step / 2; x < SW; x += step) {
+        for (var k = 0; k < shapes.length; k++) {
+          var sh = shapes[k];
+          if (Math.hypot(x - sh.x, y - sh.y) < sh.r) { vecPoints.push([x, y]); break; }
+        }
+      }
     }
-  });
+  })();
 
   var GRID_X = 72, GRID_Y = 42; // raster grid
   var rasterTotal = GRID_X * GRID_Y;
@@ -1787,7 +1776,7 @@
     beamIdx = 0;
     trail = [];
     btnRaster.classList.toggle('active', m === 'raster');
-    btnVector.classList.toggle('active', m === 'vector');
+    btnSkip.classList.toggle('active', m === 'skip');
     if (m === 'raster') {
       scanModeEl.textContent = 'RASTER';
       scanModeEl.style.color = 'var(--accent4)';
@@ -1795,15 +1784,15 @@
       scanBudgetEl.textContent = '100%';
       scanLineageEl.textContent = 'NTSC · FIXED-GRID PANELS';
     } else {
-      scanModeEl.textContent = 'VECTOR';
+      scanModeEl.textContent = 'SKIP-SCAN';
       scanModeEl.style.color = 'var(--accent)';
       scanPointsEl.textContent = vecPoints.length.toLocaleString();
       scanBudgetEl.textContent = Math.round(vecPoints.length / rasterTotal * 100) + '%';
-      scanLineageEl.textContent = 'OSCILLOSCOPE · VECTREX';
+      scanLineageEl.textContent = 'FRAMEBUFFER · SKIP-SCAN';
     }
   }
   btnRaster.addEventListener('click', function () { setMode('raster'); });
-  btnVector.addEventListener('click', function () { setMode('vector'); });
+  btnSkip.addEventListener('click', function () { setMode('skip'); });
 
   function scanStep() {
     var now = performance.now();
@@ -2009,7 +1998,7 @@
   applyDrive();
 
   /* ── SHARED ANIMATION LOOP ── */
-  setMode('vector');
+  setMode('skip');
   function loop() {
     scanStep();
     fovStep();

@@ -49,6 +49,8 @@ export interface FieldOpts {
   only?: 'fovea' | 'mid' | 'edge';
   /** Motion mode: whole screen at stage 3 (edge tier on the stage-3 keep grid). */
   stage3?: boolean;
+  /** With stage3: keep the fovea at full res (motion slowing). */
+  stage3Fovea?: boolean;
 }
 
 /** Draws the field; returns dots lit this frame. */
@@ -63,7 +65,7 @@ export function drawField(ctx: CanvasRenderingContext2D, o: FieldOpts): number {
   for (let gy = 0; gy < rows; gy++) {
     for (let gx = 0; gx < COLS; gx++) {
       let z = zoneOf(gx, gy, o.gazeX, o.gazeY, o.agg, o.noFovea);
-      if (o.stage3) { const k3 = stage3Keep(o.agg); z = gx % k3.kx === 0 && gy % k3.ky === 0 ? 'edge' : 'skip'; }
+      if (o.stage3) { const k3 = stage3Keep(o.agg); const inF = o.stage3Fovea && z === 'fovea'; z = inF ? 'fovea' : gx % k3.kx === 0 && gy % k3.ky === 0 ? 'edge' : 'skip'; }
       if (z === 'skip') continue;
       if (o.only && z !== o.only) continue;
       if (z === 'mid' && !midLit(gx, gy, o.frame, o.agg)) continue;
@@ -87,7 +89,7 @@ export function drawField(ctx: CanvasRenderingContext2D, o: FieldOpts): number {
     }
   }
   ctx.restore();
-  if (o.rings && !o.noFovea && !o.stage3) drawRings(ctx, o.gazeX * s + ox, o.gazeY * s + oy, s, o.tier);
+  if (o.rings && !o.noFovea && (!o.stage3 || o.stage3Fovea)) drawRings(ctx, o.gazeX * s + ox, o.gazeY * s + oy, s, o.tier);
   return lit;
 }
 

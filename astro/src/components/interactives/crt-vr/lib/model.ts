@@ -141,3 +141,14 @@ export function stage3Count(agg: number): { drawn: number; hz: number } {
   const drawn = Math.ceil(COLS / kx) * Math.ceil(ROWS / ky);
   return { drawn, hz: Math.round(BASELINE_HZ * (FIXED_POINTS / drawn)) };
 }
+
+/** Motion mode while slowing: the fovea is back at full res, the rest of the screen still at stage 3. Illustrative design target. */
+export function stage3FoveaCount(gazeX: number, gazeY: number, agg: number): { drawn: number; hz: number } {
+  const { kx, ky } = stage3Keep(agg);
+  let drawn = 0;
+  for (let gy = 0; gy < ROWS; gy++) for (let gx = 0; gx < COLS; gx++) {
+    const d = Math.hypot(gx * CELL + CELL / 2 - gazeX, gy * CELL + CELL / 2 - gazeY);
+    if (d < R_FOVEA || (gx % kx === 0 && gy % ky === 0)) drawn++;
+  }
+  return { drawn, hz: Math.round(BASELINE_HZ * (FIXED_POINTS / drawn)) };
+}

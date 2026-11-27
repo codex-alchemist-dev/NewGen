@@ -751,6 +751,7 @@ export function shieldVariant(): VariantImpl {
  * imprint itself (burn-in), then Hexa-Index evens it out. Through all of
  * it the phosphor stays perfectly uniform. */
 export function timelapseVariant(): VariantImpl {
+  let field: SVGElement;
   let cells: SVGElement[] = [], ghost: SVGGElement, sweep: SVGElement, sun: SVGElement, dust: SVGElement[] = [];
   let year: SVGElement, yearGhost: SVGElement[] = [], yearLbl: SVGElement, frame: SVGElement, scan: SVGElement, tags: SVGElement[] = [];
   const gid = uid('tl');
@@ -769,7 +770,7 @@ export function timelapseVariant(): VariantImpl {
       box = { x: c.cx - bw / 2, y: c.H * 0.5 - bh / 2, w: bw, h: bh };
       mk('rect', { x: box.x, y: box.y, width: bw, height: bh, rx: 10 }, cp);
       sun = mk('rect', { x: 0, y: 0, width: c.W, height: c.H, fill: '#1a1410' }, g);
-      const field = mk('g', { 'clip-path': `url(#${clip})` }, g);
+      field = mk('g', { 'clip-path': `url(#${clip})` }, g);
       mk('rect', { x: box.x, y: box.y, width: bw, height: bh, fill: c.tint, opacity: 0.9 }, field);
       const hr = Math.max(6, bh / 22);
       const dx = hr * Math.sqrt(3), dy = hr * 1.5;
@@ -812,6 +813,8 @@ export function timelapseVariant(): VariantImpl {
       const fmt = (h: number) => Math.max(0, h).toLocaleString('en-US');
       year.textContent = fmt(hours);
       const show = seg(u, 0.02, 0.1) * vis;
+      // the lit patch fades with the hand-off, so nothing is left over the act
+      field.setAttribute('opacity', show.toFixed(3));
       const blur = clamp01(tt * 1.4);
       year.setAttribute('opacity', (show * (1 - blur * 0.45)).toFixed(3));
       yearGhost.forEach((gh, i) => {

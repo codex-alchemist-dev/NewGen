@@ -646,7 +646,8 @@ const labels = v === 'seals'
 
       // 3 · variant moment
       const u = S(s, P.art);
-      gVar.style.opacity = s >= P.art[0] ? '1' : '0';
+      // bespoke Act 5–12 art is fully cleared once the power-on hand-off ends
+      gVar.style.opacity = s >= P.art[0] ? (BESPOKE[vname] ? (1 - out).toFixed(3) : '1') : '0';
       variant.render(u, c, out);
       variant.title?.(u, title, out);
 

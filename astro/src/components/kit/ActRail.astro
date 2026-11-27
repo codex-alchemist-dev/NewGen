@@ -1,27 +1,186 @@
 ---
 import { acts } from '../../data/crt-vr';
 
-/* Fixed progress rail. A small script marks the act in view. */
+/*
+ * Act rail. Each act gets a small glyph drawn from its grand act-transition art.
+ * Desktop: a slim fixed rail on the right edge; the act in view lights up and
+ * shows its name. Phone: a compact pill in the top bar that opens the list, so
+ * the rail never takes space in the page flow. A small script marks the act in view.
+ */
+const glyphs: Record<string, string> = {
+  // 01 · power-on: the raster opens around the waiting dot
+  default: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 12h10" opacity=".55"/><circle cx="12" cy="12" r="1.6" class="f"/>',
+  // 02 · the eye
+  eye: '<path d="M2.5 12S6.5 5.5 12 5.5 21.5 12 21.5 12 17.5 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="1.2" class="f"/>',
+  // 03 · warp: the screen streaks toward the vanishing point
+  warp: '<path d="M12 12 3 4M12 12l9-8M12 12l-9 8M12 12l9 8M12 12H2M12 12h10" opacity=".7"/><rect x="9" y="9.5" width="6" height="5" rx="1"/>',
+  // 04 · six beams converge on one point
+  'six-beam': '<path d="M12 13 3 4M12 13l-5.5-9.5M12 13l-1-10M12 13l1-10M12 13l5.5-9.5M12 13l9-9" opacity=".75"/><circle cx="12" cy="17" r="3.5"/><circle cx="12" cy="13.5" r="1.3" class="f"/>',
+  // 05 · the hexagon wakes in a white-hot flare
+  flare: '<path d="M12 4.5 18.5 8.25v7.5L12 19.5 5.5 15.75v-7.5Z"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2 2M17.8 17.8l2 2M19.8 4.2l-2 2M6.2 17.8l-2 2" opacity=".6"/><circle cx="12" cy="12" r="1.8" class="f"/>',
+  // 06 · the whip-pan: a sharp object, no smear
+  whip: '<circle cx="15" cy="12" r="4.5"/><path d="M2 9h7M4 12h6M2 15h7" opacity=".6"/><circle cx="15" cy="12" r="1.3" class="f"/>',
+  // 07 · the blueprint: the tube, drawn from the electron up
+  blueprint: '<path d="M2 12h3l7-6h9v12h-9l-7-6" /><path d="M12 6v12M16.5 6v12" opacity=".45"/><path d="M5 12h16" stroke-dasharray="1.5 2" opacity=".7"/>',
+  // 08 · the cone: light wraps the eye
+  cone: '<path d="M4 3.5A14 14 0 0 1 20 3.5" /><path d="M12 19 4.5 5M12 19 8 4.2M12 19V3.8M12 19l4-14.8M12 19l7.5-14" opacity=".6"/><circle cx="12" cy="19" r="2.4"/>',
+  // 09 · the shield seals around the high-voltage arc
+  shield: '<path d="M12 2.5 20 5.5v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6Z"/><path d="m13 7-3 5h4l-3 5" />',
+  // 10 · time-lapse: years fly past
+  timelapse: '<path d="M6.5 3h11M6.5 21h11M7.5 3c0 5 9 5 9 9s-9 4-9 9M16.5 3c0 5-9 5-9 9s9 4 9 9" /><path d="M10 18.5h4" class="s"/>',
+  // 11 · a certification seal stamps in
+  seals: '<circle cx="12" cy="12" r="6.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M19.4 4.6l-1.8 1.8M6.4 17.6l-1.8 1.8" opacity=".65"/><path d="m9.2 12.2 2 2 3.8-4.2"/>',
+  // 12 · the race: CRT-VR breaks the chart
+  race: '<path d="M2.5 21h19" opacity=".6"/><path d="M5 21v-5M10 21v-8"/><path d="M15 21V1.5" class="hot"/><path d="M13 4.5l2-3 2 3" />',
+};
+const pad = (n: number) => String(n).padStart(2, '0');
 ---
-<nav class="act-rail" aria-label="Acts">
-  <ol>
+<nav class="act-rail" aria-label="Acts" data-act-rail>
+  <button class="act-rail__toggle" type="button" aria-expanded="false" aria-controls="act-rail-list" data-rail-toggle>
+    <svg class="act-rail__ico" viewBox="0 0 24 24" aria-hidden="true" data-rail-ico set:html={glyphs[acts[0].transition] ?? glyphs.default}></svg>
+    <span class="act-rail__cur"><b data-rail-num>{pad(acts[0].number)}</b> <span data-rail-name>{acts[0].title}</span></span>
+    <span class="act-rail__caret" aria-hidden="true"></span>
+  </button>
+  <ol id="act-rail-list" class="act-rail__list">
     {acts.map((a) => (
-      <li><a href={`#${a.id}`} data-rail={a.id}><span>{String(a.number).padStart(2, '0')}</span> {a.title}</a></li>
+      <li>
+        <a href={`#${a.id}`} data-rail={a.id} data-num={pad(a.number)} data-name={a.title}>
+          <svg class="act-rail__ico" viewBox="0 0 24 24" aria-hidden="true" set:html={glyphs[a.transition] ?? glyphs.default}></svg>
+          <span class="act-rail__n">{pad(a.number)}</span>
+          <span class="act-rail__t">{a.title}</span>
+        </a>
+      </li>
     ))}
   </ol>
 </nav>
+
+<style>
+  .act-rail {
+    --rail-ink: var(--text-dim, #6a7fa8);
+    --rail-hot: var(--accent, #00ff99);
+    position: fixed; z-index: 30;
+    top: 50%; right: clamp(8px, 1.4vw, 20px); transform: translateY(-50%);
+    font-family: var(--font-mono, 'DM Mono', monospace);
+  }
+  .act-rail__toggle { display: none; }
+  .act-rail__list { list-style: none; margin: 0; padding: 6px 0; display: grid; gap: 2px; position: relative; }
+  /* the signal line the glyphs hang on */
+  .act-rail__list::before {
+    content: ''; position: absolute; top: 14px; bottom: 14px; right: 17px; width: 1px;
+    background: linear-gradient(transparent, color-mix(in srgb, var(--rail-hot) 30%, transparent) 12%, color-mix(in srgb, var(--rail-hot) 30%, transparent) 88%, transparent);
+  }
+  .act-rail__list a {
+    position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    height: 30px; padding: 0 3px 0 10px; border-radius: 16px;
+    color: var(--rail-ink); text-decoration: none;
+    transition: color var(--dur-short, .32s) var(--ease-newgen, ease);
+  }
+  .act-rail__n, .act-rail__t { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+  .act-rail__n { order: 1; opacity: .8; }
+  .act-rail__t {
+    order: 2; max-width: 0; overflow: hidden; opacity: 0;
+    transition: max-width .45s var(--ease-newgen, ease), opacity .3s;
+  }
+  .act-rail__n { display: none; }
+  .act-rail__ico {
+    order: 3; flex: none; width: 28px; height: 28px; padding: 5px; border-radius: 50%;
+    fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    background: color-mix(in srgb, var(--bg, #04050a) 88%, transparent);
+    border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+    transition: border-color .3s, box-shadow .3s, background .3s;
+  }
+  .act-rail__ico :global(.f) { fill: currentColor; stroke: none; }
+  .act-rail__ico :global(.hot) { stroke-width: 2.4; }
+  .act-rail__list a:hover, .act-rail__list a:focus-visible { color: var(--text, #d8e4ff); }
+  .act-rail__list a:hover .act-rail__t, .act-rail__list a:focus-visible .act-rail__t { max-width: 22ch; opacity: 1; }
+  .act-rail__list a[aria-current] { color: var(--rail-hot); }
+  .act-rail__list a[aria-current] .act-rail__t { max-width: 22ch; opacity: 1; text-shadow: 0 0 12px color-mix(in srgb, var(--rail-hot) 60%, transparent); }
+  .act-rail__list a[aria-current] .act-rail__ico {
+    border-color: var(--rail-hot);
+    background: color-mix(in srgb, var(--rail-hot) 12%, var(--bg, #04050a));
+    box-shadow: 0 0 14px color-mix(in srgb, var(--rail-hot) 55%, transparent), inset 0 0 8px color-mix(in srgb, var(--rail-hot) 30%, transparent);
+  }
+  .act-rail__list a:focus-visible { outline: 1px dashed var(--rail-hot); outline-offset: 2px; }
+  /* the label reads on a dark pill so it never fights the content behind it */
+  .act-rail__list a[aria-current]::before, .act-rail__list a:hover::before {
+    content: ''; position: absolute; inset: 2px 0; z-index: -1; border-radius: 16px;
+    background: color-mix(in srgb, var(--bg, #04050a) 82%, transparent);
+  }
+
+  /* ── phone: a pill in the top bar that opens the list ── */
+  @media (max-width: 860px) {
+    .act-rail { top: 6px; right: 10px; transform: none; }
+    .act-rail__toggle {
+      display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px 0 4px; cursor: pointer;
+      color: var(--rail-hot); font: inherit; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+      background: color-mix(in srgb, var(--bg, #04050a) 90%, transparent);
+      border: 1px solid color-mix(in srgb, var(--rail-hot) 40%, transparent); border-radius: 18px;
+      box-shadow: 0 0 16px color-mix(in srgb, var(--rail-hot) 18%, transparent);
+    }
+    .act-rail__toggle .act-rail__ico { width: 28px; height: 28px; border-color: transparent; background: none; }
+    .act-rail__cur b { font-weight: 500; opacity: .8; }
+    .act-rail__cur span { color: var(--text, #d8e4ff); }
+    .act-rail__cur span { display: inline-block; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    @media (max-width: 480px) { .act-rail__cur span { display: none; } }
+    .act-rail__caret { width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .3s; }
+    .act-rail.is-open .act-rail__caret { transform: translateY(1px) rotate(225deg); }
+    .act-rail__list {
+      position: absolute; top: calc(100% + 8px); right: 0; width: min(78vw, 280px);
+      padding: 8px; gap: 0; border-radius: 10px;
+      background: color-mix(in srgb, var(--bg2, #080b14) 96%, transparent);
+      border: 1px solid var(--border, #1a2240);
+      box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .9);
+      opacity: 0; visibility: hidden; transform: translateY(-6px);
+      transition: opacity .25s, transform .25s var(--ease-newgen, ease), visibility 0s .25s;
+    }
+    .act-rail.is-open .act-rail__list { opacity: 1; visibility: visible; transform: none; transition: opacity .25s, transform .25s var(--ease-newgen, ease); }
+    .act-rail__list::before { display: none; }
+    .act-rail__list a { justify-content: flex-start; height: 40px; padding: 0 8px; border-radius: 6px; }
+    .act-rail__list a::before { display: none; }
+    .act-rail__ico { order: 0; }
+    .act-rail__n { display: inline; order: 1; }
+    .act-rail__t { order: 2; max-width: none; opacity: 1; overflow: visible; color: var(--text, #d8e4ff); }
+    .act-rail__list a[aria-current] { background: color-mix(in srgb, var(--rail-hot) 10%, transparent); }
+    .act-rail__list a[aria-current] .act-rail__t { color: var(--rail-hot); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .act-rail__t, .act-rail__list, .act-rail__caret { transition: none; }
+  }
+</style>
+
 <script>
-  const links = new Map<string, HTMLElement>();
-  document.querySelectorAll<HTMLAnchorElement>('[data-rail]').forEach((a) => links.set(a.dataset.rail!, a));
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        links.forEach((el) => el.removeAttribute('aria-current'));
-        links.get(e.target.id)?.setAttribute('aria-current', 'true');
-      });
-    },
-    { rootMargin: '-45% 0px -45% 0px' },
-  );
-  document.querySelectorAll('.act').forEach((s) => io.observe(s));
+  const rail = document.querySelector<HTMLElement>('[data-act-rail]');
+  if (rail) {
+    const toggle = rail.querySelector<HTMLButtonElement>('[data-rail-toggle]')!;
+    const ico = rail.querySelector<SVGElement>('[data-rail-ico]')!;
+    const num = rail.querySelector<HTMLElement>('[data-rail-num]')!;
+    const name = rail.querySelector<HTMLElement>('[data-rail-name]')!;
+    const links = new Map<string, HTMLAnchorElement>();
+    rail.querySelectorAll<HTMLAnchorElement>('[data-rail]').forEach((a) => links.set(a.dataset.rail!, a));
+
+    const setOpen = (open: boolean) => {
+      rail.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    toggle.addEventListener('click', () => setOpen(!rail.classList.contains('is-open')));
+    links.forEach((a) => a.addEventListener('click', () => setOpen(false)));
+    document.addEventListener('click', (e) => { if (!rail.contains(e.target as Node)) setOpen(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+
+    const mark = (id: string) => {
+      const a = links.get(id);
+      if (!a || a.hasAttribute('aria-current')) return;
+      links.forEach((el) => el.removeAttribute('aria-current'));
+      a.setAttribute('aria-current', 'true');
+      num.textContent = a.dataset.num ?? '';
+      name.textContent = a.dataset.name ?? '';
+      ico.innerHTML = a.querySelector('svg')?.innerHTML ?? '';
+    };
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) mark(e.target.id); }),
+      { rootMargin: '-45% 0px -45% 0px' },
+    );
+    document.querySelectorAll('.act').forEach((s) => io.observe(s));
+    mark(links.keys().next().value ?? '');
+  }
 </script>

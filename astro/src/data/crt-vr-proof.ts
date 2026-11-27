@@ -127,7 +127,7 @@ export const openQuestions = [
  },
  {
   "tier": "P1 Architecture-Completing",
-  "body": "Peak content-motion speeds: what pan and head-turn velocities should trigger the 836 Hz mode?"
+  "body": "Saccade timing: how early can the panel predict the landing point to start the burst?"
  },
  {
   "tier": "P1 Architecture-Completing",

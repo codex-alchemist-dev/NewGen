@@ -584,6 +584,18 @@ const marks = labels.map((l: string) => (CERT_MARKS[l] ?? []).map((m) => ({ src:
     const POSTER_P = 0.5;
     let posted = false;
     const S = (s: number, r: number[]) => seg(s, r[0], r[1]);
+    // Acts 9–12 static posters: the in-flow still is only 72vh tall, which collapses
+    // these acts' phases (the reveal starts before the art does), so the mid-transition
+    // frame came out nearly blank on desktop. Their poster uses the full-length timeline
+    // and lands on the act's idea: shield sealed, years survived, seals stamped, chart broken.
+    const POSTER_T = 400, POSTER_U = 0.72;
+    const POSTER_ART = new Set(['shield', 'timelapse', 'seals', 'race']);
+    const poster = () => {
+      if (!POSTER_ART.has(vname)) { render(POSTER_P); return; }
+      totalVh = POSTER_T;
+      P = phases(first, POSTER_T);
+      render((P.art[0] + POSTER_U * (P.art[1] - P.art[0])) / POSTER_T);
+    };
 
     const render = (p: number) => {
       const s = p * totalVh;
@@ -705,7 +717,7 @@ const marks = labels.map((l: string) => (CERT_MARKS[l] ?? []).map((m) => ({ src:
         lastT = now;
         if (getTier() === 'static') {
           // poster frame: one still at mid-transition, re-drawn on resize only
-          if (!posted) { posted = true; render(POSTER_P); }
+          if (!posted) { posted = true; poster(); }
           return;
         }
         if (shown < 0) {
@@ -723,7 +735,7 @@ const marks = labels.map((l: string) => (CERT_MARKS[l] ?? []).map((m) => ({ src:
     }
     addEventListener('resize', () => {
       layout();
-      if (getTier() === 'static') render(POSTER_P);
+      if (getTier() === 'static') poster();
       else render(clamp01(shown));
     });
   }

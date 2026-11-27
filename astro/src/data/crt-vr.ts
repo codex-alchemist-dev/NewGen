@@ -189,11 +189,11 @@ export const acts: ActDef[] = [
         'The curved screen cancels the optics\' field curvature, so it stays sharp right out to the edges.'] },
       { id: 'per-beam-ca-prewarp', title: 'Per-beam chromatic-aberration pre-warp', interactive: 'fringe-toggle', eyebrow: 'CA pre-warp', headline: 'Fringe-free, in hardware.', body: [
         "Each of the six beams pre-bends its own color to cancel the lens's chromatic fringing."] },
-      { id: 'pupil-swim-correction', title: 'Pupil-swim correction', eyebrow: 'Pupil swim', headline: 'The world never wobbles.', body: [
+      { id: 'pupil-swim-correction', title: 'Pupil-swim correction', visual: 'pupil-swim', eyebrow: 'Pupil swim', headline: 'The world never wobbles.', body: [
         'As your eye turns, the panel adjusts its geometry every frame.'] },
       { id: 'eyebox-and-eye-relief', title: 'Eyebox and eye relief', eyebrow: 'Eyebox', headline: 'Room for you.', body: [
         'A generous eyebox, space for glasses, and wide IPD range.'] },
-      { id: 'glare-and-ghost-control', title: 'Glare and ghost control', eyebrow: 'Glare', headline: 'Darkness, protected.', body: [
+      { id: 'glare-and-ghost-control', title: 'Glare and ghost control', visual: 'glare-control', eyebrow: 'Glare', headline: 'Darkness, protected.', body: [
         'A Kurocoat-lined barrel keeps stray light from lifting the blacks.'] },
       { id: 'honest-fov-note', title: 'Honest FOV note', eyebrow: 'Field of view', headline: 'Your whole field of view.', footnote: '† Stretch design targets.', body: [
         'Up to about 160° per eye, and 200°+ across both eyes.'] },

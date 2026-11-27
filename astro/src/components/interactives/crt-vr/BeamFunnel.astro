@@ -1,0 +1,353 @@
+---
+/**
+ * CRT-VR · Act 7 · "beam-funnel" — Focus-Well Hexagons (a Chromatron revival).
+ *
+ * Sony's 1961 Chromatron focused its beams with a charged grid in front of the
+ * screen. Focus-Well Hexagons move that grid onto the screen itself: the
+ * Kurocoat well rims are biased negative relative to the phosphor floor
+ * (coordinator-approved, Nov 27), so their field repels electrons off the walls
+ * and funnels a slightly off-target or stretched shallow-angle beam into the
+ * centre of its triangle.
+ *
+ * Left: side section through one well with field lines, equipotentials and
+ * seven beam rays. Right: top view of the hex pixel with the landing footprint.
+ * The trajectory model is illustrative (a paraxial funnel lens), not a field solve.
+ *
+ * Tiers: full (auto-wander of the aim + glow), reduced (no auto-wander),
+ * static (fixed demonstration state; the controls still work).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './blueprint.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { tier = 'full', id = 'bp-funnel' } = Astro.props;
+
+// Section geometry, 100 px = 1 µm. Triangle side 1.96 µm (24K on 4″, 4:3).
+const S = 100, FY = 300, CX = 330, W = 196, WT = 16, RH = 50, RT = FY - RH;
+const rimL = CX - W / 2 - WT / 2, rimR = CX + W / 2 + WT / 2;
+
+// Top-view hex: pointy-top, 6 wedges, R = triangle side.
+const HX = 160, HY = 170, HR = 118;
+const WEDGE = [
+  { c: '#ff3c3c', n: 'R' }, { c: '#ffe135', n: 'Y' }, { c: '#00ff99', n: 'G' },
+  { c: '#00e5ff', n: 'C' }, { c: '#3a6bff', n: 'B' }, { c: '#ff3cdc', n: 'M' },
+];
+const corner = (k: number, r = HR) => {
+  const a = (Math.PI / 180) * (60 * k - 90);
+  return [HX + r * Math.cos(a), HY + r * Math.sin(a)];
+};
+const wedgeCentroid = (k: number) => {
+  const [ax, ay] = corner(k), [bx, by] = corner(k + 1);
+  return [(HX + ax + bx) / 3, (HY + ay + by) / 3];
+};
+---
+
+<div class:list={['crtvr', 'bp', 'bp-funnel', { 'is-static': tier === 'static' }]} id={id} data-beam-funnel>
+  <div class="bp-frame bp-wide">
+    <div class="bp-head">
+      <span><b>Focus-Well Hexagons</b> &nbsp;· biased rims funnel the beam</span>
+      <span class="lineage">Chromatron lineage · 1961</span>
+      <span class="bp-dwg">DWG CRT-VR-07-05 · illustrative model</span>
+    </div>
+
+    <div class="views">
+      <figure class="side">
+        <svg viewBox="0 0 660 410" role="img" aria-labelledby={`${id}-st`}>
+          <title id={`${id}-st`}>Side section through one Focus-Well: beam rays bend into the centre of the triangle as the rim bias rises</title>
+          <defs>
+            <pattern id={`${id}-kuro`} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="5" height="5" fill="#05070b" />
+              <line x1="0" y1="0" x2="0" y2="5" stroke="#7fd4ff" stroke-opacity=".22" />
+            </pattern>
+          </defs>
+          <!-- equipotentials + field lines (drawn by script) -->
+          <g data-equi class="equi"></g>
+          <g data-fieldlines class="fl"></g>
+
+          <!-- phosphor floors: this well (G) and neighbours -->
+          <rect x={CX - W / 2} y={FY} width={W} height="16" fill="#00ff99" opacity=".75" data-floor />
+          <rect x={CX - W * 1.5 - WT} y={FY} width={W} height="16" fill="#ff3c3c" opacity=".45" />
+          <rect x={CX + W / 2 + WT} y={FY} width={W} height="16" fill="#ffe135" opacity=".45" />
+          <rect x="0" y={FY + 16} width="660" height="18" fill="#7fd4ff" opacity=".1" />
+          <text class="lbl sub" x="8" y={FY + 100}>Dome faceplate (glass) below · light exits toward the eye</text>
+
+          <!-- Kurocoat rims with the Hexa-Index strip on top -->
+          {[rimL, rimR, rimL - W - WT, rimR + W + WT].map((rx) => (
+            <g>
+              <rect x={rx - WT / 2} y={RT} width={WT} height={RH + 16} fill={`url(#${id}-kuro)`} stroke="#7fd4ff" stroke-opacity=".5" />
+              <rect x={rx - WT / 2} y={RT - 5} width={WT} height="5" fill="#e8f0ff" opacity=".85" />
+              <text class="lbl sub bias" x={rx} y={RT - 12} text-anchor="middle" data-bias>−</text>
+            </g>
+          ))}
+          <!-- triangle-centre datum -->
+          <line class="ink dim dash" x1={CX} y1={RT - 150} x2={CX} y2={FY + 16} />
+          <text class="lbl sub" x={CX + 6} y={RT - 140}>triangle centre</text>
+
+          <!-- rays -->
+          <g data-rays></g>
+          <g data-landings></g>
+
+          <!-- dimensions -->
+          <g class="dim-line">
+            <path class="ink dim" d={`M${CX - W / 2},${FY + 70} L${CX + W / 2},${FY + 70} M${CX - W / 2},${FY + 62} L${CX - W / 2},${FY + 78} M${CX + W / 2},${FY + 62} L${CX + W / 2},${FY + 78}`} />
+            <text class="lbl sub" x={CX} y={FY + 66} text-anchor="middle">1.96 µm triangle</text>
+          </g>
+          <text class="lbl sub" x={rimR + 16} y={RT + 30}>Kurocoat rim</text>
+          <text class="lbl sub" x={rimR + 16} y={RT + 2} fill="#e8f0ff">MgO / diamond index strip</text>
+          <text class="lbl" x="12" y="26" data-from>← from the gun at the temple</text>
+        </svg>
+      </figure>
+
+      <figure class="top">
+        <svg viewBox="0 0 320 340" role="img" aria-labelledby={`${id}-tt`}>
+          <title id={`${id}-tt`}>Top view of one hex pixel: the landing footprint shrinks and centres on the green triangle as the rim bias rises</title>
+          {WEDGE.map((w, k) => {
+            const [ax, ay] = corner(k), [bx, by] = corner(k + 1);
+            const [mx, my] = wedgeCentroid(k);
+            return (
+              <g>
+                <path d={`M${HX},${HY} L${ax},${ay} L${bx},${by} Z`} fill={w.c} fill-opacity={k === 2 ? 0.5 : 0.16} stroke="#05070b" stroke-width="7" />
+                <text class="lbl sub" x={mx} y={my + 4} text-anchor="middle" fill={w.c}>{w.n}</text>
+              </g>
+            );
+          })}
+          <path class="ink dim" d={`M${[0, 1, 2, 3, 4, 5].map((k) => corner(k).join(',')).join(' L')} Z`} />
+          <ellipse data-ghost class="ghost" />
+          <ellipse data-foot class="foot glow" />
+          <circle data-target r="3" fill="#fff" />
+          <text class="lbl sub" x="160" y="318" text-anchor="middle">dashed: no bias · solid: biased</text>
+        </svg>
+      </figure>
+    </div>
+
+    <div class="bp-controls">
+      <label class="bp-ctl">Rim bias (relative to floor) <output data-o="bias"></output>
+        <input type="range" min="0" max="100" value="70" data-in="bias" />
+      </label>
+      <label class="bp-ctl">Aim error <output data-o="aim"></output>
+        <input type="range" min="-80" max="80" value="40" data-in="aim" />
+      </label>
+      <label class="bp-ctl">Landing angle (from the screen) <output data-o="ang"></output>
+        <input type="range" min="12" max="60" value="25" data-in="ang" />
+      </label>
+      <label class="bp-ctl">Auto-wander
+        <span class="bp-seg"><button type="button" aria-pressed="true" data-wander>On</button></span>
+      </label>
+    </div>
+    <div class="bp-readouts">
+      <div class="bp-ro" data-ro="foot"><span>Footprint</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="err"><span>Centroid error</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="in"><span>Rays in own triangle</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="rim"><span>Rim brushes → Hexa-Index</span><strong>—</strong></div>
+    </div>
+    <p class="bp-foot">Illustrative paraxial-lens model at drawing scale (1 µm = 100 px; rim height drawn at 0.5 µm). The negative rims repel electrons off the walls and the phosphor floor pulls them down, so the beam lands centred and tighter. Rays that still brush a rim strip are what Hexa-Index reads.</p>
+  </div>
+</div>
+
+<script define:vars={{ G: { S, FY, CX, W, WT, RH, RT, rimL, rimR, HX, HY, HR, TGX: wedgeCentroid(2)[0], TGY: wedgeCentroid(2)[1] } }}>
+  window.__bpFunnelG = G;
+</script>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+
+  const G = (window as any).__bpFunnelG as Record<string, number>;
+  const { S, FY, CX, W, WT, RT, rimL, rimR, TGX, TGY } = G;
+  const NS = 'http://www.w3.org/2000/svg';
+  const NR = 7, BEAM_W = 26; // beam diameter at drawing scale (0.26 µm)
+  const ZT = RT - 120;       // top of the funnel's capture zone
+
+  const el = (tag: string, attrs: Record<string, string | number>) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+    return e;
+  };
+
+  type Ray = { d: string; land: number; hit: 'floor' | 'rim' | 'spill' };
+
+  /** One ray: aimed at floor point ax with direction (dx,dy); funnel strength f 0..1. */
+  function ray(ax: number, off: number, dx: number, dy: number, f: number): Ray {
+    const px = -dy, py = dx;
+    const sx = ax - dx * 900 + px * off, sy = FY - dy * 900 + py * off;
+    const atY = (y: number) => sx + ((y - sy) / dy) * dx;
+    const xf = atY(FY);
+    // straight-line wall test (unbiased physics)
+    const wallHit = (): number | null => {
+      for (const rx of [rimL - W - WT, rimL, rimR, rimR + W + WT]) {
+        const xl = rx - WT / 2, xr = rx + WT / 2;
+        const yAt = sy + ((xl - sx) / dx) * dy;
+        if (yAt > RT - 5 && yAt < FY && xl < xf) return xl;
+        const xTop = atY(RT - 5);
+        if (xTop > xl && xTop < xr) return xTop;
+      }
+      return null;
+    };
+    const capture = W / 2 + WT + 90 * f;
+    const xe = atY(ZT);
+    const start = `M${sx.toFixed(1)},${sy.toFixed(1)}`;
+    if (f > 0.02 && Math.abs(xf - CX) < capture + 40 * f) {
+      const land = CX + (xf - CX) * (1 - 0.9 * f);
+      const cx1 = xe + (atY(RT - 20) - xe) * (1 - f * 0.55);
+      const cxm = cx1 + (land - cx1) * f * 0.7;
+      const d = `${start} L${xe.toFixed(1)},${ZT} Q${cxm.toFixed(1)},${(RT - 20).toFixed(1)} ${land.toFixed(1)},${FY}`;
+      const inWell = Math.abs(land - CX) < W / 2 - 2;
+      return { d, land, hit: inWell ? 'floor' : 'rim' };
+    }
+    const w = wallHit();
+    if (w !== null) {
+      const y = sy + ((w - sx) / dx) * dy;
+      return { d: `${start} L${w.toFixed(1)},${Math.max(RT - 5, y).toFixed(1)}`, land: w, hit: 'rim' };
+    }
+    return { d: `${start} L${xf.toFixed(1)},${FY}`, land: xf, hit: Math.abs(xf - CX) < W / 2 ? 'floor' : 'spill' };
+  }
+
+  function setup(root: HTMLElement) {
+    const q = <T extends Element>(s: string) => root.querySelector(s) as T;
+    const inp = (k: string) => q<HTMLInputElement>(`[data-in="${k}"]`);
+    const out = (k: string) => q<HTMLOutputElement>(`[data-o="${k}"]`);
+    const ro = (k: string) => q<HTMLElement>(`[data-ro="${k}"]`);
+    const rays = q<SVGGElement>('[data-rays]');
+    const lands = q<SVGGElement>('[data-landings]');
+    const equi = q<SVGGElement>('[data-equi]');
+    const fls = q<SVGGElement>('[data-fieldlines]');
+    const foot = q<SVGEllipseElement>('[data-foot]');
+    const ghost = q<SVGEllipseElement>('[data-ghost]');
+    const target = q<SVGCircleElement>('[data-target]');
+    const wanderBtn = q<HTMLButtonElement>('[data-wander]');
+    let tier: VfxTier = 'full';
+    let wander = true, visible = false, raf = 0;
+    target.setAttribute('cx', String(TGX)); target.setAttribute('cy', String(TGY));
+
+    const draw = (aimOverride?: number) => {
+      const b = Number(inp('bias').value) / 100;
+      const aim = aimOverride ?? Number(inp('aim').value);
+      const ang = Number(inp('ang').value);
+      out('bias').textContent = b === 0 ? 'off' : `−${Math.round(b * 100)}%`;
+      out('aim').textContent = `${aim >= 0 ? '+' : ''}${(aim / S).toFixed(2)} µm`;
+      out('ang').textContent = `${ang}°`;
+      const a = (ang * Math.PI) / 180, dx = Math.cos(a), dy = Math.sin(a);
+      const f = b;
+
+      // equipotentials dip into the well as bias rises; field lines bow from rims to floor
+      equi.replaceChildren();
+      fls.replaceChildren();
+      if (b > 0) {
+        for (let k = 0; k < 4; k++) {
+          const y0 = RT - 18 - k * 26, dip = b * (46 - k * 9);
+          equi.appendChild(el('path', { d: `M${CX - 330},${y0} C${CX - 150},${y0} ${CX - 110},${y0 + dip} ${CX},${y0 + dip} S${CX + 150},${y0} ${CX + 330},${y0}`, opacity: (0.55 - k * 0.1) * b }));
+        }
+        for (const rx of [rimL, rimR]) {
+          const s = rx < CX ? 1 : -1;
+          for (let k = 0; k < 4; k++) {
+            const tx = CX - s * (20 + k * 14);
+            fls.appendChild(el('path', { d: `M${rx + s * 8},${RT - 2 + k * 10} Q${rx + s * (30 + k * 6)},${FY - 60 + k * 6} ${tx},${FY}`, opacity: 0.25 + 0.5 * b }));
+          }
+        }
+      }
+      root.querySelectorAll<SVGTextElement>('[data-bias]').forEach((t) => (t.style.opacity = String(b)));
+
+      // rays: biased and (ghost) unbiased
+      rays.replaceChildren();
+      lands.replaceChildren();
+      const now: Ray[] = [], raw: Ray[] = [];
+      for (let j = 0; j < NR; j++) {
+        const off = (j / (NR - 1) - 0.5) * BEAM_W;
+        raw.push(ray(CX + aim, off, dx, dy, 0));
+        now.push(ray(CX + aim, off, dx, dy, f));
+      }
+      if (b > 0) raw.forEach((r) => rays.appendChild(el('path', { d: r.d, class: 'ray ghost-ray' })));
+      now.forEach((r) => {
+        rays.appendChild(el('path', { d: r.d, class: `ray glow ${r.hit}` }));
+        if (r.hit === 'floor') lands.appendChild(el('circle', { cx: r.land, cy: FY, r: 3.2, class: 'land' }));
+        if (r.hit === 'rim') lands.appendChild(el('circle', { cx: r.land, cy: RT - 3, r: 4.5, class: 'brush' }));
+      });
+
+      const stat = (rs: Ray[]) => {
+        const xs = rs.filter((r) => r.hit === 'floor').map((r) => r.land);
+        const all = rs.map((r) => r.land);
+        const mn = Math.min(...all), mx = Math.max(...all);
+        const c = all.reduce((s, v) => s + v, 0) / all.length;
+        return { span: Math.max(BEAM_W * 0.4, mx - mn), c, inn: xs.length, rim: rs.filter((r) => r.hit === 'rim').length };
+      };
+      const s1 = stat(now), s0 = stat(raw);
+      const fmt = (px: number) => `${(px / S).toFixed(2)}<small>µm</small>`;
+      ro('foot').querySelector('strong')!.innerHTML = fmt(s1.span);
+      ro('err').querySelector('strong')!.innerHTML = fmt(Math.abs(s1.c - CX));
+      ro('in').querySelector('strong')!.innerHTML = `${s1.inn}<small>/ ${NR}</small>`;
+      ro('rim').querySelector('strong')!.innerHTML = `${s1.rim}<small>rays</small>`;
+      ro('in').className = `bp-ro ${s1.inn === NR ? 'ok' : s1.inn >= NR / 2 ? 'warn' : 'bad'}`;
+      ro('err').className = `bp-ro ${Math.abs(s1.c - CX) < 25 ? 'ok' : Math.abs(s1.c - CX) < 70 ? 'warn' : 'bad'}`;
+
+      // top view: x along the scan (section direction) maps onto the hex; G wedge centroid is the target
+      const tx = TGX, ty = TGY, k = 118 / 196;
+      const setE = (e: SVGEllipseElement, st: { span: number; c: number }, minor: number) => {
+        e.setAttribute('cx', (tx + (st.c - CX) * k).toFixed(1));
+        e.setAttribute('cy', String(ty));
+        e.setAttribute('rx', Math.max(3, (st.span * k) / 2 + 3).toFixed(1));
+        e.setAttribute('ry', minor.toFixed(1));
+      };
+      setE(ghost, s0, (BEAM_W * k) / 2 + 3);
+      setE(foot, s1, ((BEAM_W * k) / 2 + 3) * (1 - 0.45 * b));
+      ghost.style.opacity = b > 0 ? '1' : '0';
+    };
+
+    root.querySelectorAll<HTMLInputElement>('input').forEach((i) => i.addEventListener('input', () => {
+      if (i.dataset.in === 'aim') setWander(false);
+      draw();
+    }));
+    const setWander = (on: boolean) => {
+      wander = on;
+      wanderBtn.setAttribute('aria-pressed', String(on));
+      wanderBtn.textContent = on ? 'On' : 'Off';
+      kick();
+    };
+    wanderBtn.addEventListener('click', () => setWander(!wander));
+
+    const frame = (t: number) => {
+      raf = 0;
+      if (!(wander && visible && tier !== 'static')) return;
+      const aim = Math.round(70 * Math.sin(t / 1900) * Math.cos(t / 3100));
+      inp('aim').value = String(aim);
+      draw(aim);
+      raf = requestAnimationFrame(frame);
+    };
+    const kick = () => { if (!raf && wander && visible && tier !== 'static') raf = requestAnimationFrame(frame); };
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); }).observe(root);
+    onTier((t) => {
+      tier = t;
+      root.classList.toggle('is-static', t === 'static');
+      if (t !== 'full') setWander(false);
+      draw();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-beam-funnel]').forEach(setup);
+</script>
+
+<style>
+  .lineage { color: var(--bp-sony); }
+  .views { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .views figure { margin: 0; padding: 12px; }
+  .views figure + figure { border-left: 1px solid var(--bp-ink-faint); }
+  .equi :global(path) { fill: none; stroke: #7fd4ff; stroke-dasharray: 2 5; stroke-width: 1; }
+  .fl :global(path) { fill: none; stroke: #ff3c6e; stroke-width: 1; stroke-dasharray: 6 4; }
+  [data-rays] :global(.ray) { fill: none; stroke: #00ff99; stroke-width: 1.5; color: #00ff99; }
+  [data-rays] :global(.ray.rim) { stroke: #e8f0ff; color: #e8f0ff; }
+  [data-rays] :global(.ray.spill) { stroke: #ffe135; color: #ffe135; }
+  [data-rays] :global(.ghost-ray) { stroke: #7fd4ff; stroke-opacity: .28; stroke-dasharray: 3 4; filter: none; }
+  [data-landings] :global(.land) { fill: #eafff4; }
+  [data-landings] :global(.brush) { fill: none; stroke: #e8f0ff; stroke-width: 2; }
+  .bias { fill: #ff3c6e; font-size: 16px; }
+  .foot { fill: rgba(255, 255, 255, .35); stroke: #fff; stroke-width: 1.5; color: #bfffe0; }
+  .ghost { fill: none; stroke: #7fd4ff; stroke-dasharray: 4 4; stroke-width: 1.2; }
+  @media (max-width: 760px) {
+    .views { grid-template-columns: 1fr; }
+    .views figure + figure { border-left: 0; border-top: 1px solid var(--bp-ink-faint); }
+    .top svg { max-width: 300px; margin: 0 auto; }
+  }
+</style>
+<style>
+  /* lighter glow for the many thin rays */
+  :global(html[data-vfx-tier='full']) .bp-funnel [data-rays] :global(.ray.glow) { filter: drop-shadow(0 0 2px currentColor); }
+</style>

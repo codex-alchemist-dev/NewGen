@@ -1,0 +1,384 @@
+---
+/**
+ * CRT-VR · Act 7 · "gun-shootout" — electron source trade study.
+ *
+ * Ported from the live page (Sony/CRT-VR/index.html, section 03) with its data
+ * kept verbatim: four candidates, five qualitative 0–10 ratings, verdicts and
+ * body copy. One coordinator-approved change (Nov 27): the spot-headroom cell
+ * now compares against the ~2 µm triangle side at 24K on 4″.
+ *
+ * Upgrades: a live emitter cutaway per candidate (tip, heat, emission cone),
+ * a five-axis radar that overlays the chosen Schottky source, animated meters,
+ * and ARIA tabs with arrow-key navigation.
+ *
+ * Tiers: full (animated emitters + glow), reduced (no emitter animation),
+ * static (no animation; meters drawn at value).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './blueprint.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { tier = 'full', id = 'bp-gun' } = Astro.props;
+
+const AXES = ['Current Density', 'Stability / Life', 'Vacuum Tolerance', 'Power / Heat', 'System Simplicity'];
+const SHORT = ['Current', 'Stability', 'Vacuum', 'Power', 'Simplicity'];
+
+const GUNS = [
+  {
+    key: 'schottky', tier: 'TIER 1 ✓', name: 'Schottky ZrO/W', color: '#00ff99', dark: '#004433',
+    verdict: 'CHOSEN — THE SEM/TEM COLUMN SOURCE',
+    body: [
+      'ZrO/W tip at ~1800 K with strong extraction field. <strong>2–4 orders of magnitude more current density than thermionic</strong>; nm-scale coherent virtual source; <strong>thermally self-cleaning</strong> — adsorbed gas bakes off continuously, so emission is stable for years, not hours. Forgiving vacuum requirement, non-toxic materials, &lt;1 W heat plausible.',
+      'Consequence: the gun is <strong>never the brightness bottleneck</strong> (phosphor saturation is), and spot size carries 3+ orders of magnitude headroom over the ~2 µm triangle side at 24K on 4″.',
+    ],
+    scores: [9, 9.5, 8, 7.5, 8.5],
+  },
+  {
+    key: 'cold', tier: 'TIER 2', name: 'Cold Field Emission', color: '#00b4ff', dark: '#003a55',
+    verdict: 'TIER 2 — BEST RAW EFFICIENCY, WORST HABITS',
+    body: [
+      'CNT / Spindt / nanodiamond cold cathodes: best raw efficiency and instant-on. But emission current <strong>drifts as gas molecules adsorb onto the tip</strong> — the classic cold-FE reliability problem — demanding ~10⁻¹⁰ torr and periodic tip flashing.',
+      'Manageable with modern getter technology, but it trades away the one property a consumer display must have: <strong>set-and-forget stability</strong>. Kept on the bench as the fallback if Schottky heater power ever becomes the binding constraint.',
+    ],
+    scores: [8.5, 4, 2.5, 9.5, 7],
+  },
+  {
+    key: 'photo', tier: 'TIER 3', name: 'Photocathode', color: '#cc44ff', dark: '#33004d',
+    verdict: "TIER 3 — SOLVING A BOTTLENECK WE DON'T HAVE",
+    body: [
+      'Laser-triggered photocathodes are the <strong>fastest, most precise</strong> electron sources in existence — free-electron laser and ultrafast electron diffraction heritage.',
+      'But they add a laser driver and an optical excitation path inside the envelope, for temporal precision the display never needs: gun modulation already carries massive headroom over phosphor decay. <strong>Complexity purchased, nothing gained.</strong>',
+    ],
+    scores: [7, 6, 4.5, 5.5, 2],
+  },
+  {
+    key: 'thermionic', tier: 'REJECTED', name: 'Thermionic BaO', color: '#ff3c6e', dark: '#550010',
+    verdict: 'REJECTED — THE LEGACY CATHODE',
+    body: [
+      'The barium-oxide cathode that powered every living-room CRT: <strong>~800 °C heater, 5–10 W continuous draw, 30–60 s warm-up</strong>, and toxic barium/strontium oxide chemistry.',
+      'Every one of those properties is disqualifying in a head-mounted device. Rejected without regret — this is precisely the part of CRT heritage the design leaves behind.',
+    ],
+    scores: [2, 6.5, 7.5, 1, 6],
+  },
+];
+
+// Radar geometry
+const RC = 130, RR = 96;
+const pt = (i: number, v: number) => {
+  const a = -Math.PI / 2 + (i * 2 * Math.PI) / AXES.length;
+  return [RC + Math.cos(a) * RR * (v / 10), RC + Math.sin(a) * RR * (v / 10)];
+};
+const poly = (s: number[]) => s.map((v, i) => pt(i, v).map((n) => n.toFixed(1)).join(',')).join(' ');
+---
+
+<div class:list={['crtvr', 'bp', 'bp-gun', { 'is-static': tier === 'static' }]} id={id} data-gun-shootout>
+  <div class="bp-frame bp-wide">
+    <div class="bp-head">
+      <span><b>The Gun Shootout</b> &nbsp;· four candidates, one survivor</span>
+      <span class="bp-dwg">Electron source trade study</span>
+    </div>
+    <p class="intro">Select a candidate. Decision is final unless reopened; ratings are qualitative engineering-judgment scores from the trade study, not measurements.</p>
+
+    <div class="tabs" role="tablist" aria-label="Electron source candidates">
+      {GUNS.map((g, i) => (
+        <button role="tab" id={`${id}-tab-${g.key}`} aria-controls={`${id}-panel-${g.key}`}
+          aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}
+          data-gun={g.key} style={`--c:${g.color}`}>
+          <span class="tier">{g.tier}</span>{g.name}
+        </button>
+      ))}
+    </div>
+
+    <div class="body">
+      <!-- live emitter cutaway -->
+      <figure class="emitter" aria-hidden="true">
+        <svg viewBox="0 0 360 220" data-emitter>
+          <defs>
+            <radialGradient id={`${id}-heat`}>
+              <stop offset="0" stop-color="#fff4d6" stop-opacity=".95" />
+              <stop offset=".4" stop-color="#ff9a3c" stop-opacity=".5" />
+              <stop offset="1" stop-color="#ff5a00" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <g class="ink dim dash"><line x1="0" y1="110" x2="360" y2="110" /></g>
+          <!-- extractor / anode -->
+          <path class="ink" d="M200,30 L200,96 M200,124 L200,190" stroke-width="3" />
+          <text class="lbl sub" x="206" y="26">extractor</text>
+          <!-- per-candidate cathodes -->
+          <g data-em="schottky">
+            <circle cx="96" cy="110" r="46" fill={`url(#${id}-heat)`} class="heat" />
+            <path d="M20,92 L104,108 Q110,110 104,112 L20,128 Z" fill="#33465e" stroke="#7fd4ff" />
+            <path d="M60,100 L104,108 Q110,110 104,112 L60,120" fill="none" stroke="#ffe135" stroke-width="2.5" />
+            <text class="lbl sub" x="20" y="150">ZrO/W · ~1800 K</text>
+          </g>
+          <g data-em="cold">
+            {[0, 1, 2, 3, 4].map((k) => (
+              <path d={`M${60 + k * 9},${132} L${64 + k * 9},${92 + (k % 2) * 6} L${68 + k * 9},132 Z`} fill="#1c3550" stroke="#00b4ff" />
+            ))}
+            <rect x="52" y="132" width="60" height="8" fill="#1c3550" stroke="#00b4ff" />
+            <g class="adsorb">{[0, 1, 2, 3, 4, 5].map((k) => <circle cx={62 + k * 8} cy={86 + (k % 3) * 4} r="2.4" fill="#ff3c6e" />)}</g>
+            <text class="lbl sub" x="20" y="160">CNT / Spindt array · cold</text>
+          </g>
+          <g data-em="photo">
+            <rect x="96" y="78" width="10" height="64" fill="#2a1c40" stroke="#cc44ff" />
+            <line class="laser" x1="10" y1="40" x2="100" y2="104" stroke="#cc44ff" stroke-width="3" />
+            <rect x="0" y="26" width="28" height="22" fill="#1a0f26" stroke="#cc44ff" />
+            <text class="lbl sub" x="20" y="166">Laser-driven cathode</text>
+          </g>
+          <g data-em="thermionic">
+            <circle cx="90" cy="110" r="70" fill={`url(#${id}-heat)`} class="heat" />
+            <rect x="70" y="82" width="34" height="56" rx="4" fill="#4a2a1a" stroke="#ff3c6e" />
+            <path d="M74,140 l4,10 l4,-10 l4,10 l4,-10 l4,10 l4,-10 l4,10" fill="none" stroke="#ff7a00" stroke-width="2" />
+            <text class="lbl sub" x="20" y="172">BaO · ~800 °C · 5–10 W</text>
+          </g>
+          <!-- emission (dots flowing right) -->
+          <g data-flow></g>
+          <!-- spot at the right -->
+          <circle data-spot cx="330" cy="110" r="4" fill="#fff4d6" />
+          <text class="lbl sub" x="300" y="146" data-spotlbl>spot</text>
+        </svg>
+      </figure>
+
+      <div class="panels">
+        {GUNS.map((g, i) => (
+          <div role="tabpanel" id={`${id}-panel-${g.key}`} aria-labelledby={`${id}-tab-${g.key}`}
+            data-panel={g.key} hidden={i !== 0} style={`--c:${g.color}; --d:${g.dark}`}>
+            <p class="verdict">{g.verdict}</p>
+            {g.body.map((b) => <p class="copy" set:html={b} />)}
+            <div class="meters">
+              {AXES.map((a, k) => (
+                <div class="row">
+                  <span class="ax">{a}</span>
+                  <span class="track"><span class="bar" style={`--w:${g.scores[k] * 10}%`} /></span>
+                  <span class="val">{g.scores[k]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <figure class="radar">
+        <svg viewBox="-58 -4 376 280" role="img" aria-label="Radar chart of the five ratings, selected candidate over the chosen Schottky source">
+          {[2.5, 5, 7.5, 10].map((v) => <polygon class="ink dim" points={poly(AXES.map(() => v))} opacity=".5" />)}
+          {AXES.map((a, i) => {
+            const [x, y] = pt(i, 10);
+            const [lx, ly] = pt(i, 12.6);
+            return (
+              <>
+                <line class="ink dim" x1={RC} y1={RC} x2={x} y2={y} opacity=".5" />
+                <text class="lbl sub" x={lx} y={ly + 4} text-anchor={lx < RC - 8 ? 'end' : lx > RC + 8 ? 'start' : 'middle'} font-size="12">{SHORT[i]}</text>
+              </>
+            );
+          })}
+          <polygon class="ref" points={poly(GUNS[0].scores)} />
+          <polygon class="cur" data-radar points={poly(GUNS[0].scores)} />
+          <text class="lbl sub" x="0" y="268" font-size="11">dashed = Schottky (chosen)</text>
+        </svg>
+      </figure>
+    </div>
+
+    <div class="specs">
+      <div class="cell">
+        <span class="k">Precision Headroom — Spot Size</span>
+        <strong>100–1000×</strong>
+        <p>Schottky spot size (sub-nm to low-nm in electron microscopy) vs. the ~2 µm triangle side at 24K on 4″. The gun is never the resolution bottleneck.</p>
+      </div>
+      <div class="cell">
+        <span class="k">Current Headroom vs. Need</span>
+        <strong>10²–10⁴<small>×</small></strong>
+        <p>Brightness ceiling is set by phosphor saturation, not beam current. Theory extrapolation from SEM/TEM column data.</p>
+      </div>
+      <div class="cell">
+        <span class="k">Beam Configuration</span>
+        <strong>6 Beams · 1 Assembly</strong>
+        <p>Classic Trinitron "single gun" = one assembly, three converged beams, geometric color separation. CRT-VR: same converged-assembly principle at six — "6 guns, 6 dots" — with a litho-patterned grille.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ guns: GUNS.map((g) => ({ key: g.key, color: g.color, scores: g.scores })), RC, RR }}>
+  window.__bpGunData = { guns, RC, RR };
+</script>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+
+  type Gun = { key: string; color: string; scores: number[] };
+  const data = (window as any).__bpGunData as { guns: Gun[]; RC: number; RR: number };
+
+  // Per-candidate emission character: [cone half-angle °, particle rate, jitter, spot r]
+  const EM: Record<string, [number, number, number, number]> = {
+    schottky: [3, 1, 0.05, 3],
+    cold: [5, 1, 0.8, 4],          // current drifts (flicker)
+    photo: [2, 0.6, 0.05, 2.5],    // pulsed
+    thermionic: [16, 0.35, 0.2, 11],
+  };
+
+  function setup(root: HTMLElement) {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+    const ems = Array.from(root.querySelectorAll<SVGGElement>('[data-em]'));
+    const flow = root.querySelector<SVGGElement>('[data-flow]')!;
+    const spot = root.querySelector<SVGCircleElement>('[data-spot]')!;
+    const radar = root.querySelector<SVGPolygonElement>('[data-radar]')!;
+    const NS = 'http://www.w3.org/2000/svg';
+    let tier: VfxTier = 'full';
+    let cur = data.guns[0];
+    let shown = cur.scores.slice();
+    let raf = 0, visible = false, last = 0;
+    const dots: { el: SVGCircleElement; x: number; a: number; on: boolean }[] = [];
+    for (let i = 0; i < 40; i++) {
+      const el = document.createElementNS(NS, 'circle');
+      el.setAttribute('r', '1.6');
+      flow.appendChild(el);
+      dots.push({ el, x: 0, a: 0, on: false });
+    }
+
+    const pt = (i: number, v: number) => {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+      return `${(data.RC + Math.cos(a) * data.RR * (v / 10)).toFixed(1)},${(data.RC + Math.sin(a) * data.RR * (v / 10)).toFixed(1)}`;
+    };
+    const drawRadar = () => radar.setAttribute('points', shown.map((v, i) => pt(i, v)).join(' '));
+
+    const select = (key: string, focus = false) => {
+      tabs.forEach((t) => {
+        const on = t.dataset.gun === key;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        if (on && focus) t.focus();
+      });
+      panels.forEach((p) => {
+        const on = p.dataset.panel === key;
+        p.hidden = !on;
+        if (on && tier !== 'static') { p.classList.remove('grow'); void p.offsetWidth; p.classList.add('grow'); }
+      });
+      ems.forEach((g) => (g.style.display = g.dataset.em === key ? '' : 'none'));
+      cur = data.guns.find((g) => g.key === key)!;
+      root.style.setProperty('--sel', cur.color);
+      radar.style.setProperty('stroke', cur.color);
+      radar.style.setProperty('fill', cur.color);
+      spot.setAttribute('r', String(EM[key][3]));
+      if (tier === 'static') { shown = cur.scores.slice(); drawRadar(); }
+      kick();
+    };
+
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(t.dataset.gun!));
+      t.addEventListener('keydown', (e) => {
+        let j = -1;
+        if (e.key === 'ArrowRight') j = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft') j = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') j = 0;
+        else if (e.key === 'End') j = tabs.length - 1;
+        if (j >= 0) { e.preventDefault(); select(tabs[j].dataset.gun!, true); }
+      });
+    });
+
+    const frame = (t: number) => {
+      raf = 0;
+      const dt = Math.min(0.05, (t - (last || t)) / 1000);
+      last = t;
+      let moving = false;
+      shown = shown.map((v, i) => {
+        const d = cur.scores[i] - v;
+        if (Math.abs(d) > 0.01) moving = true;
+        return Math.abs(d) < 0.01 ? cur.scores[i] : v + d * 0.14;
+      });
+      drawRadar();
+      const animate = tier === 'full' && visible;
+      if (animate) {
+        const [ang, rate, jit] = EM[cur.key];
+        const flick = cur.key === 'cold' ? 0.5 + 0.5 * Math.sin(t / 230) * Math.sin(t / 71) : 1;
+        const pulse = cur.key === 'photo' ? ((t / 300) % 1 < 0.25 ? 1 : 0) : 1;
+        root.querySelector<SVGLineElement>('.laser')?.setAttribute('opacity', String(pulse));
+        for (const d of dots) {
+          if (!d.on && Math.random() < rate * flick * pulse * 0.25) {
+            d.on = true; d.x = 110; d.a = ((Math.random() * 2 - 1) * ang * Math.PI) / 180 + (Math.random() - 0.5) * jit * 0.05;
+          }
+          if (d.on) {
+            d.x += dt * 420;
+            const y = 110 + Math.tan(d.a) * (d.x - 110) * (d.x < 200 ? 1 : Math.max(0.15, 1 - (d.x - 200) / 140));
+            d.el.setAttribute('cx', d.x.toFixed(1));
+            d.el.setAttribute('cy', y.toFixed(1));
+            d.el.setAttribute('fill', cur.color);
+            d.el.setAttribute('opacity', '0.9');
+            if (d.x > 330) { d.on = false; d.el.setAttribute('opacity', '0'); }
+          }
+        }
+        spot.setAttribute('opacity', String(0.4 + 0.6 * flick * (cur.key === 'photo' ? 0.4 + 0.6 * pulse : 1)));
+      } else {
+        dots.forEach((d) => { d.on = false; d.el.setAttribute('opacity', '0'); });
+      }
+      if (animate || moving) raf = requestAnimationFrame(frame);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) kick(); }).observe(root);
+    onTier((t) => { tier = t; root.classList.toggle('is-static', t === 'static'); select(cur.key); });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-gun-shootout]').forEach(setup);
+</script>
+
+<style>
+  .intro { margin: 0; padding: 12px 14px; font-size: 12px; line-height: 1.6; color: var(--crtvr-text-dim); border-bottom: 1px solid var(--bp-ink-dim); }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--bp-ink-faint); border-bottom: 1px solid var(--bp-ink-dim); }
+  .tabs button {
+    position: relative; background: var(--bp-paper); border: 0; cursor: pointer; padding: 16px 10px;
+    font: 10px/1.3 var(--crtvr-font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--crtvr-text-dim);
+    transition: background .2s, color .2s;
+  }
+  .tabs .tier { display: block; font-family: var(--crtvr-font-display); font-size: 20px; letter-spacing: .08em; margin-bottom: 4px; color: var(--crtvr-text-dimmer, #3a4a6a); }
+  .tabs button:hover { color: var(--crtvr-text); background: #071427; }
+  .tabs button[aria-selected='true'] { color: var(--crtvr-white); background: #071427; }
+  .tabs button[aria-selected='true'] .tier { color: var(--c); }
+  .tabs button[aria-selected='true']::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--c); box-shadow: 0 0 12px var(--c); }
+
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, .8fr); gap: 0; }
+  .body > * { padding: 14px; }
+  .body > * + * { border-left: 1px solid var(--bp-ink-faint); }
+  .emitter { margin: 0; align-self: center; }
+  .emitter :global(.heat) { opacity: .9; }
+  :global(html[data-vfx-tier='full']) .bp-gun .emitter :global(.heat) { animation: bp-heat 2.4s ease-in-out infinite; }
+  @keyframes bp-heat { 50% { opacity: .65; } }
+  [data-spot] { fill: var(--sel, #00ff99); }
+
+  .verdict { margin: 0 0 10px; font-family: var(--crtvr-font-display); font-size: 22px; letter-spacing: .06em; color: var(--c); }
+  .copy { margin: 0 0 10px; font-family: var(--crtvr-font-serif); font-size: 15px; line-height: 1.55; color: var(--crtvr-text); }
+  .copy :global(strong) { color: var(--crtvr-white); }
+  .meters { display: grid; gap: 7px; margin-top: 14px; }
+  .row { display: grid; grid-template-columns: 130px 1fr 34px; gap: 10px; align-items: center; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--crtvr-text-dim); }
+  .track { height: 6px; background: rgba(127, 212, 255, .08); position: relative; overflow: hidden; }
+  .bar { position: absolute; inset: 0 auto 0 0; width: var(--w); background: linear-gradient(to right, var(--d), var(--c)); }
+  .grow .bar { animation: bp-grow .9s var(--crtvr-ease-out) both; }
+  @keyframes bp-grow { from { width: 0; } }
+  .val { color: var(--c); font-size: 13px; text-align: right; }
+
+  .radar { margin: 0; align-self: center; }
+  .radar :global(.ref) { fill: none; stroke: #00ff99; stroke-dasharray: 4 4; stroke-width: 1.2; }
+  .radar :global(.cur) { fill-opacity: .18; stroke-width: 2; }
+
+  .specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--bp-ink-faint); border-top: 1px solid var(--bp-ink-dim); }
+  .cell { background: var(--bp-paper); padding: 14px; }
+  .cell .k { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--crtvr-text-dim); }
+  .cell strong { display: block; margin: 6px 0; font-family: var(--crtvr-font-display); font-weight: 400; font-size: 30px; letter-spacing: .04em; color: #00ff99; }
+  .cell strong small { font-size: 18px; }
+  .cell p { margin: 0; font-size: 11.5px; line-height: 1.55; color: var(--crtvr-text-dim); }
+
+  .is-static .grow .bar { animation: none; }
+
+  @media (max-width: 900px) {
+    .body { grid-template-columns: 1fr 1fr; }
+    .panels { grid-column: 1 / -1; order: -1; border-left: 0 !important; }
+    .emitter { border-left: 0 !important; }
+  }
+  @media (max-width: 640px) {
+    .tabs { grid-template-columns: 1fr 1fr; }
+    .body, .specs { grid-template-columns: 1fr; }
+    .body > * + * { border-left: 0; border-top: 1px solid var(--bp-ink-faint); }
+    .row { grid-template-columns: 110px 1fr 30px; }
+  }
+</style>

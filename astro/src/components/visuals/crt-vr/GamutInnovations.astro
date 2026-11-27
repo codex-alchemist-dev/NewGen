@@ -1,0 +1,176 @@
+---
+/**
+ * CRT-VR · Act 4 · "Gamut innovations" — four schematic plates.
+ *   1. Nanoplatelet / perovskite QDs: ~20 nm FWHM lines vs a conventional phosphor's ~40–100 nm.
+ *   2. Resonant Wells: a microcavity cup that narrows and aims emission (unlabeled schematic).
+ *   3. Per-subpixel dichroic trim: a notch that shaves each line's tail (unlabeled schematic).
+ *   4. Zero cross-talk: walls + per-beam landing, target under −30 dB (labeled as a target).
+ * Spectra are computed from the same primary model as the Act 4 interactives.
+ * Tiers: full (glow + motion), reduced (motion, no filters), static (still).
+ */
+import './tokens.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+import { buildPrimaries, gaussian, nmCss, UI, PRIMARY_SPEC, type Key } from '../../interactives/crt-vr/lib/color';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { tier = 'full', id = 'crtvr-gamut-innovations' } = Astro.props;
+
+const ps = buildPrimaries();
+const L0 = 400, L1 = 700, SW = 520, SH = 200, PX = 30, PY = 20;
+const X = (nm: number) => PX + ((nm - L0) / (L1 - L0)) * (SW - PX - 10);
+const Y = (v: number) => PY + (1 - v) * (SH - PY - 30);
+const curve = (f: (nm: number) => number) => {
+  let d = '';
+  for (let nm = L0; nm <= L1; nm += 1) d += `${nm === L0 ? 'M' : 'L'}${X(nm).toFixed(1)} ${Y(f(nm)).toFixed(1)}`;
+  return d;
+};
+const area = (f: (nm: number) => number) => `${curve(f)} L${X(L1)} ${Y(0)} L${X(L0)} ${Y(0)} Z`;
+const qd = (['B', 'C', 'G', 'Y', 'R'] as const).map((k) => ({ k: k as Key, nm: PRIMARY_SPEC[k], d: area(gaussian(PRIMARY_SPEC[k], 20)) }));
+// M: two-peak, drawn from the model's own blend (normalised to its taller peak)
+const mS = ps.by.M.spectrum; let mMax = 0; for (let nm = L0; nm <= L1; nm++) mMax = Math.max(mMax, mS(nm));
+const mPath = curve((nm) => mS(nm) / mMax * 0.8);
+// conventional broad phosphor bands (schematic, 40–100 nm FWHM)
+const broad = [
+  { c: 450, w: 40 }, { c: 530, w: 80 }, { c: 620, w: 100 },
+].map((b) => curve(gaussian(b.c, b.w)));
+const strip = Array.from({ length: 31 }, (_, i) => ({ nm: L0 + i * 10, c: nmCss(L0 + i * 10) }));
+
+// trim plate: one line with a broad tail, and the notch that removes the tail
+const tailed = (nm: number) => gaussian(520, 20)(nm) + 0.28 * gaussian(560, 60)(nm);
+const ss = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const trimmed = (nm: number) => tailed(nm) * (1 - 0.94 * ss(534, 544, nm) * (1 - ss(636, 646, nm)));
+---
+<div class:list={['crtvr', 'gi', `tier-${tier}`]} id={id} data-gamut-innovations>
+  <article class="plate">
+    <header><span class="idx">01</span><h4>Nanoplatelet &amp; perovskite QDs</h4><p>Narrow lines sit on the edge of vision. Broad bands fall inside it.</p></header>
+    <svg viewBox={`0 0 ${SW} ${SH}`} role="img" aria-label="Emission spectra: six narrow quantum-dot lines of about 20 nanometres width compared with broad conventional phosphor bands of about 40 to 100 nanometres">
+      <defs><filter id={`${id}-g`} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" /></filter></defs>
+      {broad.map((d) => <path d={d} fill="none" stroke="var(--crtvr-text-dim)" stroke-width="1.2" stroke-dasharray="4 4" />)}
+      {qd.map((q) => (
+        <g class="line" style={`--c:${UI[q.k]}`}>
+          {tier === 'full' && <path d={q.d} fill={UI[q.k]} opacity=".45" filter={`url(#${id}-g)`} />}
+          <path d={q.d} fill={UI[q.k]} fill-opacity=".55" stroke={UI[q.k]} stroke-width="1.4" />
+          <text x={X(q.nm)} y={Y(1) - 6} text-anchor="middle">{q.k} {q.nm}</text>
+        </g>
+      ))}
+      <path d={mPath} fill="none" stroke={UI.M} stroke-width="2" stroke-dasharray="2 3" class="mline" />
+            {strip.map((s, i) => i < strip.length - 1 && <rect x={X(s.nm)} y={Y(0) + 6} width={X(s.nm + 10) - X(s.nm) + 0.5} height="6" fill={s.c} />)}
+      {[400, 500, 600, 700].map((nm) => <text x={X(nm)} y={SH - 2} text-anchor="middle" class="ax">{nm}</text>)}
+    </svg>
+    <ul class="legend"><li><i class="qd" />QD lines · ~20 nm FWHM</li><li><i class="ph" />conventional phosphor · ~40–100 nm FWHM</li><li><i class="m" />M · two peaks (B + R)</li></ul>
+  </article>
+
+  <article class="plate">
+    <header><span class="idx">02</span><h4>Resonant Wells</h4><p>Each well is a tiny optical cavity. Light that resonates leaves narrower, and aimed.</p></header>
+    <svg viewBox="0 0 520 210" role="img" aria-label="Schematic comparing an open well, which emits widely in all directions, with a resonant well between two mirrors, which emits a narrow forward beam">
+      <defs>
+        <linearGradient id={`${id}-cone`} x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color={UI.G} stop-opacity=".75" /><stop offset="1" stop-color={UI.G} stop-opacity="0" /></linearGradient>
+        <radialGradient id={`${id}-fan`} cx=".5" cy="1" r="1"><stop offset="0" stop-color={UI.G} stop-opacity=".45" /><stop offset="1" stop-color={UI.G} stop-opacity="0" /></radialGradient>
+      </defs>
+      <!-- open well -->
+      <g>
+        <path d="M60 110 L130 30 L200 110 Z" fill="none" />
+        <path class="fan" d="M70 110 A 70 70 0 0 1 190 110 Z" fill={`url(#${id}-fan)`} transform="translate(0 -2)" />
+        {[-70, -45, -20, 0, 20, 45, 70].map((a) => <line x1="130" y1="108" x2={130 + 80 * Math.sin(a * Math.PI / 180)} y2={108 - 80 * Math.cos(a * Math.PI / 180)} stroke={UI.G} stroke-opacity=".35" stroke-dasharray="2 4" />)}
+        <path d="M80 110 L80 170 L180 170 L180 110" fill="none" stroke="#000" stroke-width="8" />
+        <path d="M80 110 L80 170 L180 170 L180 110" fill="none" stroke="var(--crtvr-line-bright)" stroke-width=".8" />
+        <rect x="90" y="150" width="80" height="12" fill={UI.G} />
+        <text x="130" y="194" text-anchor="middle" class="lbl">open well</text>
+        <text x="130" y="207" text-anchor="middle" class="sub">wide, unaimed</text>
+      </g>
+      <!-- resonant well -->
+      <g>
+        <path class="cone" d="M370 110 L352 6 L428 6 L410 110 Z" fill={`url(#${id}-cone)`} />
+        <path d="M340 110 L340 170 L440 170 L440 110" fill="none" stroke="#000" stroke-width="8" />
+        <path d="M340 110 L340 170 L440 170 L440 110" fill="none" stroke="var(--crtvr-line-bright)" stroke-width=".8" />
+        <rect x="346" y="160" width="88" height="5" fill="#c8d4f0" opacity=".8" />
+        <rect x="346" y="112" width="88" height="4" fill="#c8d4f0" opacity=".5" />
+        <rect x="350" y="146" width="80" height="10" fill={UI.G} />
+        <path class="wave" d="M348 132 Q 359 118 370 132 T 392 132 T 414 132 T 436 132" fill="none" stroke={UI.G} stroke-width="1.6" />
+        <path class="wave w2" d="M348 132 Q 359 146 370 132 T 392 132 T 414 132 T 436 132" fill="none" stroke={UI.G} stroke-width="1.6" opacity=".5" />
+        <text x="390" y="194" text-anchor="middle" class="lbl" fill={UI.G}>resonant well</text>
+        <text x="390" y="207" text-anchor="middle" class="sub">narrower, aimed forward</text>
+        <text x="332" y="118" text-anchor="end" class="sub">partial mirror</text>
+        <text x="332" y="166" text-anchor="end" class="sub">mirror</text>
+      </g>
+    </svg>
+    <ul class="legend"><li>Schematic. Mirrors, cavity length and Q not drawn to value.</li></ul>
+  </article>
+
+  <article class="plate">
+    <header><span class="idx">03</span><h4>Per-subpixel dichroic trim</h4><p>A thin-film filter on each subpixel shaves off the tail, so every line stays pure.</p></header>
+    <svg viewBox={`0 0 ${SW} ${SH}`} role="img" aria-label="Schematic: an emission line with a long tail, and the same line after a dichroic trim removes the tail">
+      <path d={area(tailed)} fill={UI.G} fill-opacity=".12" stroke={UI.G} stroke-opacity=".5" stroke-dasharray="3 3" />
+      <rect class="notch" x={X(540)} y={PY} width={X(640) - X(540)} height={Y(0) - PY} fill="#f0f4ff" fill-opacity=".05" stroke="#f0f4ff" stroke-opacity=".25" stroke-dasharray="2 4" />
+      <path d={area(trimmed)} fill={UI.G} fill-opacity=".6" stroke={UI.G} stroke-width="1.5" />
+      <text x={X(590)} y={PY + 16} text-anchor="middle" class="sub">trim band</text>
+      <text x={X(498)} y={Y(0.7)} text-anchor="end" class="lbl" fill={UI.G}>kept</text>
+      <text x={X(600)} y={Y(0.35)} text-anchor="middle" class="sub">tail removed</text>
+      {strip.map((s, i) => i < strip.length - 1 && <rect x={X(s.nm)} y={Y(0) + 6} width={X(s.nm + 10) - X(s.nm) + 0.5} height="6" fill={s.c} />)}
+    </svg>
+    <ul class="legend"><li>Schematic. Trim band shown for G only; each primary gets its own.</li></ul>
+  </article>
+
+  <article class="plate">
+    <header><span class="idx">04</span><h4>Zero cross-talk</h4><p>Walls stop light leaking sideways. Beams land only on their own well.</p></header>
+    <svg viewBox="0 0 520 200" role="img" aria-label="Schematic: three neighbouring subpixel wells separated by black walls; stray light from the middle well is absorbed by the walls">
+      {(['C', 'G', 'Y'] as Key[]).map((k, i) => {
+        const x = 70 + i * 140;
+        return (
+          <g>
+            <rect x={x} y="60" width="110" height="16" fill={UI[k]} opacity={i === 1 ? 1 : 0.12} />
+            {i === 1 && <path class="up" d={`M${x + 15} 60 L${x + 35} 14 L${x + 75} 14 L${x + 95} 60 Z`} fill={UI[k]} opacity=".35" />}
+          </g>
+        );
+      })}
+      {[60, 180, 320, 460].map((x) => <rect x={x} y="56" width="10" height="110" fill="#000" stroke="var(--crtvr-line-bright)" stroke-width=".8" />)}
+      <path class="stray" d="M265 82 L322 112" stroke={UI.G} stroke-width="1.6" stroke-dasharray="3 3" />
+      <path class="stray" d="M255 82 L188 120" stroke={UI.G} stroke-width="1.6" stroke-dasharray="3 3" />
+      <circle cx="322" cy="112" r="4" fill="#000" stroke={UI.G} /><circle cx="188" cy="120" r="4" fill="#000" stroke={UI.G} />
+      <line x1="265" y1="196" x2="265" y2="78" stroke={UI.G} stroke-width="2" stroke-dasharray="6 8" class="beam" />
+      <text x="260" y="190" text-anchor="end" class="sub">beam</text>
+      <text x="440" y="150" class="sub" text-anchor="end">absorbed by Kurocoat</text>
+    </svg>
+    <div class="target"><strong>&lt; −30<small>dB</small></strong><span>cross-talk to neighbours <em>target</em></span></div>
+  </article>
+</div>
+
+<style>
+  .gi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2vw, 22px); margin: var(--s-4, 32px) 0; }
+  :global(.section__body:has(.gi)) { max-width: none; }
+  @media (max-width: 760px) { .gi { grid-template-columns: 1fr; } }
+  .plate { position: relative; border: 1px solid var(--crtvr-line); border-radius: 14px; padding: 18px 18px 14px; background: radial-gradient(120% 100% at 50% 0%, #0b1224, var(--crtvr-bg) 75%); overflow: hidden; }
+  .plate header { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin-bottom: 8px; }
+  .idx { grid-row: span 2; font: 400 34px/1 var(--crtvr-font-display); color: var(--crtvr-text-dimmer); }
+  .plate h4 { margin: 0; font: 400 24px/1.05 var(--crtvr-font-display); letter-spacing: .02em; color: var(--crtvr-white); }
+  .plate header p { margin: 0; font: 400 12px/1.45 var(--crtvr-font-mono); color: var(--crtvr-text-dim); }
+  .plate svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .plate svg text { font: 400 10px var(--crtvr-font-mono); fill: var(--crtvr-text); }
+  .plate svg text.ax, .plate svg text.sub { fill: var(--crtvr-text-dim); }
+  .plate svg text.lbl { font-weight: 500; }
+  .legend { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font: 400 10.5px/1.4 var(--crtvr-font-mono); color: var(--crtvr-text-dim); }
+  .legend i { display: inline-block; width: 18px; height: 0; vertical-align: middle; margin-right: 6px; border-top: 2px solid; }
+  .legend i.qd { border-image: linear-gradient(90deg, #4a5dff, #00e1ff, #19ff74, #ffe135, #ff3b2f) 1; }
+  .legend i.ph { border-top: 1.5px dashed var(--crtvr-text-dim); }
+  .legend i.m { border-top: 2px dotted #ff2fd2; }
+  .target { display: flex; align-items: baseline; gap: 12px; margin-top: 4px; }
+  .target strong { font: 400 34px/1 var(--crtvr-font-display); color: var(--crtvr-white); }
+  .target strong small { font: 500 14px/1 var(--crtvr-font-mono); margin-left: 4px; color: var(--crtvr-text); }
+  .target span { font: 400 11px/1.3 var(--crtvr-font-mono); color: var(--crtvr-text-dim); }
+  .target em { font-style: normal; color: #ffe135; border: 1px solid rgba(255,225,53,.5); border-radius: 4px; padding: 2px 5px; margin-left: 6px; letter-spacing: .14em; text-transform: uppercase; font-size: 9px; }
+
+  /* motion (full + reduced) */
+  .tier-full .wave, .tier-reduced .wave { animation: gi-wave 1.6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+  .tier-full .w2, .tier-reduced .w2 { animation-direction: alternate-reverse; }
+  .tier-full .fan, .tier-reduced .fan, .tier-full .cone, .tier-reduced .cone { animation: gi-glow 1.6s ease-in-out infinite alternate; }
+  .tier-full .notch, .tier-reduced .notch { animation: gi-glow 2.4s ease-in-out infinite alternate; }
+  .tier-full .stray, .tier-reduced .stray { animation: gi-dash 1s linear infinite; }
+  .tier-full .beam, .tier-reduced .beam { animation: gi-dash 0.8s linear infinite reverse; }
+  .tier-full .up { animation: gi-glow 1.2s ease-in-out infinite alternate; }
+  .tier-full .mline { animation: gi-dash 2s linear infinite; }
+  @keyframes gi-wave { from { transform: scaleY(1); } to { transform: scaleY(-1); } }
+  @keyframes gi-glow { from { opacity: .25; } to { opacity: .8; } }
+  @keyframes gi-dash { to { stroke-dashoffset: -24; } }
+  :global(html[data-vfx-tier='static']) .gi *, .tier-static * { animation: none !important; }
+  @media (prefers-reduced-motion: reduce) { .gi * { animation: none !important; } }
+</style>

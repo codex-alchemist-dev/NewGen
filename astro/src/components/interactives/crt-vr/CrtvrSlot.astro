@@ -1,0 +1,31 @@
+---
+/*
+ * Renders the CRT-VR slot components built so far, falling back to the
+ * kit <Slot> placeholder for ids that are not built yet.
+ */
+import Slot from '../../kit/Slot.astro';
+import type { SlotKind } from '../../../data/slots';
+import PixelVsSoft from './PixelVsSoft.astro';
+import CrtHistoryTimeline from './CrtHistoryTimeline.astro';
+import SonyLineageTree from './SonyLineageTree.astro';
+import EmissionCompare from './EmissionCompare.astro';
+import BlackFloorStack from './BlackFloorStack.astro';
+import MotionLineageChart from './MotionLineageChart.astro';
+import MotionBlurCompare from './MotionBlurCompare.astro';
+import ComparisonTable from './ComparisonTable.astro';
+import ContributionMap from '../../visuals/crt-vr/ContributionMap.astro';
+
+interface Props { id: string; kind: SlotKind }
+const { id, kind } = Astro.props;
+const p = { tier: 'full' as const, reducedMotion: false };
+---
+{id === 'pixel-vs-soft' ? <PixelVsSoft {...p} />
+  : id === 'crt-history-timeline' ? <CrtHistoryTimeline {...p} />
+  : id === 'sony-lineage-tree' ? <SonyLineageTree {...p} />
+  : id === 'contribution-map' ? <ContributionMap {...p} />
+  : id === 'emission-compare' ? <EmissionCompare {...p} />
+  : id === 'black-floor-stack' ? <BlackFloorStack {...p} />
+  : id === 'motion-lineage-chart' ? <MotionLineageChart {...p} />
+  : id === 'motion-blur-compare' ? <MotionBlurCompare {...p} />
+  : id === 'comparison-table' ? <ComparisonTable {...p} />
+  : <Slot id={id} kind={kind} />}

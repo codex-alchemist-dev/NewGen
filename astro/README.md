@@ -41,8 +41,14 @@ the existing site. Publishing `astro/dist/` under `/2nd/` on Pages is a follow-u
 - **Lenis** smooth scroll, driven by the GSAP ticker. Not started under reduced motion.
 - **GSAP + ScrollTrigger**: import from `src/lib/motion/gsap.ts` only.
 - **VFX quality store** (`src/lib/motion/vfx-quality.ts`): samples FPS each second.
-  Two windows below 45 fps step the tier down (`full` → `reduced` → `static`). Four
-  windows at or above 58 fps step it back up. `prefers-reduced-motion` pins the tier to `static`.
+  Two slow windows (below 48 fps, scaled down on sub-60 Hz screens, or a quarter of the
+  frames over 50 ms) step the tier from `full` to `reduced`. The FPS monitor never goes
+  below `reduced`; `static` is reserved for `prefers-reduced-motion`. Six windows at or
+  above 58 fps step it back up.
+- **Resolution budget**: the WebGL backdrop renders at DPR ≤ 1.5 and at most ~3.7 MP
+  (2560×1440), with dynamic resolution (down to 0.6×) in the full tier before the tier
+  drops. The cursor trail canvas uses the same budget. QA: `?vfx=full|reduced|static`
+  pins a tier, `?vfxdyn=0` holds the backdrop at its full scale.
   The tier is mirrored to `<html data-vfx-tier="…">`. React islands use `useVfxQuality()`.
 
 ## Slot contract

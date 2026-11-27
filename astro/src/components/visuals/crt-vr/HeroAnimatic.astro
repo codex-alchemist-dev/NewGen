@@ -407,7 +407,8 @@ const smpteRev = ['#0000c0', '#101018', '#c000c0', '#101018', '#00c0c0', '#10101
   .scanlines {
     position: absolute; inset: 0; pointer-events: none; z-index: 1;
     background: repeating-linear-gradient(to bottom, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
-    mix-blend-mode: multiply; opacity: .55;
+    /* pure black lines: a normal overlay gives the same pixels as multiply, without a full-viewport blend */
+    opacity: .55;
   }
   .vignette {
     position: absolute; inset: 0; pointer-events: none; z-index: 1;

@@ -19,6 +19,8 @@ export function initSectionMotion() {
     // Auto-enhance the kit: act titles and every section's children drift in
     // with a gentle stagger. Anything else can opt in with [data-reveal].
     document.querySelectorAll<HTMLElement>('.act-title, .section').forEach((group) => {
+      // Act 1's title and the hero sit in the first screen: crisp from load
+      if (group.id === 'hero' || (group.matches('.act-title') && group.closest('#hook'))) return;
       [...group.children].forEach((child, i) => {
         const el = child as HTMLElement;
         if (el.matches('.section__body')) {

@@ -1,0 +1,52 @@
+/*
+ * Shared frame for CRT-VR interactives (Acts 1, 5, 6, 11, 12).
+ * Uses the CRT-VR visual tokens (../../visuals/crt-vr/tokens.css).
+ */
+.ix {
+  position: relative;
+  margin: var(--s-6, 48px) 0;
+  width: var(--wide-w, 100%);
+  margin-left: var(--wide-x, 0px);
+  color: var(--crtvr-text);
+  font-family: var(--crtvr-font-mono);
+}
+.ix-frame {
+  position: relative;
+  border: 1px solid var(--crtvr-line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--crtvr-surface) 70%, transparent), color-mix(in srgb, var(--crtvr-bg) 90%, transparent));
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ix-frame::before, .ix-frame::after {
+  content: ''; position: absolute; width: 14px; height: 14px; pointer-events: none; z-index: 3;
+  border: 1px solid var(--ix-accent, var(--crtvr-phosphor));
+}
+.ix-frame::before { top: 6px; left: 6px; border-right: 0; border-bottom: 0; }
+.ix-frame::after { bottom: 6px; right: 6px; border-left: 0; border-top: 0; }
+.ix-head {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.ix-tag {
+  font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ix-accent, var(--crtvr-phosphor));
+}
+.ix-note { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--crtvr-text-dim); }
+.ix-label {
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--crtvr-text-dim);
+}
+.ix-display { font-family: var(--crtvr-font-display); letter-spacing: .03em; line-height: .95; color: var(--crtvr-white); font-weight: 400; }
+.ix-controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 14px; }
+.ix-chip {
+  appearance: none; font: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  color: var(--crtvr-text-dim); background: transparent; border: 1px solid var(--crtvr-line-bright);
+  transition: color .25s, border-color .25s, background .25s, box-shadow .25s;
+}
+.ix-chip:hover { color: var(--crtvr-text); border-color: var(--crtvr-text-dim); }
+.ix-chip[aria-pressed="true"] {
+  color: var(--crtvr-bg); background: var(--ix-accent, var(--crtvr-phosphor)); border-color: transparent;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ix-accent, var(--crtvr-phosphor)) 45%, transparent);
+}
+.ix-range { display: inline-flex; align-items: center; gap: 10px; }
+.ix-range input[type="range"] { accent-color: var(--ix-accent, var(--crtvr-phosphor)); width: min(220px, 50vw); }
+.ix-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

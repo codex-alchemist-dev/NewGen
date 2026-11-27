@@ -1,0 +1,263 @@
+---
+/**
+ * CRT-VR · Act 1 · "No pixels. Ever." — slot `pixel-vs-soft`.
+ *
+ * One scene, two reconstructions of the same foveated sample budget:
+ *   left  — a grid panel: each peripheral sample is a hard square (blocks),
+ *   right — CRT-VR: each sample is a Gaussian beam spot (soft, never a pixel).
+ * Both halves share the gaze point, the three zones and the sample count, so the
+ * only difference is the reconstruction. Illustrative, not a measured render.
+ *
+ * Tiers: full (auto-roaming gaze + live render), reduced (render on input only),
+ * static (one composed frame, gaze at centre).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './ix.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { id = 'crtvr-pixel-vs-soft' } = Astro.props;
+---
+<div class="crtvr ix pvs" id={id} data-pvs>
+  <div class="ix-head">
+    <span class="ix-tag">Same periphery · two displays</span>
+    <span class="ix-note">Illustrative · move to look around</span>
+  </div>
+  <div class="pvs-grid">
+    <figure class="ix-frame pvs-pane" style="--ix-accent: var(--crtvr-panel-cold)">
+      <canvas data-side="grid" aria-hidden="true"></canvas>
+      <figcaption>
+        <span class="ix-label">Grid panel</span>
+        <span class="pvs-verdict cold">Periphery turns to blocks</span>
+      </figcaption>
+    </figure>
+    <figure class="ix-frame pvs-pane">
+      <canvas data-side="crt" aria-hidden="true"></canvas>
+      <figcaption>
+        <span class="ix-label">CRT-VR</span>
+        <span class="pvs-verdict">Periphery goes soft. No pixels.</span>
+      </figcaption>
+    </figure>
+  </div>
+  <p class="ix-sr">Two copies of the same scene, foveated around your gaze. On the grid panel the low-resolution periphery shows square blocks. On CRT-VR the same low-resolution periphery is soft and smooth, with no visible pixels.</p>
+  <div class="ix-controls">
+    <label class="ix-range"><span class="ix-label">Periphery</span>
+      <input type="range" min="0" max="3" step="1" value="2" data-level aria-label="Periphery resolution" />
+      <output class="ix-label pvs-out" data-level-out>480p-class</output>
+    </label>
+    <button type="button" class="ix-chip" aria-pressed="false" data-zones>Show zones</button>
+  </div>
+</div>
+
+<style>
+  .pvs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .pvs-grid { grid-template-columns: 1fr; } }
+  .pvs-pane { margin: 0; cursor: crosshair; }
+  .pvs-pane canvas { width: 100%; aspect-ratio: 16 / 10; display: block; background: #04050a; touch-action: pan-y; }
+  .pvs-pane figcaption {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 28px 16px 12px; background: linear-gradient(0deg, rgba(4,5,10,.85), transparent);
+    pointer-events: none;
+  }
+  .pvs-verdict { font-size: 12px; letter-spacing: .08em; color: var(--crtvr-phosphor); text-shadow: 0 0 12px color-mix(in srgb, var(--crtvr-phosphor) 50%, transparent); }
+  .pvs-verdict.cold { color: var(--crtvr-panel-cold); text-shadow: none; }
+  .pvs-out { min-width: 9ch; color: var(--crtvr-text); }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+  import { widen, rafLoop, fitCanvas } from './lib/wide';
+
+  const SW = 960, SH = 600; // scene units
+  // Edge-zone sample cell (scene px) per periphery level. Mid zone uses half of it.
+  const LEVELS = [
+    { edge: 4, label: 'High' },
+    { edge: 8, label: '720p-class' },
+    { edge: 14, label: '480p-class' },
+    { edge: 22, label: 'Below 480p' },
+  ];
+  // Zone radii as a fraction of scene height: tiny full-res core, mid ring, edge beyond.
+  const R_CORE = 0.12, R_MID = 0.34;
+
+  function rng(seed: number) { return () => ((seed = (seed * 16807) % 2147483647) / 2147483647); }
+
+  function drawScene(): HTMLCanvasElement {
+    const c = document.createElement('canvas'); c.width = SW; c.height = SH;
+    const g = c.getContext('2d')!;
+    const hz = 340;
+    const sky = g.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#03040b'); sky.addColorStop(.6, '#0c1236'); sky.addColorStop(1, '#3a0e45');
+    g.fillStyle = sky; g.fillRect(0, 0, SW, hz);
+    const r = rng(7);
+    for (let i = 0; i < 260; i++) {
+      const x = r() * SW, y = r() * hz * .9, s = r() < .08 ? 2 : 1;
+      g.fillStyle = `rgba(220,230,255,${.3 + r() * .7})`; g.fillRect(x, y, s, s);
+    }
+    // sun with stripes
+    const sx = SW / 2, sy = hz - 40, sr = 120;
+    const sun = g.createLinearGradient(0, sy - sr, 0, sy + sr);
+    sun.addColorStop(0, '#ffe135'); sun.addColorStop(.55, '#ff7a00'); sun.addColorStop(1, '#ff3c6e');
+    g.save(); g.beginPath(); g.arc(sx, sy, sr, 0, Math.PI * 2); g.clip();
+    g.fillStyle = sun; g.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+    g.fillStyle = '#1a0a2a';
+    for (let k = 0; k < 7; k++) { const y = sy + 6 + k * 15; g.fillRect(sx - sr, y, sr * 2, 2 + k * 1.4); }
+    g.restore();
+    // mountains
+    const ridge = (base: number, amp: number, col: string, edge: string, seed: number) => {
+      const rr = rng(seed); g.beginPath(); g.moveTo(0, hz);
+      let y = base;
+      for (let x = 0; x <= SW; x += 24) { y = base - rr() * amp; g.lineTo(x, y); }
+      g.lineTo(SW, hz); g.closePath(); g.fillStyle = col; g.fill();
+      g.strokeStyle = edge; g.lineWidth = 1.5; g.stroke();
+    };
+    ridge(hz - 30, 90, '#130a26', 'rgba(204,68,255,.6)', 3);
+    ridge(hz - 5, 50, '#090616', 'rgba(0,255,153,.8)', 11);
+    // grid floor
+    g.fillStyle = '#05040c'; g.fillRect(0, hz, SW, SH - hz);
+    g.strokeStyle = '#00ff99'; g.lineWidth = 1.4; g.shadowColor = '#00ff99'; g.shadowBlur = 6;
+    for (let k = -18; k <= 18; k++) { g.beginPath(); g.moveTo(sx + k * 8, hz); g.lineTo(sx + k * 110, SH); g.stroke(); }
+    for (let k = 0; k < 14; k++) { const t = Math.pow(k / 13, 2.1); const y = hz + t * (SH - hz); g.beginPath(); g.moveTo(0, y); g.lineTo(SW, y); g.stroke(); }
+    g.shadowBlur = 0;
+    // HUD: fine text and thin lines in the periphery (where foveation bites)
+    g.fillStyle = '#d8e4ff'; g.font = '500 15px "DM Mono", monospace';
+    g.fillText('NEWGEN × SONY', 28, 40); g.fillText('CRT-VR  //  SECTOR 06', 28, 62);
+    g.textAlign = 'right'; g.fillText('HP 100   SHD 076', SW - 28, 40); g.fillText('AMMO 42 / 180', SW - 28, 62); g.textAlign = 'left';
+    g.strokeStyle = 'rgba(216,228,255,.85)'; g.lineWidth = 1;
+    g.strokeRect(28, SH - 120, 150, 92);
+    for (let i = 0; i < 6; i++) { g.beginPath(); g.moveTo(36, SH - 108 + i * 14); g.lineTo(36 + 40 + ((i * 37) % 90), SH - 108 + i * 14); g.stroke(); }
+    g.font = '500 13px "DM Mono", monospace'; g.fillText('MAP · GRID 44', 36, SH - 34);
+    // crosshair-style reticle near the right edge, thin diagonal lines
+    g.strokeStyle = '#00b4ff'; g.lineWidth = 1.2;
+    for (let i = 0; i < 10; i++) { g.beginPath(); g.moveTo(SW - 200 + i * 16, SH - 30); g.lineTo(SW - 120 + i * 16, SH - 130); g.stroke(); }
+    g.font = 'bold 54px "Bebas Neue", Impact, sans-serif'; g.fillStyle = '#f0f4ff'; g.textAlign = 'center';
+    g.fillText('LOOK ANYWHERE', sx, 150); g.textAlign = 'left';
+    return c;
+  }
+
+  /** Box-reconstructed (blocky) and Gaussian-reconstructed (soft) copies at a given sample cell. */
+  function buildLevel(scene: HTMLCanvasElement, cell: number) {
+    const w = Math.max(1, Math.round(SW / cell)), h = Math.max(1, Math.round(SH / cell));
+    const small = document.createElement('canvas'); small.width = w; small.height = h;
+    const sg = small.getContext('2d')!; sg.imageSmoothingEnabled = true; sg.imageSmoothingQuality = 'high';
+    sg.drawImage(scene, 0, 0, w, h);
+    const block = document.createElement('canvas'); block.width = SW; block.height = SH;
+    const bg = block.getContext('2d')!; bg.imageSmoothingEnabled = false; bg.drawImage(small, 0, 0, SW, SH);
+    const soft = document.createElement('canvas'); soft.width = SW; soft.height = SH;
+    const fg = soft.getContext('2d')!; fg.imageSmoothingEnabled = true; fg.imageSmoothingQuality = 'high';
+    // Gaussian spot ≈ sigma of half a cell: same information, no edges.
+    if ('filter' in fg) fg.filter = `blur(${(cell * 0.5).toFixed(1)}px)`;
+    fg.drawImage(small, 0, 0, SW, SH);
+    return { block, soft };
+  }
+
+  function init(root: HTMLElement) {
+    widen(root);
+    const scene = drawScene();
+    const canvases = Array.from(root.querySelectorAll<HTMLCanvasElement>('canvas'));
+    const levelIn = root.querySelector<HTMLInputElement>('[data-level]')!;
+    const levelOut = root.querySelector<HTMLOutputElement>('[data-level-out]')!;
+    const zonesBtn = root.querySelector<HTMLButtonElement>('[data-zones]')!;
+    const tmp = document.createElement('canvas'); tmp.width = SW; tmp.height = SH;
+    const tg = tmp.getContext('2d')!;
+    const comp = document.createElement('canvas'); comp.width = SW; comp.height = SH;
+    const cg = comp.getContext('2d')!;
+
+    let tier: VfxTier = 'full';
+    let showZones = false;
+    let gx = SW * .5, gy = SH * .45, tx = gx, ty = gy;
+    let userUntil = 0;
+    let mid = buildLevel(scene, 2), edge = buildLevel(scene, 14);
+
+    const rebuild = () => {
+      const L = LEVELS[+levelIn.value];
+      levelOut.value = L.label; levelOut.textContent = L.label;
+      mid = buildLevel(scene, Math.max(2, Math.round(L.edge / 2)));
+      edge = buildLevel(scene, L.edge);
+    };
+
+    const composeGrid = () => {
+      // Grid panel: hard zone boundaries, nearest-neighbour blocks.
+      cg.globalCompositeOperation = 'source-over';
+      cg.drawImage(edge.block, 0, 0);
+      cg.save(); cg.beginPath(); cg.arc(gx, gy, R_MID * SH, 0, Math.PI * 2); cg.clip(); cg.drawImage(mid.block, 0, 0); cg.restore();
+      cg.save(); cg.beginPath(); cg.arc(gx, gy, R_CORE * SH, 0, Math.PI * 2); cg.clip(); cg.drawImage(scene, 0, 0); cg.restore();
+    };
+    const softLayer = (src: HTMLCanvasElement, r0: number, r1: number) => {
+      tg.globalCompositeOperation = 'source-over'; tg.clearRect(0, 0, SW, SH); tg.drawImage(src, 0, 0);
+      tg.globalCompositeOperation = 'destination-in';
+      const m = tg.createRadialGradient(gx, gy, r0, gx, gy, r1);
+      m.addColorStop(0, '#000'); m.addColorStop(1, 'rgba(0,0,0,0)');
+      tg.fillStyle = m; tg.fillRect(0, 0, SW, SH);
+      cg.drawImage(tmp, 0, 0);
+    };
+    const composeCrt = () => {
+      // CRT-VR: same sample counts, Gaussian spots, zones blend with no seam.
+      cg.globalCompositeOperation = 'source-over';
+      cg.drawImage(edge.soft, 0, 0);
+      softLayer(mid.soft, R_MID * SH * .8, R_MID * SH * 1.15);
+      softLayer(scene, R_CORE * SH * .7, R_CORE * SH * 1.3);
+    };
+
+    const paint = () => {
+      canvases.forEach((c) => {
+        const { w, h } = fitCanvas(c);
+        const g = c.getContext('2d')!;
+        if (c.dataset.side === 'grid') composeGrid(); else composeCrt();
+        // cover-fit scene into the canvas
+        const s = Math.max(w / SW, h / SH), dw = SW * s, dh = SH * s;
+        g.imageSmoothingEnabled = c.dataset.side !== 'grid';
+        g.clearRect(0, 0, w, h);
+        g.drawImage(comp, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        if (showZones) {
+          const cx = (w - dw) / 2 + gx * s, cy = (h - dh) / 2 + gy * s;
+          g.setLineDash([6 * s, 6 * s]); g.lineWidth = 1.5 * s;
+          g.strokeStyle = 'rgba(240,244,255,.75)';
+          [R_CORE, R_MID].forEach((rr) => { g.beginPath(); g.arc(cx, cy, rr * SH * s, 0, Math.PI * 2); g.stroke(); });
+          g.setLineDash([]);
+          g.font = `${11 * s}px "DM Mono", monospace`; g.fillStyle = 'rgba(240,244,255,.8)'; g.textAlign = 'center';
+          g.fillText('FULL-RES CORE', cx, cy - R_CORE * SH * s - 6 * s);
+          g.fillText('MID ZONE', cx, cy - R_MID * SH * s - 6 * s);
+          g.fillText('EDGE', cx, cy - R_MID * SH * s - 40 * s > 14 * s ? cy - R_MID * SH * s - 40 * s : 14 * s);
+          g.textAlign = 'left';
+        }
+      });
+    };
+
+    const loop = rafLoop(root, (dt, t) => {
+      if (tier === 'full' && performance.now() > userUntil) {
+        // slow Lissajous roam, like an eye scanning the scene
+        tx = SW * (.5 + .32 * Math.sin(t * .37)); ty = SH * (.45 + .22 * Math.sin(t * .53 + 1.2));
+      }
+      const k = 1 - Math.pow(.001, dt || .016);
+      gx += (tx - gx) * k; gy += (ty - gy) * k;
+      paint();
+    });
+
+    const toScene = (e: PointerEvent) => {
+      const c = e.currentTarget as HTMLCanvasElement; const r = c.getBoundingClientRect();
+      const s = Math.max(r.width / SW, r.height / SH), dw = SW * s, dh = SH * s;
+      tx = ((e.clientX - r.left) - (r.width - dw) / 2) / s; ty = ((e.clientY - r.top) - (r.height - dh) / 2) / s;
+      userUntil = performance.now() + 2500;
+      if (tier !== 'full') { gx = tx; gy = ty; paint(); }
+    };
+    canvases.forEach((c) => c.addEventListener('pointermove', toScene));
+    levelIn.addEventListener('input', () => { rebuild(); paint(); });
+    zonesBtn.addEventListener('click', () => {
+      showZones = !showZones; zonesBtn.setAttribute('aria-pressed', String(showZones)); paint();
+    });
+    window.addEventListener('resize', () => paint());
+
+    rebuild();
+    onTier((t) => {
+      tier = t;
+      loop.enabled = t === 'full';
+      if (t === 'static') { gx = tx = SW * .5; gy = ty = SH * .45; }
+      paint();
+    });
+    // Fonts may arrive after the first paint; redraw the scene once they do.
+    document.fonts?.ready.then(() => { const s2 = drawScene(); scene.getContext('2d')!.drawImage(s2, 0, 0); rebuild(); paint(); });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-pvs]').forEach(init);
+</script>

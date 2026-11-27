@@ -11,6 +11,8 @@ import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
 import { acts } from '../../../data/crt-vr';
 import { comparisonHeads, comparisonRows, openQuestions, liveFootnotes, specGroups } from '../../../data/crt-vr-proof';
 import SpecTable from '../../../components/kit/SpecTable.astro';
+import CertBadgeWall from '../../../components/visuals/crt-vr/CertBadgeWall.astro';
+import CrtvrSlot from '../../../components/interactives/crt-vr/CrtvrSlot.astro';
 
 const placeholder = '[copy pending]';
 ---
@@ -40,8 +42,8 @@ const placeholder = '[copy pending]';
                 {(s.items ?? []).map((i) => <StatCard label={i.label} value={i.value} unit={i.unit} />)}
               </div>
             )}
-            {s.kind === 'badges' && <CertificationWall items={s.items ?? []} />}
-            {s.kind === 'comparison' && (
+            {s.kind === 'badges' && <CertBadgeWall tier="full" reducedMotion={false} items={s.items ?? []} />}
+            {s.kind === 'comparison' && !s.interactive && (
               <ComparisonTable caption="CRT-VR vs. everything" columns={comparisonHeads} rows={comparisonRows} />
             )}
             {s.kind === 'specs' && specGroups.map((g) => <SpecTable caption={g.name} rows={g.rows} />)}
@@ -59,8 +61,8 @@ const placeholder = '[copy pending]';
             {s.footnote && <Footnote n="†">{s.footnote}</Footnote>}
             {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
-            {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
-            {s.interactive && <Slot id={s.interactive} kind="interactive" />}
+            {s.visual && s.visual !== 'hero-animatic' && <CrtvrSlot id={s.visual} kind="visual" />}
+            {s.interactive && <CrtvrSlot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>

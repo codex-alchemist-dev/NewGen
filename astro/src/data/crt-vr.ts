@@ -137,7 +137,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 5, id: 'brilliance', title: 'Brilliance', transition: 'default', tagline: 'Blinding light. Absolute black.', sections: [
+    number: 5, id: 'brilliance', title: 'Brilliance', transition: 'flare', tagline: 'Blinding light. Absolute black.', sections: [
       { id: 'the-numbers', title: 'The numbers', kind: 'stats', eyebrow: 'The numbers', headline: 'Bright enough to squint.', footnote: '† Design targets at the faceplate.', items: [
         { value: '1,500', unit: 'nits', label: 'Full screen' },
         { value: '4,000+', unit: 'nits', label: 'Highlights' },
@@ -155,7 +155,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 6, id: 'motion', title: 'Motion', transition: 'default', tagline: 'The crown it never lost.', sections: [
+    number: 6, id: 'motion', title: 'Motion', transition: 'whip', tagline: 'The crown it never lost.', sections: [
       { id: 'motion-crown', title: 'The motion crown', interactive: 'motion-lineage-chart', eyebrow: 'The crown', headline: 'Decades at the top.', body: [
         'For decades CRT owned motion clarity and response time. Esports players and purists kept theirs long after flat panels took over. LCD never caught up. OLED is still chasing it with black-frame tricks and 480 Hz races. CRT-VR widens the gap. Impulse phosphor light with microsecond-class response meant no sample-and-hold blur.'] },
       { id: 'zero-smear', title: 'Zero smear', eyebrow: 'Zero smear', headline: 'Zero smear.', body: [
@@ -167,7 +167,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 7, id: 'the-machine', title: 'The Machine', transition: 'default', tagline: 'A tube, reimagined from the electron up.', sections: [
+    number: 7, id: 'the-machine', title: 'The Machine', transition: 'blueprint', tagline: 'A tube, reimagined from the electron up.', sections: [
       { id: 'side-fire-tube', title: 'Side-fire tube', interactive: 'exploded-tube', eyebrow: 'Side-fire', headline: 'Fired from the side.', body: [
         'Watchman lineage, with guns at the temples firing across the faceplate.'] },
       { id: 'dome-faceplate', title: 'Dome faceplate', eyebrow: 'Dome', headline: 'A dome, not a slab.', body: [
@@ -187,7 +187,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 8, id: 'wraparound-optics', title: 'Wraparound Optics', transition: 'rays', tagline: 'Made for VR. Before VR existed.', sections: [
+    number: 8, id: 'wraparound-optics', title: 'Wraparound Optics', transition: 'cone', tagline: 'Made for VR. Before VR existed.', sections: [
       { id: 'cone-in-cone-out', title: 'Cone in, cone out', interactive: 'flat-vs-cone', eyebrow: 'Cone', headline: 'Born a cone.', body: [
         "A flat panel has to stretch a rectangle around your eye, which is where distortion and the screen-in-a-box feel come from. A CRT's light already leaves as a cone. CRT-VR's optics simply turn that cone around to wrap your eye. The panel the industry tried to leave behind was simply ahead of its time."] },
       { id: 'monocentric-relay', title: 'Gaze-Cone optics', interactive: 'rotate-eye', eyebrow: 'Gaze-Cone', headline: 'Sharp across the cone your eye sweeps.', body: [
@@ -221,7 +221,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 9, id: 'safe-on-your-face', title: 'Safe on Your Face', transition: 'default', tagline: 'Safe on your face.', sections: [
+    number: 9, id: 'safe-on-your-face', title: 'Safe on Your Face', transition: 'shield', tagline: 'Safe on your face.', sections: [
       { id: 'high-voltage', title: 'High voltage', eyebrow: 'High voltage', headline: 'High voltage, sealed away.', body: [
         'Potted high-voltage modules at the temples, with an instant fail-safe beam kill.'] },
       { id: 'x-rays', title: 'X-rays', eyebrow: 'X-rays', headline: 'X-rays? Effectively none.', body: [
@@ -233,7 +233,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 10, id: 'built-to-last', title: 'Built to Last', transition: 'default', tagline: 'Built to last.', sections: [
+    number: 10, id: 'built-to-last', title: 'Built to Last', transition: 'timelapse', tagline: 'Built to last.', sections: [
       { id: 'burn-in', title: 'Burn-in', eyebrow: 'Burn-in', headline: 'Burn-in, compensated.', body: [
         "Hexa-Index tracks every subpixel's aging and evens it out."] },
       { id: 'vacuum-lifetime', title: 'Vacuum lifetime', eyebrow: 'Vacuum', headline: 'A vacuum that stays a vacuum.', body: [
@@ -243,7 +243,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 11, id: 'certified', title: 'Certified', transition: 'default', tagline: 'Certified, top to bottom.', sections: [
+    number: 11, id: 'certified', title: 'Certified', transition: 'seals', tagline: 'Certified, top to bottom.', sections: [
       { id: 'badge-wall', title: 'Certifications', kind: 'badges', eyebrow: 'Certified', headline: 'Certified, top to bottom.', footnote: 'Measured at the faceplate.', items: [
         { label: 'VESA DisplayHDR 1400' }, { label: 'DisplayHDR True Black 1000' }, { label: 'ClearMR 21000' },
         { label: 'AdaptiveSync Display' }, { label: 'AMD FreeSync Premium Pro' }, { label: 'NVIDIA G-SYNC (Pulsar-class)' },
@@ -252,7 +252,7 @@ export const acts: ActDef[] = [
     ],
   },
   {
-    number: 12, id: 'proof', title: 'Proof', transition: 'default', tagline: 'The proof.', sections: [
+    number: 12, id: 'proof', title: 'Proof', transition: 'race', tagline: 'The proof.', sections: [
       { id: 'versus', title: 'Versus', kind: 'comparison', interactive: 'comparison-table', eyebrow: 'Versus', headline: 'CRT-VR vs. everything.' },
       { id: 'full-specs', title: 'Full specs', kind: 'specs', eyebrow: 'Specs', headline: 'Every number.', footnote: '† Design targets, TRL 2–3.' },
       { id: 'engineering-honesty', title: 'Engineering honesty', kind: 'honesty', eyebrow: 'Honesty', headline: "What we don't know yet." },

@@ -109,7 +109,12 @@ export const acts: ActDef[] = [
       { id: 'why-three-isnt-enough', title: "Six Primaries: why three isn't enough", interactive: 'gamut-explorer', eyebrow: 'Why three', headline: 'Three colors were never enough.', body: [
         "The RGB triangle against the eye's horseshoe. Every screen you own mixes red, green and blue. That triangle leaves out huge parts of what your eye can see, especially the deep cyans and greens."] },
       { id: 'meet-the-six', title: 'Meet the six', eyebrow: 'Meet the six', headline: 'Meet the six.', body: [
-        'Blue ~450 · Cyan ~490 · Green ~520 · Yellow ~575 · Red ~635 nm, plus a true two-peak M (magenta), kept magenta so Puretone renders pure magenta from one subpixel. Cyan fills the gap three-color screens miss, including the cyan-green bulge. Yellow lifts brightness.'] },
+        'Blue ~450 nm: deep enough for a wide blue corner without sliding into dim violet.',
+        'Cyan ~490 nm: fills the cyan-green bulge where three-primary displays lose the most.',
+        'Green ~520 nm: near the tip of the spectral horseshoe, for the widest green reach.',
+        'Yellow ~575 nm: a bright, efficient tone that pushes the yellow edge and renders pure yellow alone.',
+        'Red ~635 nm: deep red without spending energy where the eye barely sees.',
+        'M: a true two-peak magenta, kept magenta so Puretone draws pure magenta from one subpixel.'] },
       { id: 'hexagon-pixel', title: 'The Hexagon pixel', interactive: 'hex-zoom', eyebrow: 'The Hexagon', headline: 'The Hexagon.', body: [
         'Every pixel is an RGB triangle and an inverted MCY triangle, six subpixels in one perfect hex.'] },
       { id: 'six-beams-one-gun', title: 'Six beams, one gun', interactive: 'six-beam-convergence', eyebrow: 'Six beams', headline: 'Six beams. One gun.', body: [

@@ -27,7 +27,7 @@ export const R_FOVEA = 70;
 export const R_MID = 190;
 
 /** Angular mapping used by the acuity curve (coordinator-approved, illustrative). */
-export const CORE_DEG = 5;   // full-res core, ±5° (2° fovea + tracking margin)
+export const CORE_DEG = 5;   // full-res core, ±5° (2° fovea plus margin)
 export const MID_DEG = 20;   // interlaced mid-zone to ±20°
 export const FOV_DEG = 180;  // 180°+ field
 /** Relative acuity, standard falloff: 1 / (1 + e / E2). */

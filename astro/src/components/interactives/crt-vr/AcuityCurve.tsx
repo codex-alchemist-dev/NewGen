@@ -76,7 +76,7 @@ export default function AcuityCurve(_: Partial<VfxSlotProps>) {
       readout={
         <>
           <Readout k="Fovea (eye)" v="≈2" unit="°" color="var(--crtvr-white)" note={`Acuity halves by about ${ACUITY_E2}° out.`} />
-          <Readout k="Full-res core" v={`±${CORE_DEG}`} unit="°" color="var(--crtvr-phosphor)" note="Covers the fovea plus eye-tracking margin." />
+          <Readout k="Full-res core" v={`±${CORE_DEG}`} unit="°" color="var(--crtvr-phosphor)" note="Covers the ≈2° fovea with margin to spare." />
           <Readout k="Interlaced mid-zone" v={`±${MID_DEG}`} unit="°" color="var(--crtvr-blue)" />
           <Readout big k="Lowest headroom outside the core" v={`${minMargin.toFixed(2)}×`} color={minMargin >= 1 ? 'var(--crtvr-phosphor)' : 'var(--crtvr-rose)'}
             note="Lowest ratio of CRT-VR resolution to eye acuity beyond ±5°. Above 1× means the eye never out-resolves the scan." />

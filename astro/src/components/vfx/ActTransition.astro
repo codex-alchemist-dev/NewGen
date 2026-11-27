@@ -1,0 +1,695 @@
+---
+/**
+ * ActTransition (slot act-NN/transition): the grand act change.
+ *
+ * A fixed full-screen stage, scrubbed by scroll across a tall spacer:
+ *   1. CRT power-off. The outgoing act squashes to a white-hot line,
+ *      then the line pinches to a single glowing phosphor dot.
+ *   2. A beat of black. The dot dies to an ember, then nothing.
+ *   3. The dot re-ignites and blooms into the variant's moment.
+ *   4. The act number is traced by the beam and the title is beam-drawn.
+ *   5. CRT power-on. A line, then the full raster opens onto the new act.
+ * Act 1 (or `first`) is a timed power-on intro instead: dot → bloom → raster
+ * opens onto the hero. It takes no scroll, so the hero is never held back.
+ *
+ * Variants:
+ *   default   dot collapse → bloom with expanding phosphor rings
+ *   eye       (Act 2) the line opens into an eye; the dot becomes the pupil
+ *   warp      (Act 3) the dot detonates into a speed-of-light streak field
+ *   six-beam  (Act 4) the dot splits into six RGBMCY beams that land on a
+ *             hexagonal pixel: RGB triangle + inverted MCY triangle
+ *   rays      (Act 8) rays bend around the viewer; monocentric shells pass
+ *
+ * Fully scrubbed (pure function of scroll), so it plays backwards too.
+ * Tiers: full · reduced (shorter, fewer particles) · static (not rendered:
+ * the act's own title carries it).
+ */
+import type { VfxSlotProps } from '../../lib/motion/types';
+import BeamText from './BeamText.astro';
+
+type Variant = 'default' | 'eye' | 'warp' | 'six-beam' | 'rays';
+interface Props extends Partial<VfxSlotProps> {
+  variant?: Variant | string;
+  number: number;
+  title: string;
+  /** small mono line above the title. Default "Act NN". */
+  kicker?: string;
+  /** phosphor color of this act's moment. */
+  tint?: string;
+  /** true = no outgoing act (page opening). Default: number === 1 */
+  first?: boolean;
+}
+const { variant = 'default', number, title, kicker, tint = '#00ff99', first = number === 1 } = Astro.props;
+const num = String(number).padStart(2, '0');
+const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? variant : 'default') as Variant;
+---
+<div
+  class:list={['act-tx', { 'act-tx--first': first }]}
+  data-act-tx
+  data-variant={v}
+  data-first={first ? '1' : '0'}
+  style={`--tx-tint:${tint}`}
+>
+  <div class="act-tx__spacer"></div>
+  <div class="act-tx__stage" aria-hidden="true">
+    <!-- CRT mask: four black shutters (transform-only, GPU cheap) -->
+    <div class="tx-shutter tx-shutter--t"></div>
+    <div class="tx-shutter tx-shutter--b"></div>
+    <div class="tx-shutter tx-shutter--l"></div>
+    <div class="tx-shutter tx-shutter--r"></div>
+    <!-- white-hot flare on the collapsing raster -->
+    <div class="tx-flare"></div>
+
+    <svg class="tx-art" preserveAspectRatio="none">
+      <defs>
+        <radialGradient id={`tx-dot-${num}`}>
+          <stop offset="0" stop-color="#fff" />
+          <stop offset="0.25" stop-color="#fff" stop-opacity="0.95" />
+          <stop offset="0.5" stop-color="var(--tx-tint)" stop-opacity="0.55" />
+          <stop offset="1" stop-color="var(--tx-tint)" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id={`tx-bloom-${num}`}>
+          <stop offset="0" stop-color="var(--tx-tint)" stop-opacity="0.55" />
+          <stop offset="0.4" stop-color="var(--tx-tint)" stop-opacity="0.18" />
+          <stop offset="1" stop-color="var(--tx-tint)" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <g class="tx-variant" data-layer="variant"></g>
+      <circle class="tx-bloom" r="0" fill={`url(#tx-bloom-${num})`} />
+      <circle class="tx-dot" r="0" fill={`url(#tx-dot-${num})`} />
+      <text class="tx-num" text-anchor="middle" dominant-baseline="central">{num}</text>
+    </svg>
+
+    <div class="tx-copy">
+      <p class="tx-kicker">{kicker ?? `Act ${num}`}</p>
+      <BeamText text={title} as="span" trigger="external" color={tint} class="tx-title" />
+    </div>
+  </div>
+</div>
+
+<style>
+  .act-tx {
+    --tx-len: 300vh;
+    position: relative;
+    height: var(--tx-len);
+    /* sit flush across the act's own top padding */
+    margin: calc(-1 * var(--s-12, 96px)) calc(-1 * var(--gutter, 16px)) 0;
+    pointer-events: none;
+  }
+  .act-tx--first { --tx-len: 0px; height: 0; margin: 0; }
+  :global(html[data-vfx-tier='static']) .act-tx { display: none; }
+
+  .act-tx__spacer { height: 100%; }
+  .act-tx__stage {
+    position: fixed;
+    inset: 0;
+    z-index: 800;
+    visibility: hidden;
+    contain: strict;
+  }
+  .act-tx__stage.is-on { visibility: visible; }
+  /* Act 1 intro: black from first paint (no flash of hero before power-on).
+     Failsafe: if scripts never run, the stage hides itself after 4 s. */
+  .act-tx--first .act-tx__stage { visibility: visible; animation: tx-failsafe 0s linear 4s forwards; }
+  .act-tx--first .act-tx__stage.is-done { visibility: hidden; }
+  @keyframes tx-failsafe { to { visibility: hidden; } }
+  @media (prefers-reduced-motion: reduce) {
+    .act-tx--first .act-tx__stage { visibility: hidden; }
+  }
+
+  .tx-shutter {
+    position: absolute;
+    background: #000;
+    will-change: transform;
+  }
+  .tx-shutter--t, .tx-shutter--b { left: 0; right: 0; height: 50.5vh; }
+  .tx-shutter--t { top: 0; transform-origin: 50% 0; }
+  .tx-shutter--b { bottom: 0; transform-origin: 50% 100%; }
+  .tx-shutter--l, .tx-shutter--r { top: 0; bottom: 0; width: 50.5vw; }
+  .tx-shutter--l { left: 0; transform-origin: 0 50%; }
+  .tx-shutter--r { right: 0; transform-origin: 100% 50%; }
+
+  .tx-flare {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(closest-side, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.12) 22%, transparent 45%),
+      radial-gradient(closest-side, color-mix(in srgb, var(--tx-tint) 55%, transparent), transparent 80%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  .tx-art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .tx-art :global(.tx-add) { mix-blend-mode: screen; }
+  .tx-num {
+    font-family: var(--vfx-font-display);
+    fill: transparent;
+    stroke: var(--tx-tint);
+    stroke-width: 1.2;
+    stroke-dasharray: 1600;
+    stroke-dashoffset: 1600;
+    opacity: 0;
+    filter: url(#ng-bloom);
+  }
+
+  .tx-copy {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(92vw, 1100px);
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+  }
+  .act-tx[data-variant='eye'] .tx-copy,
+  .act-tx[data-variant='six-beam'] .tx-copy { top: 85%; }
+  .act-tx[data-variant='eye'] .tx-copy :global(.tx-title),
+  .act-tx[data-variant='six-beam'] .tx-copy :global(.tx-title) { font-size: clamp(44px, 7vw, 112px); }
+  .tx-kicker {
+    font-family: var(--vfx-font-mono);
+    font-size: 12px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--tx-tint);
+    opacity: 0;
+    margin: 0 0 18px;
+  }
+  .tx-copy :global(.tx-title) {
+    font-family: var(--vfx-font-display);
+    font-size: clamp(56px, 11vw, 168px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+  }
+</style>
+
+<script>
+  import { ready, seg, clamp01, smooth, easeOut, easeInOut, expoOut, lerp } from './motion';
+  import { getTier, budget } from './quality';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag: string, attrs: Record<string, string | number> = {}, parent?: Element) => {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, String(attrs[k]));
+    parent?.appendChild(el);
+    return el as SVGElement;
+  };
+  // deterministic pseudo-random so scrubbing is repeatable
+  const rnd = (i: number, s = 1) => {
+    const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const css = (name: string, fallback: string) =>
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+
+  type Ctx = { W: number; H: number; cx: number; cy: number; R: number; tint: string };
+  type VariantImpl = { build(g: SVGGElement, c: Ctx): void; render(u: number, c: Ctx, out: number): void };
+
+  /* ── variant: default · phosphor rings ───────────────────── */
+  function ringsVariant(): VariantImpl {
+    let rings: SVGElement[] = [];
+    let scan: SVGElement;
+    return {
+      build(g, c) {
+        rings = [0, 1, 2, 3].map(() =>
+          mk('circle', { fill: 'none', stroke: c.tint, 'stroke-width': 1.5, class: 'tx-add', filter: 'url(#ng-bloom)' }, g)
+        );
+        scan = mk('rect', { x: 0, height: 2, fill: c.tint, opacity: 0, class: 'tx-add', filter: 'url(#ng-bloom)' }, g);
+      },
+      render(u, c, out) {
+        rings.forEach((r, i) => {
+          const t = seg(u, 0.02 + i * 0.09, 0.62 + i * 0.09);
+          const rad = expoOut(t) * c.R * (0.55 + i * 0.35);
+          r.setAttribute('cx', String(c.cx));
+          r.setAttribute('cy', String(c.cy));
+          r.setAttribute('r', rad.toFixed(1));
+          r.setAttribute('opacity', (Math.sin(Math.PI * t) * 0.8 * (1 - out)).toFixed(3));
+          r.setAttribute('stroke-width', (0.6 + 2.4 * (1 - t)).toFixed(2));
+        });
+        const st = seg(u, 0.15, 0.7);
+        scan.setAttribute('width', String(c.W));
+        scan.setAttribute('y', (lerp(-10, c.H + 10, easeInOut(st))).toFixed(1));
+        scan.setAttribute('opacity', (Math.sin(Math.PI * st) * 0.55 * (1 - out)).toFixed(3));
+      },
+    };
+  }
+
+  /* ── variant: eye · Act 2 Gaze-Native ────────────────────── */
+  function eyeVariant(): VariantImpl {
+    let lids: SVGElement, lidsGlow: SVGElement, iris: SVGElement, irisRing: SVGElement, pupil: SVGElement, glint: SVGElement;
+    let fibers: SVGElement[] = [];
+    let clip: SVGElement;
+    let fg: SVGGElement;
+    const id = 'tx-eye-clip-' + Math.random().toString(36).slice(2, 7);
+    return {
+      build(g, c) {
+        const defs = mk('defs', {}, g);
+        clip = mk('path', {}, mk('clipPath', { id }, defs));
+        fg = mk('g', { 'clip-path': `url(#${id})` }, g) as SVGGElement;
+        iris = mk('circle', { fill: c.tint, opacity: 0.18 }, fg);
+        const n = Math.round(72 * Math.max(0.5, budget()));
+        for (let i = 0; i < n; i++) {
+          fibers.push(mk('line', { stroke: c.tint, 'stroke-width': 1, class: 'tx-add', 'stroke-linecap': 'round' }, fg));
+        }
+        irisRing = mk('circle', { fill: 'none', stroke: c.tint, 'stroke-width': 2, filter: 'url(#ng-bloom)' }, fg);
+        pupil = mk('circle', { fill: '#000' }, fg);
+        glint = mk('circle', { fill: '#fff', filter: 'url(#ng-bloom)' }, fg);
+        lidsGlow = mk('path', { fill: 'none', stroke: c.tint, 'stroke-width': 6, opacity: 0.35, filter: 'url(#ng-bloom)' }, g);
+        lids = mk('path', { fill: 'none', stroke: '#fff', 'stroke-width': 1.6 }, g);
+      },
+      render(u, c, out) {
+        // lids open from the collapsed line: almond eye
+        const open = easeInOut(seg(u, 0.0, 0.42)) * (1 - easeInOut(out));
+        const w = c.R * 1.25 * (0.6 + 0.4 * easeOut(seg(u, 0, 0.3)));
+        const h = c.R * 0.62 * open;
+        const L = c.cx - w, Rr = c.cx + w;
+        const d = `M${L},${c.cy} C${c.cx - w * 0.45},${c.cy - h * 1.35} ${c.cx + w * 0.45},${c.cy - h * 1.35} ${Rr},${c.cy}` +
+          ` C${c.cx + w * 0.45},${c.cy + h * 1.35} ${c.cx - w * 0.45},${c.cy + h * 1.35} ${L},${c.cy} Z`;
+        clip.setAttribute('d', d);
+        lids.setAttribute('d', d);
+        lidsGlow.setAttribute('d', d);
+        const vis = seg(u, 0, 0.12) * (1 - out);
+        lids.setAttribute('opacity', vis.toFixed(3));
+        lidsGlow.setAttribute('opacity', (vis * 0.4).toFixed(3));
+        // gaze: the eye glances left, right, then locks on you
+        const look = Math.sin(seg(u, 0.4, 0.85) * Math.PI * 2) * c.R * 0.16 * (1 - seg(u, 0.75, 0.9));
+        const ix = c.cx + look;
+        const ir = c.R * 0.42;
+        iris.setAttribute('cx', ix.toFixed(1));
+        iris.setAttribute('cy', String(c.cy));
+        iris.setAttribute('r', ir.toFixed(1));
+        irisRing.setAttribute('cx', ix.toFixed(1));
+        irisRing.setAttribute('cy', String(c.cy));
+        irisRing.setAttribute('r', ir.toFixed(1));
+        irisRing.setAttribute('opacity', (0.9 * vis).toFixed(3));
+        // pupil dilates as the eye "focuses" (foveation)
+        const pr = ir * lerp(0.55, 0.3, easeInOut(seg(u, 0.3, 0.8)));
+        pupil.setAttribute('cx', ix.toFixed(1));
+        pupil.setAttribute('cy', String(c.cy));
+        pupil.setAttribute('r', pr.toFixed(1));
+        glint.setAttribute('cx', (ix + pr * 0.45).toFixed(1));
+        glint.setAttribute('cy', (c.cy - pr * 0.45).toFixed(1));
+        glint.setAttribute('r', (pr * 0.16).toFixed(1));
+        glint.setAttribute('opacity', vis.toFixed(3));
+        const grow = easeOut(seg(u, 0.08, 0.5));
+        fibers.forEach((f, i) => {
+          const a = (i / fibers.length) * Math.PI * 2 + rnd(i) * 0.05;
+          const r0 = pr * 1.05;
+          const r1 = lerp(r0, ir * (0.82 + rnd(i, 2) * 0.18), grow);
+          f.setAttribute('x1', (ix + Math.cos(a) * r0).toFixed(1));
+          f.setAttribute('y1', (c.cy + Math.sin(a) * r0).toFixed(1));
+          f.setAttribute('x2', (ix + Math.cos(a) * r1).toFixed(1));
+          f.setAttribute('y2', (c.cy + Math.sin(a) * r1).toFixed(1));
+          f.setAttribute('opacity', ((0.25 + rnd(i, 3) * 0.6) * vis).toFixed(3));
+        });
+      },
+    };
+  }
+
+  /* ── variant: warp · Act 3 Velocity ──────────────────────── */
+  function warpVariant(): VariantImpl {
+    let streaks: SVGElement[] = [];
+    let flash: SVGElement;
+    return {
+      build(g, c) {
+        const n = Math.round(160 * Math.max(0.3, budget()));
+        const g2 = mk('g', { class: 'tx-add' }, g);
+        for (let i = 0; i < n; i++) {
+          const hue = rnd(i, 5);
+          const col = hue < 0.7 ? c.tint : hue < 0.85 ? '#ffffff' : css('--accent2', '#00b4ff');
+          streaks.push(mk('line', { stroke: col, 'stroke-linecap': 'round' }, g2));
+        }
+        flash = mk('circle', { fill: '#fff', filter: 'url(#ng-bloom)', class: 'tx-add' }, g);
+      },
+      render(u, c, out) {
+        const diag = Math.hypot(c.W, c.H) * 0.6;
+        // acceleration: slow drift → light speed → (out) everything streaks past
+        const speed = Math.pow(seg(u, 0.0, 0.85), 2.2) + out * 2;
+        streaks.forEach((s, i) => {
+          const a = rnd(i) * Math.PI * 2;
+          const depth = rnd(i, 2); // 0 near, 1 far
+          const phase = rnd(i, 3);
+          // each streak loops outward; travel grows with speed
+          const travel = (phase + u * (0.4 + speed * 3.2) * (0.6 + depth)) % 1;
+          const r = Math.pow(travel, 1.6) * diag + 4;
+          const len = (6 + speed * 260 * (0.3 + travel)) * (1 - depth * 0.5);
+          const r2 = r + len;
+          const cs = Math.cos(a), sn = Math.sin(a);
+          s.setAttribute('x1', (c.cx + cs * r).toFixed(1));
+          s.setAttribute('y1', (c.cy + sn * r).toFixed(1));
+          s.setAttribute('x2', (c.cx + cs * r2).toFixed(1));
+          s.setAttribute('y2', (c.cy + sn * r2).toFixed(1));
+          s.setAttribute('stroke-width', (0.6 + travel * 2.4 * (1 - depth * 0.6)).toFixed(2));
+          const op = seg(u, 0, 0.1) * Math.min(1, travel * 4) * (1 - seg(out, 0.5, 1));
+          s.setAttribute('opacity', op.toFixed(3));
+        });
+        // light-speed flash at peak
+        const f = Math.exp(-Math.pow((u - 0.86) / 0.05, 2));
+        flash.setAttribute('cx', String(c.cx));
+        flash.setAttribute('cy', String(c.cy));
+        flash.setAttribute('r', (c.R * (0.05 + f * 0.6)).toFixed(1));
+        flash.setAttribute('opacity', (f * 0.85 * (1 - out)).toFixed(3));
+      },
+    };
+  }
+
+  /* ── variant: six-beam · Act 4 RGBMCY ────────────────────── */
+  function sixBeamVariant(): VariantImpl {
+    // RGB triangle points up; MCY triangle is inverted. Angles from +x, SVG y-down.
+    const prim = [
+      { k: 'R', v: '--ng-p-r', f: '#ff2d20', a: -90 },
+      { k: 'G', v: '--ng-p-g', f: '#00ff99', a: 30 },
+      { k: 'B', v: '--ng-p-b', f: '#2a6bff', a: 150 },
+      { k: 'C', v: '--ng-p-c', f: '#00e5ff', a: 90 },
+      { k: 'M', v: '--ng-p-m', f: '#ff2bd6', a: -30 },
+      { k: 'Y', v: '--ng-p-y', f: '#ffe135', a: -150 },
+    ];
+    let beams: SVGElement[] = [], dots: SVGElement[] = [], labels: SVGElement[] = [];
+    let triRGB: SVGElement, triMCY: SVGElement, hex: SVGElement, core: SVGElement;
+    let cols: string[] = [];
+    return {
+      build(g, c) {
+        cols = prim.map((p) => css(p.v, p.f));
+        const add = mk('g', { class: 'tx-add' }, g);
+        hex = mk('polygon', { fill: 'none', stroke: '#ffffff', 'stroke-width': 1, opacity: 0 }, add);
+        triRGB = mk('polygon', { fill: 'none', 'stroke-width': 1.5, stroke: '#ffffff', filter: 'url(#ng-bloom)' }, add);
+        triMCY = mk('polygon', { fill: 'none', 'stroke-width': 1.5, stroke: '#ffffff', filter: 'url(#ng-bloom)' }, add);
+        prim.forEach((_, i) => {
+          beams.push(mk('line', { stroke: cols[i], 'stroke-width': 3, 'stroke-linecap': 'round', filter: 'url(#ng-bloom)' }, add));
+          dots.push(mk('circle', { fill: cols[i], filter: 'url(#ng-bloom)' }, add));
+          const t = mk('text', {
+            fill: cols[i], 'text-anchor': 'middle', 'dominant-baseline': 'central',
+            'font-family': css('--vfx-font-mono', 'monospace'), 'font-size': 13, 'letter-spacing': 3,
+          }, add);
+          t.textContent = prim[i].k;
+          labels.push(t);
+        });
+        core = mk('circle', { fill: '#fff', filter: 'url(#ng-bloom)' }, add);
+      },
+      render(u, c, out) {
+        const split = easeInOut(seg(u, 0.05, 0.45));
+        const R = c.R * 0.62 * split * (1 + out * 0.4);
+        const vis = (1 - out);
+        const pts = prim.map((p) => {
+          const a = (p.a * Math.PI) / 180 + (1 - split) * 1.4; // spiral out
+          return [c.cx + Math.cos(a) * R, c.cy + Math.sin(a) * R];
+        });
+        prim.forEach((_, i) => {
+          const [x, y] = pts[i];
+          // beam comes from the gun (behind the viewer: from the center outward)
+          beams[i].setAttribute('x1', String(c.cx));
+          beams[i].setAttribute('y1', String(c.cy));
+          beams[i].setAttribute('x2', x.toFixed(1));
+          beams[i].setAttribute('y2', y.toFixed(1));
+          beams[i].setAttribute('opacity', (seg(u, 0.03, 0.15) * (1 - seg(u, 0.55, 0.8) * 0.75) * vis).toFixed(3));
+          beams[i].setAttribute('stroke-width', (1 + 3 * (1 - split)).toFixed(2));
+          dots[i].setAttribute('cx', x.toFixed(1));
+          dots[i].setAttribute('cy', y.toFixed(1));
+          dots[i].setAttribute('r', (4 + 6 * seg(u, 0.4, 0.55) * (1 - seg(u, 0.55, 0.9) * 0.5)).toFixed(1));
+          dots[i].setAttribute('opacity', (seg(u, 0.02, 0.1) * vis).toFixed(3));
+          labels[i].setAttribute('x', (c.cx + (x - c.cx) * 1.22).toFixed(1));
+          labels[i].setAttribute('y', (c.cy + (y - c.cy) * 1.22).toFixed(1));
+          labels[i].setAttribute('opacity', (seg(u, 0.45, 0.6) * vis).toFixed(3));
+        });
+        const tri = seg(u, 0.45, 0.7);
+        triRGB.setAttribute('points', [0, 1, 2].map((i) => pts[i].map((v) => v.toFixed(1)).join(',')).join(' '));
+        triMCY.setAttribute('points', [3, 4, 5].map((i) => pts[i].map((v) => v.toFixed(1)).join(',')).join(' '));
+        triRGB.setAttribute('opacity', (tri * 0.7 * vis).toFixed(3));
+        triMCY.setAttribute('opacity', (tri * 0.7 * vis).toFixed(3));
+        // hexagon pixel outline (order around the ring)
+        const ring = [0, 4, 1, 3, 2, 5].map((i) => pts[i].map((v) => v.toFixed(1)).join(',')).join(' ');
+        hex.setAttribute('points', ring);
+        hex.setAttribute('opacity', (seg(u, 0.6, 0.8) * 0.5 * vis).toFixed(3));
+        // additive white core where all six land (Puretone: alone or together)
+        core.setAttribute('cx', String(c.cx));
+        core.setAttribute('cy', String(c.cy));
+        core.setAttribute('r', (c.R * 0.1 * (1 - split) + c.R * 0.08 * seg(u, 0.65, 0.85)).toFixed(1));
+        core.setAttribute('opacity', ((1 - split) * 0.9 + seg(u, 0.65, 0.85) * 0.5 * vis).toFixed(3));
+      },
+    };
+  }
+
+  /* ── variant: rays · Act 8 Wraparound Optics ─────────────── */
+  function raysVariant(): VariantImpl {
+    let rays: SVGElement[] = [];
+    let shells: SVGElement[] = [];
+    return {
+      build(g, c) {
+        const add = mk('g', { class: 'tx-add' }, g);
+        const n = Math.round(36 * Math.max(0.5, budget()));
+        for (let i = 0; i < 5; i++) {
+          shells.push(mk('ellipse', { fill: 'none', stroke: c.tint, 'stroke-width': 1.2, filter: 'url(#ng-bloom)' }, add));
+        }
+        for (let i = 0; i < n; i++) {
+          rays.push(mk('path', { fill: 'none', stroke: i % 6 === 0 ? '#ffffff' : c.tint, 'stroke-width': 1.4, 'stroke-linecap': 'round' }, add));
+        }
+      },
+      render(u, c, out) {
+        const diag = Math.hypot(c.W, c.H) * 0.75;
+        // rays shoot out, then bend around the viewer (wrap past the edges)
+        const reach = easeOut(seg(u, 0.02, 0.4));
+        const bend = easeInOut(seg(u, 0.3, 0.9)) + out * 0.6;
+        rays.forEach((r, i) => {
+          const a = (i / rays.length) * Math.PI * 2 + 0.06;
+          const len = diag * reach * (0.85 + rnd(i) * 0.3);
+          // control point pushes perpendicular: the ray curves around you
+          const ex = c.cx + Math.cos(a + bend * 0.9) * len;
+          const ey = c.cy + Math.sin(a + bend * 0.9) * len * 0.82;
+          const mx = c.cx + Math.cos(a) * len * 0.55;
+          const my = c.cy + Math.sin(a) * len * 0.55 * 0.82;
+          r.setAttribute('d', `M${c.cx},${c.cy} Q${mx.toFixed(1)},${my.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`);
+          r.setAttribute('opacity', (seg(u, 0.02, 0.12) * (0.35 + rnd(i, 2) * 0.5) * (1 - seg(out, 0.4, 1))).toFixed(3));
+        });
+        // monocentric shells expanding past the viewer: you are inside the dome
+        shells.forEach((s, i) => {
+          const t = (seg(u, 0.1, 1) * 1.6 + i / shells.length) % 1;
+          const rx = Math.pow(t, 1.8) * diag * 1.3;
+          s.setAttribute('cx', String(c.cx));
+          s.setAttribute('cy', String(c.cy));
+          s.setAttribute('rx', rx.toFixed(1));
+          s.setAttribute('ry', (rx * 0.62).toFixed(1));
+          s.setAttribute('opacity', (Math.sin(Math.PI * t) * 0.6 * seg(u, 0.1, 0.2) * (1 - out)).toFixed(3));
+          s.setAttribute('stroke-width', (0.5 + 3 * t).toFixed(2));
+        });
+      },
+    };
+  }
+
+  const VARIANTS: Record<string, () => VariantImpl> = {
+    default: ringsVariant, eye: eyeVariant, warp: warpVariant, 'six-beam': sixBeamVariant, rays: raysVariant,
+  };
+
+  /*
+   * Timeline in vh of scroll from the trigger start. The spacer's top enters
+   * at the viewport bottom (start 'top bottom') so the power-off plays over
+   * the outgoing act; the last 100 vh is the power-on onto the new act.
+   */
+  function phases(first: boolean, totalVh: number) {
+    const end = totalVh;
+    const revealStart = end - 100;
+    if (first) {
+      // page opening (time-based, 0…100): waiting dot → bloom → power-on. No title:
+      // the hero owns Act 1's headline.
+      return { squashV: [-2, -1], squashH: [-1, 0], ember: [-1, 0], ignite: [0, 34], art: [0, 70], num: [998, 999], title: [998, 999], out: [36, 62], lineOpen: [34, 60], fullOpen: [56, 100] };
+    }
+    return {
+      squashV: [0, 42], squashH: [40, 62], ember: [62, 96], ignite: [100, 132],
+      art: [100, revealStart + 10], num: [118, 178], title: [135, 210], out: [revealStart - 14, revealStart + 30],
+      lineOpen: [revealStart, revealStart + 35], fullOpen: [revealStart + 30, end - 8],
+    };
+  }
+
+  function setup(root: HTMLElement) {
+    const { gsap, ScrollTrigger } = ready();
+    const first = root.dataset.first === '1';
+    const stage = root.querySelector<HTMLElement>('.act-tx__stage')!;
+    const [st, sb, sl, sr] = ['t', 'b', 'l', 'r'].map((k) => stage.querySelector<HTMLElement>('.tx-shutter--' + k)!);
+    const flare = stage.querySelector<HTMLElement>('.tx-flare')!;
+    const svg = stage.querySelector<SVGSVGElement>('.tx-art')!;
+    const gVar = svg.querySelector<SVGGElement>('[data-layer="variant"]')!;
+    const dot = svg.querySelector<SVGCircleElement>('.tx-dot')!;
+    const bloom = svg.querySelector<SVGCircleElement>('.tx-bloom')!;
+    const num = svg.querySelector<SVGTextElement>('.tx-num')!;
+    const kicker = stage.querySelector<HTMLElement>('.tx-kicker')!;
+    const copy = stage.querySelector<HTMLElement>('.tx-copy')!;
+    const title = stage.querySelector<HTMLElement & { progress: number }>('beam-text')!;
+    const tint = getComputedStyle(root).getPropertyValue('--tx-tint').trim() || '#00ff99';
+    const variant = (VARIANTS[root.dataset.variant || 'default'] ?? ringsVariant)();
+    // variants whose art owns the center push the title to the lower third
+    const centered = root.dataset.variant === 'eye' || root.dataset.variant === 'six-beam';
+
+    const c: Ctx = { W: 0, H: 0, cx: 0, cy: 0, R: 0, tint };
+    let totalVh = 400;
+    let P = phases(first, totalVh);
+    let built = false;
+    const layout = () => {
+      c.W = innerWidth;
+      c.H = innerHeight;
+      c.cx = c.W / 2;
+      c.cy = c.H * 0.5;
+      c.R = Math.min(c.W, c.H) * (centered ? 0.36 : 0.42);
+      svg.setAttribute('viewBox', `0 0 ${c.W} ${c.H}`);
+      num.setAttribute('x', String(c.cx));
+      num.setAttribute('y', String(c.cy));
+      num.setAttribute('font-size', String(Math.min(c.H * 0.62, c.W * 0.5)));
+      const spacerVh = (root.offsetHeight / c.H) * 100;
+      totalVh = first ? 100 : spacerVh + 100;
+      P = phases(first, totalVh);
+      if (!built) {
+        variant.build(gVar, c);
+        built = true;
+      }
+    };
+    layout();
+
+    let target = 0;
+    let shown = first ? 0 : -1;
+    const S = (s: number, r: number[]) => seg(s, r[0], r[1]);
+
+    const render = (p: number) => {
+      const s = p * totalVh;
+      const on = first ? p < 1 : p > 0 && p < 1;
+      stage.classList.toggle('is-on', on);
+      if (first && !on) stage.classList.add('is-done');
+      if (!on) return;
+
+      // 1 · power-off: vertical squash, then horizontal pinch
+      const v = first ? 1 : Math.pow(S(s, P.squashV), 1.6);
+      const h = first ? 1 : easeInOut(S(s, P.squashH));
+      // 5 · power-on: line, then full raster
+      const lo = easeOut(S(s, P.lineOpen));
+      const fo = easeInOut(S(s, P.fullOpen));
+      const closedV = Math.max(0, v - fo); // 0 open … 1 closed
+      const closedH = Math.max(0, h - lo);
+      const lineH = 2 / c.H;
+      const holeV = 1 - closedV * (1 - lineH);
+      const holeH = 1 - closedH * (1 - 2 / c.W);
+      const keepV = (1 - holeV) / 2 / 0.505;
+      const keepH = (1 - holeH) / 2 / 0.505;
+      st.style.transform = `scaleY(${keepV.toFixed(5)})`;
+      sb.style.transform = `scaleY(${keepV.toFixed(5)})`;
+      sl.style.transform = `scaleX(${keepH.toFixed(5)})`;
+      sr.style.transform = `scaleX(${keepH.toFixed(5)})`;
+
+      // white-hot flare on the collapsing / opening raster
+      // brightest when the raster is thinnest (charge piles into fewer lines)
+      const thin = 1 - holeV;
+      const collapsing = first ? 0 : Math.pow(thin, 3) * (1 - S(s, P.ember));
+      const opening = Math.pow(thin, 2) * seg(s, P.lineOpen[0] - 4, P.lineOpen[0]) * (1 - fo);
+      const flareI = Math.max(collapsing, opening);
+      flare.style.opacity = (flareI * 0.8).toFixed(3);
+      flare.style.transform = `scale(${Math.max(holeH, 0.002).toFixed(4)}, ${Math.max(holeV * 1.6, 0.004).toFixed(4)})`;
+
+      // 1→2 · the dot: born from the pinch, dies to an ember, beat of black
+      let dotR = 0;
+      let dotO = 0;
+      if (!first) {
+        const born = S(s, P.squashH);
+        const ember = S(s, P.ember);
+        dotR = c.R * 0.08 * smooth(born) * (1 - ember * 0.85);
+        dotO = smooth(born) * (1 - smooth(ember));
+      }
+      // 3 · re-ignite and bloom
+      const ig = S(s, P.ignite);
+      const out = S(s, P.out);
+      const idle = first ? 1 - ig : 0; // page opening: waiting dot breathes
+      if (first) {
+        dotR = Math.max(dotR, c.R * 0.06 * (1 - ig * 0.4));
+        dotO = Math.max(dotO, 1 - out);
+      } else {
+        dotR = Math.max(dotR, c.R * (0.02 + 0.07 * Math.sin(Math.PI * Math.min(1, ig * 1.2))) * (1 - out));
+        dotO = Math.max(dotO, Math.min(1, ig * 4) * (1 - out) * (0.6 + 0.4 * (1 - ig)));
+      }
+      void idle;
+      dot.setAttribute('cx', String(c.cx));
+      dot.setAttribute('cy', String(c.cy));
+      dot.setAttribute('r', Math.max(0, dotR).toFixed(2));
+      dot.setAttribute('opacity', dotO.toFixed(3));
+      const bl = Math.sin(Math.PI * Math.min(1, ig)) * (1 - out);
+      bloom.setAttribute('cx', String(c.cx));
+      bloom.setAttribute('cy', String(c.cy));
+      bloom.setAttribute('r', (c.R * (0.2 + 2.2 * expoOut(ig))).toFixed(1));
+      bloom.setAttribute('opacity', (bl * bl * 0.5 + (first ? (1 - ig) * 0.3 : 0)).toFixed(3));
+
+      // 3 · variant moment
+      const u = S(s, P.art);
+      gVar.style.opacity = s >= P.art[0] ? '1' : '0';
+      variant.render(u, c, out);
+
+      // 4 · number traced by the beam, title beam-drawn
+      const nn = S(s, P.num);
+      num.style.strokeDashoffset = String(1600 * (1 - easeInOut(nn)));
+      num.style.opacity = (Math.min(1, nn * 3) * (centered ? 0.16 : 0.55) * (1 - out)).toFixed(3);
+      num.style.fill = `color-mix(in srgb, ${tint} ${(seg(nn, 0.7, 1) * 7).toFixed(1)}%, transparent)`;
+      const tt = S(s, P.title);
+      title.progress = tt;
+      kicker.style.opacity = (seg(tt, 0, 0.2) * (1 - out)).toFixed(3);
+      kicker.style.letterSpacing = `${lerp(0.9, 0.42, easeOut(seg(tt, 0, 0.5)))}em`;
+      const lift = easeInOut(out);
+      copy.style.opacity = (1 - lift).toFixed(3);
+      copy.style.transform = `translate(-50%, calc(-50% - ${(lift * 40).toFixed(1)}px)) scale(${(1 + lift * 0.06).toFixed(4)})`;
+      copy.style.filter = lift > 0.01 ? `blur(${(lift * 8).toFixed(1)}px)` : 'none';
+      svg.style.transform = `scale(${(1 + lift * 0.12).toFixed(4)})`;
+      svg.style.transformOrigin = '50% 50%';
+    };
+
+    if (first) {
+      // Power-on intro, played once in time (not scroll) so the hero is never held hostage.
+      const state = { p: 0 };
+      render(0);
+      const go = () =>
+        gsap.to(state, {
+          p: 1, duration: 2.4, ease: 'power1.inOut', delay: 0.25,
+          onUpdate: () => { shown = state.p; render(state.p); },
+        });
+      if (getTier() === 'static') stage.classList.add('is-done');
+      else if (document.readyState === 'complete') go();
+      else addEventListener('load', go, { once: true });
+    } else {
+      ScrollTrigger.create({
+        trigger: root,
+        start: 'top bottom',
+        end: 'bottom top',
+        onUpdate: (self) => (target = self.progress),
+        onRefresh: (self) => {
+          layout();
+          target = self.progress;
+        },
+      });
+      // extra damping on top of Lenis: buttery even on notchy wheels
+      let lastT = performance.now();
+      gsap.ticker.add(() => {
+        const now = performance.now();
+        const dt = Math.min(0.05, (now - lastT) / 1000);
+        lastT = now;
+        if (getTier() === 'static') {
+          stage.classList.remove('is-on');
+          return;
+        }
+        if (shown < 0) {
+          shown = target;
+          render(shown);
+          return;
+        }
+        const k = 1 - Math.exp(-dt * 9);
+        const next = Math.abs(target - shown) < 0.0004 ? target : shown + (target - shown) * k;
+        if (next !== shown) {
+          shown = next;
+          render(clamp01(shown));
+        }
+      });
+    }
+    addEventListener('resize', () => {
+      layout();
+      render(clamp01(shown));
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-act-tx]').forEach(setup);
+</script>

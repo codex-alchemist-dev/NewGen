@@ -1,0 +1,25 @@
+/* ─────────────────────────────────────────────────────────────
+   NewGen 2nd® Gen · VFX tokens
+   Built on the global tokens in src/styles/tokens.css, so the pending
+   2nd Gen color/font redesign flows through. VFX-only values live here.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* The six primaries (RGBMCY): split-beam variant, hex lattice */
+  --ng-p-r: var(--sony-red, #ff2d20);
+  --ng-p-g: var(--accent, #00ff99);
+  --ng-p-b: #2a6bff;
+  --ng-p-m: #ff2bd6;
+  --ng-p-c: #00e5ff;
+  --ng-p-y: var(--accent3, #ffe135);
+
+  /* Fonts used by VFX text (alias the global font tokens) */
+  --vfx-font-display: var(--font-display, 'Bebas Neue', Impact, sans-serif);
+  --vfx-font-mono: var(--font-mono, 'DM Mono', ui-monospace, monospace);
+
+  /* Motion curves for VFX */
+  --vfx-ease-soft: var(--ease-newgen, cubic-bezier(0.16, 1, 0.3, 1));
+  --vfx-ease-grand: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Live tint, written by ScrollBackdrop as acts blend (space-separated RGB) */
+  --vfx-tint-rgb: 0 255 153;
+}

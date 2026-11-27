@@ -1,0 +1,8 @@
+/* Section reveal + static fallbacks (shared by GlobalVfx). */
+[data-reveal] { will-change: transform, opacity, filter; }
+html[data-vfx-tier='static'] [data-reveal],
+html[data-vfx-tier='static'] [data-parallax] {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}

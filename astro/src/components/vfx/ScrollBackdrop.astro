@@ -1,0 +1,285 @@
+---
+/**
+ * ScrollBackdrop: one fixed WebGL canvas behind the whole page.
+ * Each act's <ActBackground> declares a scene + tint; as you scroll, the backdrop
+ * morphs scene → scene and tint → tint with long soft blends and extra
+ * per-frame damping, so section changes never pop.
+ *
+ * Scenes: phosphor | mask | grid | scan | void
+ * Tiers: full = DPR-capped native res, 60 fps · reduced = 0.5× res, 30 fps
+ *        static = CSS gradient only (no WebGL)
+ */
+---
+<div class="vfx-backdrop" aria-hidden="true">
+  <canvas class="vfx-backdrop__gl"></canvas>
+  <div class="vfx-backdrop__static"></div>
+  <div class="vfx-backdrop__vignette"></div>
+</div>
+
+<style>
+  .vfx-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--bg, #04050a);
+    pointer-events: none;
+  }
+  .vfx-backdrop__gl {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.6s var(--vfx-ease-soft);
+  }
+  .vfx-backdrop__gl.is-live { opacity: 1; }
+  .vfx-backdrop__static {
+    position: absolute;
+    inset: 0;
+    display: none;
+    background:
+      radial-gradient(120% 80% at 50% 110%, rgb(var(--vfx-tint-rgb) / 0.12), transparent 60%),
+      radial-gradient(80% 60% at 50% -10%, rgb(var(--vfx-tint-rgb) / 0.06), transparent 60%),
+      var(--bg, #04050a);
+  }
+  .vfx-backdrop__vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(140% 100% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.65));
+  }
+  :global(html[data-vfx-tier='static']) .vfx-backdrop__gl { display: none; }
+  :global(html[data-vfx-tier='static']) .vfx-backdrop__static { display: block; }
+</style>
+
+<script>
+  import { getTier, onTier, type Tier } from './quality';
+  import { ready, onVelocity, hexToRgb, smooth, clamp01 } from './motion';
+
+  const SCENES: Record<string, number> = { phosphor: 0, mask: 1, grid: 2, scan: 3, void: 4 };
+
+  const VERT = `attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
+  const FRAG = `
+precision highp float;
+uniform vec2 uRes; uniform float uTime; uniform float uSceneA; uniform float uSceneB;
+uniform float uMix; uniform vec3 uTintA; uniform vec3 uTintB; uniform float uVel; uniform float uScroll;
+
+float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
+float noise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),u.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x), u.y); }
+float fbm(vec2 p){ float v=0., a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p=p*2.03+vec2(1.7,9.2); a*=.5; } return v; }
+
+// Hex lattice: returns (dist-to-center, cell id hash, sub-triangle sign)
+vec3 hexCell(vec2 p){
+  const vec2 s = vec2(1., 1.7320508);
+  vec2 h = s*.5;
+  vec2 a = mod(p, s) - h;
+  vec2 b = mod(p - h, s) - h;
+  vec2 g = dot(a,a) < dot(b,b) ? a : b;
+  vec2 id = p - g;
+  float ang = atan(g.y, g.x);
+  return vec3(length(g), hash(floor(id*10.)), ang);
+}
+
+vec3 scene(float id, vec2 uv, vec2 frag, vec3 tint){
+  float t = uTime;
+  vec2 c = uv - .5; c.x *= uRes.x/uRes.y;
+  if (id < .5) {
+    // phosphor aurora: slow luminous fog
+    float n = fbm(c*1.4 + vec2(t*.02, -t*.03 + uScroll*.15));
+    float n2 = fbm(c*3. - vec2(t*.04, uScroll*.25));
+    float glow = pow(n, 2.2)*.9 + pow(n2, 4.)*.5;
+    float floorGlow = smoothstep(.9, -.2, uv.y) * .25;
+    return tint * (glow*.38 + floorGlow*.3);
+  } else if (id < 1.5) {
+    // shadow-mask hex lattice: RGB triangle + inverted MCY triangle per cell
+    vec2 p = c*26. + vec2(0., uScroll*4.);
+    vec3 h = hexCell(p);
+    float cell = smoothstep(.5, .38, h.x);
+    // six sectors → six primaries, dimmed, tinted toward the section tint
+    float sector = floor(mod((h.z + 3.14159)/1.0472, 6.));
+    vec3 prim = sector < .5 ? vec3(1.,.18,.12) : sector < 1.5 ? vec3(1.,.17,.84) : sector < 2.5 ? vec3(.16,.42,1.)
+              : sector < 3.5 ? vec3(0.,.9,1.) : sector < 4.5 ? vec3(0.,1.,.6) : vec3(1.,.88,.2);
+    float wave = .5 + .5*sin(length(c)*6. - t*.8);
+    float light = smoothstep(1.2, 0., length(c - vec2(sin(t*.11)*.6, cos(t*.07)*.3)));
+    float k = cell * (.08 + .5*light*wave) * (.6 + .4*h.y);
+    return mix(prim, tint, .55) * k * .55;
+  } else if (id < 2.5) {
+    // VR grid: perspective floor + mirrored dome
+    float hy = .5;
+    float y = uv.y - hy;
+    float side = sign(y);
+    float z = .35 / max(abs(y), .002);
+    float x = c.x * z;
+    float zz = z + t*.6 + uScroll*2.;
+    float lx = abs(fract(x*1.) - .5);
+    float lz = abs(fract(zz*.5) - .5);
+    float w = .015*z;
+    float line = smoothstep(w, 0., lx) + smoothstep(w*1.2, 0., lz);
+    float fade = smoothstep(18., 1., z) * (side < 0. ? 1. : .45);
+    float horizon = exp(-abs(y)*40.)*.6;
+    return tint * (line*fade*.55 + horizon*.5);
+  } else if (id < 3.5) {
+    // raster scan: a beam sweeps down; phosphor decays behind it
+    float lines = .55 + .45*sin(frag.y*3.14159*.5);
+    float beamY = fract(t*.18 + uScroll*.3);
+    float d = (1. - uv.y) - beamY;
+    d = d < 0. ? d + 1. : d;           // distance behind the beam (wraps)
+    float decay = exp(-d*7.) + .25*exp(-d*1.5);
+    float beam = exp(-pow(((1.-uv.y)-beamY)*uRes.y*.15, 2.));
+    float grain = noise(vec2(frag.x*.05, t*30.));
+    return tint * (decay*.22*lines + beam*.9*(.6+.4*grain)) + vec3(beam*.25);
+  } else {
+    // void: deep space dust, calm
+    vec2 g = floor(frag/3.);
+    float s = step(.9975, hash(g + floor(uScroll*3.)*0.));
+    float tw = .5 + .5*sin(t*2. + hash(g)*30.);
+    float fog = fbm(c*.8 + t*.01)*smoothstep(1.,0.,uv.y);
+    return vec3(s*tw*.5) + tint*fog*.12;
+  }
+}
+
+void main(){
+  vec2 frag = gl_FragCoord.xy;
+  vec2 uv = frag / uRes;
+  // scroll velocity: gentle vertical smear
+  vec2 uvv = uv + vec2(0., uVel*.0015);
+  vec3 a = scene(uSceneA, uvv, frag, uTintA);
+  vec3 col = a;
+  if (uMix > .001) {
+    vec3 b = scene(uSceneB, uvv, frag, uTintB);
+    col = mix(a, b, uMix);
+  }
+  col *= 1. + min(abs(uVel)*.02, .35);
+  // tone map + tiny dither
+  col = col / (1. + col);
+  col += (hash(frag + uTime) - .5) / 255.;
+  gl_FragColor = vec4(col, 1.);
+}`;
+
+  function init() {
+    const root = document.querySelector<HTMLElement>('.vfx-backdrop');
+    const canvas = root?.querySelector<HTMLCanvasElement>('canvas');
+    if (!root || !canvas) return;
+    const { ScrollTrigger } = ready();
+
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+    if (!gl) {
+      document.documentElement.dataset.vfxNoGl = '1';
+      return;
+    }
+    const sh = (type: number, src: string) => {
+      const s = gl.createShader(type)!;
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+      return s;
+    };
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const U = (n: string) => gl.getUniformLocation(prog, n);
+    const u = {
+      res: U('uRes'), time: U('uTime'), a: U('uSceneA'), b: U('uSceneB'), mix: U('uMix'),
+      ta: U('uTintA'), tb: U('uTintB'), vel: U('uVel'), scroll: U('uScroll'),
+    };
+
+    let tier: Tier = getTier();
+    let scale = 1;
+    const resize = () => {
+      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      scale = tier === 'full' ? dpr : 0.5;
+      canvas.width = Math.round(innerWidth * scale);
+      canvas.height = Math.round(innerHeight * scale);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    };
+    resize();
+    addEventListener('resize', resize);
+    onTier((t) => { tier = t; resize(); });
+
+    // Section map
+    type Sec = { el: HTMLElement; scene: number; tint: [number, number, number] };
+    let secs: Sec[] = [];
+    const collect = () => {
+      secs = [...document.querySelectorAll<HTMLElement>('[data-vfx-bg]')].map((m) => ({
+        el: (m.closest('[data-act]') as HTMLElement) ?? m.parentElement!,
+        scene: SCENES[m.dataset.scene || 'phosphor'] ?? 0,
+        tint: hexToRgb(m.dataset.tint || '#00ff99').map((v) => v / 255) as [number, number, number],
+      }));
+    };
+    collect();
+    ScrollTrigger.addEventListener('refresh', collect);
+
+    // A continuous, damped "section position": 2.4 = 40% of the way from
+    // section 2 into section 3. Damping the position (not the colors) keeps
+    // every blend continuous, even on fast flings.
+    let pos = 0;
+    let vel = 0;
+    onVelocity((v) => { vel = v; });
+    let sVel = 0;
+    const cur = { a: 0, b: 0, mix: 0, ta: [0, 1, 0.6], tb: [0, 1, 0.6] };
+
+    // Blend window: the last BLEND viewports before a boundary reaches mid-screen.
+    const BLEND = 0.9;
+    const targetPos = () => {
+      const H = innerHeight;
+      const mid = H * 0.5;
+      let idx = 0;
+      for (let i = 0; i < secs.length; i++) {
+        if (secs[i].el.getBoundingClientRect().top <= mid) idx = i;
+      }
+      if (idx >= secs.length - 1) return idx;
+      const next = secs[idx + 1].el.getBoundingClientRect().top;
+      const t = clamp01(1 - (next - mid) / (H * BLEND));
+      return idx + smooth(smooth(t));
+    };
+
+    let last = 0;
+    let t0 = performance.now();
+    let first = true;
+    canvas.classList.add('is-live');
+    const frame = (now: number) => {
+      requestAnimationFrame(frame);
+      if (tier === 'static' || document.hidden) return;
+      const minDt = tier === 'full' ? 0 : 1000 / 30;
+      if (now - last < minDt) return;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (secs.length) {
+        const tp = targetPos();
+        if (first) { pos = tp; first = false; }
+        pos += (tp - pos) * (1 - Math.exp(-dt * 3.5));
+        const ia = Math.max(0, Math.min(secs.length - 1, Math.floor(pos)));
+        const ib = Math.min(ia + 1, secs.length - 1);
+        cur.a = secs[ia].scene;
+        cur.b = secs[ib].scene;
+        cur.mix = ia === ib ? 0 : pos - ia;
+        cur.ta = secs[ia].tint;
+        cur.tb = secs[ib].tint;
+        const live = cur.ta.map((v, i) => Math.round((v + (cur.tb[i] - v) * cur.mix) * 255));
+        document.documentElement.style.setProperty('--vfx-tint-rgb', live.join(' '));
+      }
+      sVel += (vel - sVel) * 0.1;
+      gl.uniform2f(u.res, canvas.width, canvas.height);
+      gl.uniform1f(u.time, (now - t0) / 1000);
+      gl.uniform1f(u.a, cur.a);
+      gl.uniform1f(u.b, cur.b);
+      gl.uniform1f(u.mix, Math.max(0, Math.min(1, cur.mix)));
+      gl.uniform3fv(u.ta, cur.ta);
+      gl.uniform3fv(u.tb, cur.tb);
+      gl.uniform1f(u.vel, Math.max(-60, Math.min(60, sVel)));
+      gl.uniform1f(u.scroll, scrollY / innerHeight);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+    requestAnimationFrame(frame);
+  }
+
+  init();
+</script>

@@ -86,8 +86,8 @@ export const acts: ActDef[] = [
         { value: '226 Hz', label: 'Minimum' },
         { value: '800+ Hz', label: 'Aggressive foveation' },
         { value: '2200+ Hz', label: 'Looking into a corner' }] },
-      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'motion-adaptive-timeline', eyebrow: 'Saccade banking', headline: 'It banks the blink of a glance.', body: [
-        'During a saccade, the 20–80 ms jump between fixations, your vision is briefly suppressed. The headset already sends gaze to the panel, so CRT-VR drops the fovea to minimum refresh mid-jump, banks that beam time, and spends it as a burst of full-resolution refreshes at the landing spot. The place you look is already sharp the instant you arrive.'] },
+      { id: 'mafr', title: 'Motion-Adaptive Foveated Rendering', interactive: 'motion-adaptive-timeline', eyebrow: 'Motion-adaptive', headline: 'When everything moves, go all speed.', body: [
+        'Resolution matters less when everything is moving. During fast motion, like a whip-pan or a quick head turn, Motion-Adaptive Foveated Rendering drops the entire screen, fovea included, to stage-3 foveation. With the coarsest skips everywhere, the whole-screen refresh rockets past 2,400 Hz even at the mildest setting, and beyond 3,000 Hz at the most aggressive. When motion settles, full three-zone foveation and every bit of detail come straight back. It all happens in a split second. As the motion slows and its natural blur fades, your fovea snaps back to full resolution, so you never notice the switch.'] },
       { id: 'traveling-wave-deflection', title: 'Traveling-Wave Deflection', interactive: 'slew-compare', eyebrow: 'Traveling-Wave Deflection', headline: 'Steering at the speed of the beam.', body: [
         'The deflection plates are split into segments whose field travels with the electrons, which allows GHz-class beam steering.'] },
       { id: 'charge-dense-dwell', title: 'Charge-Dense Dwell', eyebrow: 'Charge-Dense Dwell', headline: 'Half a nanosecond per dot.', body: [

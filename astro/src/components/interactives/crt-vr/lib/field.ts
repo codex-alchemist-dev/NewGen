@@ -69,8 +69,8 @@ export function drawField(ctx: CanvasRenderingContext2D, o: FieldOpts): number {
       lit++;
       if (spr) {
         // softer, larger spots further out: low-res reads as soft, not pixelated
-        const sz = (z === 'fovea' ? 13 : z === 'mid' ? 13 : 22) * s;
-        ctx.globalAlpha = Math.min(1, (z === 'fovea' ? 1 : z === 'mid' ? 0.9 : 0.75) * gain);
+        const sz = (z === 'fovea' ? 13 : z === 'mid' ? 13 : 16) * s;
+        ctx.globalAlpha = Math.min(1, (z === 'fovea' ? 1 : z === 'mid' ? 0.9 : 0.5) * gain);
         ctx.drawImage(spr[z], x - sz / 2, y - sz / 2, sz, sz);
       } else {
         const [R, G, B] = ZONE_RGB[z];

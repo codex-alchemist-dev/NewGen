@@ -221,7 +221,7 @@ export const acts: ActDef[] = [
       { id: 'vacuum-lifetime', title: 'Vacuum lifetime', eyebrow: 'Vacuum', headline: 'A vacuum that stays a vacuum.', body: [
         'Thin-film getters absorb gas for the life of the panel.'] },
       { id: 'durability', title: 'Durability', eyebrow: 'Durability', headline: 'Tough by shape.', body: [
-        "The concave wraparound cap, 6–8 mm with vacuum-side ribs outside the active area, is stronger than flat glass."] },
+        "The concave wraparound cap, 6–8 mm with vacuum-side ribs outside the active area, carries the vacuum load at a fraction of a classic CRT's glass mass."] },
     ],
   },
   {

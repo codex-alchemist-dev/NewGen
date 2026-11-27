@@ -5,6 +5,9 @@ import {
   ActWrapper, ActTitle, Section, Slot, StatCard, Badge, SpecTable, ComparisonTable, CertificationWall, Footnote, Callout,
 } from '../../../components/kit';
 import { acts } from '../../../data/crt-vr';
+import HeroAnimatic from '../../../components/visuals/crt-vr/HeroAnimatic.astro';
+import HookBackground from '../../../components/visuals/crt-vr/HookBackground.astro';
+import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
 import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
 
 const placeholder = '[copy pending]';
@@ -33,7 +36,8 @@ const placeholder = '[copy pending]';
             {s.kind !== 'stats' && s.kind !== 'badges' && s.kind !== 'comparison' && s.kind !== 'specs' && (
               <p>{placeholder}</p>
             )}
-            {s.kind === 'stats' && (
+            {s.kind === 'stats' && s.id === 'the-reveal' && act.number === 1 && <RevealStats tier="full" reducedMotion={false} />}
+            {s.kind === 'stats' && !(s.id === 'the-reveal' && act.number === 1) && (
               <div class="stat-grid">
                 {(s.items ?? []).map((i) => <StatCard label={i.label} />)}
               </div>
@@ -45,7 +49,10 @@ const placeholder = '[copy pending]';
               <ComparisonTable caption="Versus" columns={s.columns ?? []} rows={(s.items ?? []).map((i) => ({ label: i.label, cells: i.cells ?? [] }))} />
             )}
             {s.kind === 'specs' && <SpecTable caption="Full specs" rows={[]} />}
-            {s.visual && <Slot id={s.visual} kind="visual" />}
+            {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
+            {/* Act 1 background (act-01/background). It mounts itself into the act; the VFX thread can move it into ActBackground. */}
+            {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
+            {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
             {s.interactive && <Slot id={s.interactive} kind="interactive" />}
           </Section>
         ))}

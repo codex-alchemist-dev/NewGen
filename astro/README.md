@@ -77,3 +77,15 @@ interface VfxSlotProps {
 - Act and section titles follow the coordinator's blueprint list. Section ids are kebab-case slugs.
 - Slot ids the blueprint did not name (`contribution-map`, `foveated-pipeline`) are provisional.
 - The Act 1 hero has the TRL 2–3 badge and the tagline. The Act 11 badge wall has the footnote "Measured at the faceplate."
+
+## Shipping (planned, not yet approved)
+
+The 2nd® Gen CRT-VR page replaces the live page at `/Sony/CRT-VR/`. Until Dom-tron approves the finished page, the live page stays as it is and the preview stays at `/NewGen/2nd/`.
+
+When approved:
+
+1. Build with the live base: `cd astro && ASTRO_BASE=/NewGen/ npm run build`. This emits `dist/Sony/CRT-VR/index.html` with `/NewGen/assets/…` paths.
+2. Copy that file over `Sony/CRT-VR/index.html` at the repo root. Other pages are untouched.
+3. Keep the preview build (`ASTRO_BASE` unset) for development.
+
+The swap should be a reviewed PR, not an automatic deploy. The Jekyll workflow is not changed by this plan.

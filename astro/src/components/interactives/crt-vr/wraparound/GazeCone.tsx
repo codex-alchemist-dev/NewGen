@@ -29,26 +29,17 @@ const elShift = (i: number, explode: number) => explode * (i - 1);
 const FACE_SHIFT = 3;
 
 const PHOS_Y = 151.7;
-/** Faceplate (phosphor) centre-line in mm: traced field in the middle, wrapping round the sides. */
+const FP_HALF = 86;
+/** Faceplate (phosphor) line in mm: a shallow concave cap. The middle is the traced field
+ *  (±62 mm); beyond it the cap sags gently back toward the eye to its rim. */
+export function faceY(x: number): number {
+  const ax = Math.abs(x);
+  const core = PHOS_Y + 3.2 * Math.min(1, ax / 62) ** 2;
+  return ax <= 62 ? core : core - 0.035 * (ax - 62) ** 2 - 0.05 * (ax - 62);
+}
 function faceplateLine(): Pt[] {
   const out: Pt[] = [];
-  const side = (sgn: number): Pt[] => {
-    const arr: Pt[] = [];
-    for (let i = 0; i <= 10; i++) {
-      const t = i / 10;
-      // from (62, 154) curve back toward the eye, ending beside it at (74, 6)
-      const x = 62 + 12 * Math.sin((t * Math.PI) / 2);
-      const y = 154 - 148 * (1 - Math.cos((t * Math.PI) / 2)) * 0.55 - 148 * t * 0.45;
-      arr.push([sgn * x, y]);
-    }
-    return arr;
-  };
-  out.push(...side(-1).reverse());
-  for (let i = 0; i <= 24; i++) {
-    const x = -62 + (124 * i) / 24;
-    out.push([x, PHOS_Y + 3.2 * (x / 62) ** 2]);
-  }
-  out.push(...side(1));
+  for (let i = 0; i <= 43; i++) { const x = -FP_HALF + (2 * FP_HALF * i) / 43; out.push([x, faceY(x)]); }
   return out;
 }
 export const FACEPLATE = faceplateLine();
@@ -66,13 +57,10 @@ export const RING_X = 46;
 export function ringRay(field: number): Pt[] {
   const a = (field * Math.PI) / 180, sgn = Math.sign(field) || 1;
   const p0: Pt = [0, 10];
-  const t1 = (RING_X - 0) / Math.abs(Math.sin(a));
-  const p1: Pt = [sgn * RING_X, 10 + t1 * Math.cos(a)];
-  // after the ring the ray continues (light runs the other way) to the faceplate wrap
-  const xw = 66 + 6 * ((Math.abs(field) - 55) / 25);
-  const a2 = a * 0.97;
-  const t2 = (xw - RING_X) / Math.abs(Math.sin(a2));
-  const p2: Pt = [sgn * xw, p1[1] + t2 * Math.cos(a2)];
+  const p1: Pt = [sgn * RING_X, 10 + RING_X / Math.tan(Math.abs(a))];
+  // the ring turns the peripheral ray forward onto the faceplate's outer zone (light runs p2 → p0)
+  const xw = 64 + 18 * ((Math.abs(field) - 55) / 25);
+  const p2: Pt = [sgn * xw, faceY(xw)];
   return [p2, p1, p0];
 }
 
@@ -146,11 +134,11 @@ export function GazeConeOptics({ uid, glow, labels = true, highlight, explode = 
       {labels && (
         <g fontSize="11" fill="#9fb4d8">
           {(() => { const [x, y] = tx([0, PHOS_Y + 16 + fpShift]); return <text x={x} y={y} textAnchor="middle">phosphor · vacuum side</text>; })()}
-          {(() => { const [x, y] = tx([-78, 120 + fpShift]); return <text x={x} y={y} textAnchor="end">E1 · faceplate</text>; })()}
+          {(() => { const [x0, y0] = tx([-74, faceY(74) + fpShift]); const [x, y] = tx([-82, 118 + fpShift * 0.5]); return <g><polyline points={`${x0},${y0} ${x + 22},${y - 4}`} fill="none" stroke="#2a3860" /><text x={x + 18} y={y} textAnchor="end">E1 · faceplate</text></g>; })()}
           {ELEMENTS.map((e, i) => {
             const yy = (e.a[0][1] + e.b[0][1]) / 2 + elShift(i, explode);
             const [x0, y0] = tx([-40, yy]);
-            const [x1, y1] = tx([-96, 40 + i * 14 + explode * 1.5 * (i - 1)]);
+            const [x1, y1] = tx([-86, 40 + i * 14 + explode * 1.5 * (i - 1)]);
             return (
               <g key={e.id}>
                 <polyline points={`${x0},${y0} ${x1 + 22},${y1 - 4}`} fill="none" stroke="#2a3860" />

@@ -179,7 +179,8 @@ export const acts: ActDef[] = [
       { id: 'cone-in-cone-out', title: 'Cone in, cone out', interactive: 'flat-vs-cone', eyebrow: 'Cone', headline: 'Born a cone.', body: [
         "A flat panel has to stretch a rectangle around your eye, which is where distortion and the screen-in-a-box feel come from. A CRT's light already leaves as a cone. CRT-VR's optics simply turn that cone around to wrap your eye. The panel the industry tried to leave behind was simply ahead of its time."] },
       { id: 'monocentric-relay', title: 'Gaze-Cone optics', interactive: 'rotate-eye', eyebrow: 'Gaze-Cone', headline: 'Sharp across the cone your eye sweeps.', body: [
-        'A curved-field aspheric eyepiece per eye, uniformly sharp across the ±50° cone the eye can rotate through, with softening only out in peripheral vision to 160° per eye.'] },
+        'A curved-field aspheric eyepiece per eye, uniformly sharp across the ±50° cone the eye can rotate through, with softening only out in peripheral vision to 160° per eye.',
+        'Beyond the cone, a thin Periphery Ring carries the wraparound faceplate out to 160° per eye, where your vision is peripheral anyway.'] },
       { id: 'faceplate-is-first-lens', title: 'The faceplate is the first lens', eyebrow: 'First lens', headline: 'One less lens.', body: [
         'The dome faceplate doubles as the first optical element.'] },
       { id: 'optics-tiers', title: 'Optics tiers: Sony, G, G Master, G Master with ZEISS T*', interactive: 'tier-compare', eyebrow: 'Tiers', headline: 'Glass worthy of the image.', body: [

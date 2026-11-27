@@ -1,0 +1,1 @@
+import{t as e}from"./tier.CHzRbHhM.js";import{i as t,n}from"./wide.BU-4Qw9Z.js";function r(r){t(r),e(e=>{r.classList.toggle(`is-static`,e===`static`),r.classList.toggle(`is-pulsing`,e===`full`),e===`static`&&r.classList.add(`is-on`)}),n(r,()=>r.classList.add(`is-on`),.2)}document.querySelectorAll(`[data-slt]`).forEach(r);

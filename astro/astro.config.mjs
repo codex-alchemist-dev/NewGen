@@ -11,5 +11,7 @@ export default defineConfig({
   trailingSlash: 'always',
   output: 'static',
   outDir: './dist',
+  // Jekyll skips _-prefixed folders, so the shipped build emits assets under assets/.
+  build: { assets: 'assets' },
   integrations: [react()],
 });

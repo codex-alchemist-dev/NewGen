@@ -115,7 +115,7 @@ export const comparisonRows = [
 export const openQuestions = [
  {
   "tier": "P0 Feasibility-Deciding",
-  "body": "Two miniature vacuum tubes + relay optics covering 160° per eye and 200°+ binocular FOV vs. 107–170 g for today's shipping microOLED panel and optics. A first design estimate puts the CRT-VR panel module at about 300 g per eye, but the full-stack mass is still open. This is where \"smaller, thinner\" is proven or dies. Inputs needed: tube envelope wall thickness at wafer-level-sealed scale, relay lens element count/mass, HV supply mass."
+  "body": "Two miniature vacuum tubes + Gaze-Cone optics covering 160° per eye and 200°+ binocular FOV vs. 107–170 g for today's shipping microOLED panel and optics. A first design estimate puts the CRT-VR panel module at about 300 g per eye, but the full-stack mass is still open. This is where \"smaller, thinner\" is proven or dies. Inputs needed: tube envelope wall thickness at wafer-level-sealed scale, relay lens element count/mass, HV supply mass."
  },
  {
   "tier": "P0 Feasibility-Deciding",

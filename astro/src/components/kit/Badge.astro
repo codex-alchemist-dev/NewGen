@@ -1,0 +1,9 @@
+---
+/** kind: trl | chosen | rejected | tier */
+interface Props {
+  kind: 'trl' | 'chosen' | 'rejected' | 'tier';
+  label: string;
+}
+const { kind, label } = Astro.props;
+---
+<span class={`badge badge--${kind}`} data-kind={kind}>{label}</span>

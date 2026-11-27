@@ -1,0 +1,156 @@
+---
+/**
+ * CRT-VR · Act 5 · "True Black" — slot `black-floor-stack`.
+ *
+ * A black-level budget on a log scale. Three contributors lift the floor:
+ * beam leakage, veiling glare and electron halo / backscatter. Each has a fix:
+ * blanking (to about 1 part in 100,000), the Kurocoat barrel, and Kurocoat wells
+ * plus Photon Cups. Switch the fixes on (they play in sequence the first time)
+ * and the total floor collapses toward zero. A patch shows the black you'd see.
+ * Bar lengths are illustrative; only the ~10⁻⁵ blanking figure comes from the spec.
+ *
+ * Tiers: full and reduced (animated sequence), static (all fixes on, no motion).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './cx.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { id = 'crtvr-black-floor' } = Astro.props;
+
+// Illustrative relative levels (fraction of white). Only blanking ≈ 1e-5 is a spec figure.
+const rows = [
+  { key: 'leak', name: 'Beam leakage', fix: 'Blanking', before: 1e-2, after: 1e-5, note: '≈ 1 part in 100,000' },
+  { key: 'glare', name: 'Veiling glare', fix: 'Kurocoat barrel', before: 4e-3, after: 1.5e-6 },
+  { key: 'halo', name: 'Electron halo / backscatter', fix: 'Kurocoat wells + Photon Cups', before: 6e-3, after: 2e-6 },
+];
+---
+<div class="crtvr cx bfs" id={id} data-bfs data-rows={JSON.stringify(rows)} style="--cx-accent: #f0f4ff">
+  <div class="cx-head">
+    <span class="cx-tag">Black-level budget</span>
+    <span class="cx-note">Illustrative · log scale</span>
+  </div>
+  <div class="cx-frame bfs-body">
+    <div class="bfs-patch-wrap">
+      <div class="bfs-patch" data-patch><span class="cx-label" data-patch-label>Lifted</span></div>
+      <span class="cx-label">The black you see</span>
+    </div>
+    <div class="bfs-chart">
+      <div class="bfs-axis" aria-hidden="true">
+        <span>Darker</span><span>Log scale</span><span>Brighter</span>
+      </div>
+      {rows.map((r) => (
+        <div class="bfs-row" data-row={r.key}>
+          <div class="bfs-row-head">
+            <span class="bfs-name">{r.name}</span>
+            <button type="button" class="cx-chip" aria-pressed="false" data-fix={r.key}>{r.fix}</button>
+          </div>
+          <div class="bfs-track"><b data-bar></b>{r.note && <em class="bfs-note" data-note>{r.note}</em>}</div>
+        </div>
+      ))}
+      <div class="bfs-row bfs-total">
+        <div class="bfs-row-head">
+          <span class="bfs-name">Total black floor</span>
+          <span class="bfs-stamp cx-tag" data-stamp>Near-zero floor</span>
+        </div>
+        <div class="bfs-track"><b data-total></b></div>
+      </div>
+    </div>
+  </div>
+  <p class="cx-sr" data-sr>Without fixes, beam leakage, veiling glare and electron halo lift the black level. Blanking, the Kurocoat barrel, and Kurocoat wells with Photon Cups each push their contributor down by orders of magnitude, leaving a near-zero black floor.</p>
+</div>
+
+<style>
+  .bfs-body { display: grid; grid-template-columns: minmax(160px, 240px) 1fr; gap: 28px; padding: 26px; }
+  @media (max-width: 720px) { .bfs-body { grid-template-columns: 1fr; } }
+  .bfs-patch-wrap { display: grid; gap: 10px; align-content: start; }
+  .bfs-patch {
+    aspect-ratio: 1; border-radius: 4px; display: grid; place-items: end start; padding: 12px;
+    background: rgb(var(--g, 40) var(--g, 40) calc(var(--g, 40) * 1.12));
+    box-shadow: inset 0 0 0 1px var(--crtvr-line), 0 0 0 6px #000, 0 0 0 7px var(--crtvr-line);
+    transition: background 1s var(--crtvr-ease-out);
+    position: relative; overflow: hidden;
+  }
+  .bfs-patch::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, rgba(255,255,255,var(--halo, .12)), transparent 60%); transition: opacity 1s; pointer-events: none; }
+  .bfs-patch span { position: relative; z-index: 1; color: var(--crtvr-text); }
+  .bfs-chart { display: grid; gap: 16px; align-content: start; }
+  .bfs-axis { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--crtvr-text-dimmer); border-bottom: 1px dashed var(--crtvr-line); padding-bottom: 6px; }
+  .bfs-row-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .bfs-name { font-size: 13px; letter-spacing: .06em; color: var(--crtvr-text); }
+  .bfs-track { position: relative; height: 14px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--crtvr-line) 0 1px, transparent 1px calc(100% / 6)); }
+  .bfs-track b {
+    position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #3a4a6a, #b9c8ff);
+    transition: width 1.2s var(--crtvr-ease-out), background .6s;
+  }
+  .bfs-row.is-fixed .bfs-track b { background: linear-gradient(90deg, #0d1220, #00e5ff); box-shadow: 0 0 10px rgba(0, 229, 255, .35); }
+  .bfs-note { position: absolute; top: -1px; font-style: normal; font-size: 11px; letter-spacing: .08em; color: #00e5ff; white-space: nowrap; opacity: 0; transition: opacity .5s .6s, left 1.2s var(--crtvr-ease-out); padding-left: 10px; }
+  .bfs-row.is-fixed .bfs-note { opacity: 1; }
+  .bfs-total { padding-top: 14px; border-top: 1px solid var(--crtvr-line); }
+  .bfs-total .bfs-name { font-weight: 500; color: var(--crtvr-white); letter-spacing: .1em; text-transform: uppercase; font-size: 12px; }
+  .bfs-total .bfs-track { height: 20px; }
+  .bfs-total b { background: linear-gradient(90deg, #6a7fa8, #f0f4ff) !important; }
+  .bfs-stamp { opacity: 0; transform: scale(1.2); transition: opacity .5s, transform .5s var(--crtvr-ease-out); color: #00e5ff; border: 1px solid currentColor; padding: 3px 8px; border-radius: 3px; }
+  .bfs.is-floor .bfs-stamp { opacity: 1; transform: none; }
+  :global(html[data-vfx-tier="full"]) .bfs.is-floor .bfs-stamp { text-shadow: 0 0 10px rgba(0, 229, 255, .6); }
+  .bfs.is-static * { transition: none !important; }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+  import { widen, onceVisible } from './lib/wide';
+
+  interface Row { key: string; before: number; after: number }
+  const LOG_MIN = -7, LOG_MAX = -1; // axis: 10^-7 (left, darker) … 10^-1 (right, brighter)
+  const pct = (v: number) => Math.max(0.6, ((Math.log10(v) - LOG_MIN) / (LOG_MAX - LOG_MIN)) * 100);
+
+  function init(root: HTMLElement) {
+    widen(root);
+    const rows: Row[] = JSON.parse(root.dataset.rows!);
+    const fixed: Record<string, boolean> = {};
+    const patch = root.querySelector<HTMLElement>('[data-patch]')!;
+    const patchLabel = root.querySelector<HTMLElement>('[data-patch-label]')!;
+    const total = root.querySelector<HTMLElement>('[data-total]')!;
+    let touched = false;
+    let tier: VfxTier = 'full';
+
+    const render = () => {
+      let sum = 0;
+      rows.forEach((r) => {
+        const el = root.querySelector<HTMLElement>(`[data-row="${r.key}"]`)!;
+        const v = fixed[r.key] ? r.after : r.before;
+        sum += v;
+        const w = pct(v);
+        el.querySelector<HTMLElement>('[data-bar]')!.style.width = `${w}%`;
+        const note = el.querySelector<HTMLElement>('[data-note]');
+        if (note) note.style.left = `${w}%`;
+        el.classList.toggle('is-fixed', !!fixed[r.key]);
+        root.querySelector(`[data-fix="${r.key}"]`)!.setAttribute('aria-pressed', String(!!fixed[r.key]));
+      });
+      total.style.width = `${pct(sum)}%`;
+      // map the floor to a visible grey: 10^-1.7 → lifted grey, 10^-5.5 and below → black
+      const t = Math.min(1, Math.max(0, (Math.log10(sum) + 5.5) / 3.8));
+      patch.style.setProperty('--g', String(Math.round(t * t * 46)));
+      patch.style.setProperty('--halo', String((t * 0.14).toFixed(3)));
+      const all = rows.every((r) => fixed[r.key]);
+      root.classList.toggle('is-floor', all);
+      patchLabel.textContent = all ? 'Off' : t > .55 ? 'Lifted' : 'Dimmer';
+    };
+
+    root.querySelectorAll<HTMLButtonElement>('[data-fix]').forEach((b) =>
+      b.addEventListener('click', () => { touched = true; fixed[b.dataset.fix!] = !fixed[b.dataset.fix!]; render(); }));
+
+    onTier((t) => {
+      tier = t;
+      root.classList.toggle('is-static', t === 'static');
+      if (t === 'static' && !touched) { rows.forEach((r) => (fixed[r.key] = true)); render(); }
+    });
+    render();
+    onceVisible(root, () => {
+      if (tier === 'static' || touched) return;
+      rows.forEach((r, i) => setTimeout(() => { if (!touched) { fixed[r.key] = true; render(); } }, 900 + i * 1400));
+    }, 0.45);
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-bfs]').forEach(init);
+</script>

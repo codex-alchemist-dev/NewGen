@@ -1,0 +1,9 @@
+---
+/* Global VFX layer. Fixed, behind content, pointer-transparent. Slot for global VFX from the Opus VFX thread. */
+---
+<div class="vfx-layer" data-vfx-layer aria-hidden="true">
+  <slot />
+</div>
+<style>
+  .vfx-layer { position: fixed; inset: 0; z-index: -2; pointer-events: none; }
+</style>

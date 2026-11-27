@@ -1,0 +1,37 @@
+---
+import Slot from './Slot.astro';
+import ActTransition from '../vfx/ActTransition.astro';
+import ActBackground from '../vfx/ActBackground.astro';
+import { lookFor } from '../vfx/act-looks';
+import type { TransitionVariant } from '../../data/slots';
+
+interface Props {
+  id: string;
+  number: number;
+  /** Act transition variant: default | eye | warp | six-beam | rays | flare | whip | blueprint | cone | shield | timelapse | seals | race. */
+  transition?: TransitionVariant;
+  /** Act title, beam-drawn by the act transition. Without it the transition slot stays a placeholder. */
+  title?: string;
+}
+const { id, number, transition = 'default', title } = Astro.props;
+const num = String(number).padStart(2, '0');
+const look = lookFor(number);
+/*
+ * Custom per-act backgrounds go in the "background" named slot, e.g.
+ *   <ActWrapper ...><HookBackground slot="background" /> ...</ActWrapper>
+ * They render inside ActBackground's fixed, crossfading layer.
+ */
+const customBg = Astro.slots.has('background');
+---
+<section class="act" id={id} data-act={num} data-transition={transition}>
+  {title
+    ? <ActTransition variant={transition} number={number} title={title} tint={look.tint} />
+    : <Slot id={`act-${num}/transition`} kind="vfx" note={`variant: ${transition}`} />}
+  {customBg
+    ? <ActBackground scene={look.scene} tint={look.tint}><slot name="background" /></ActBackground>
+    : <ActBackground scene={look.scene} tint={look.tint} />}
+  <div class="ng-grid" aria-hidden="true"></div>
+  <div class="act__inner">
+    <slot />
+  </div>
+</section>

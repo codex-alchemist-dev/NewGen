@@ -1,0 +1,290 @@
+---
+/**
+ * CRT-VR · Act 1 · "The comeback" — slot `crt-history-timeline`.
+ *
+ * A scroll-driven horizontal timeline. The section pins while you scroll; an
+ * electron beam sits at the centre of the stage and draws the history line as
+ * the track slides past it. Each era's line-art device draws on when the beam
+ * reaches it. The line runs green through the tube era, goes cold and thin at
+ * the flat-panel takeover, flickers through the holdouts, and reignites in six
+ * primaries at CRT-VR. Stylized line art, no logos.
+ *
+ * Tiers: full (glow + beam flare), reduced (no glow filters), static and
+ * reduced motion (no pinning: a wrapped grid with every device drawn).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './cx.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { id = 'crtvr-history' } = Astro.props;
+
+type Era = 'tube' | 'flat' | 'hold' | 'vr';
+const nodes: { year: string; name: string; line: string; era: Era; icon: string }[] = [
+  { year: '1897', name: 'Braun tube', line: 'The first cathode-ray tube.', era: 'tube', icon: 'braun' },
+  { year: '1930s–40s', name: 'Oscilloscope & radar', line: 'The beam learns to draw.', era: 'tube', icon: 'scope' },
+  { year: '1950s', name: 'Television', line: 'A glow in every home.', era: 'tube', icon: 'tv' },
+  { year: '1961', name: 'Chromatron', line: 'Sony focuses the beam.', era: 'tube', icon: 'chromatron' },
+  { year: '1968', name: 'Trinitron', line: 'One gun, converged beams.', era: 'tube', icon: 'trinitron' },
+  { year: '1979 · 1982', name: 'Vector arcade & Vectrex', line: 'Lines of pure light.', era: 'tube', icon: 'vector' },
+  { year: '1982', name: 'Watchman', line: 'A CRT in your pocket.', era: 'tube', icon: 'watchman' },
+  { year: '2000s', name: 'The flat-panel takeover', line: 'Thin wins. Motion loses.', era: 'flat', icon: 'flat' },
+  { year: '2010s–20s', name: 'The holdouts', line: 'Pros never let go.', era: 'hold', icon: 'hold' },
+  { year: 'Next', name: 'CRT-VR', line: 'Back, and made for VR.', era: 'vr', icon: 'vr' },
+];
+const six = ['#ff2d20', '#00ff99', '#3a6bff', '#ff3cc8', '#00e5ff', '#ffe135'];
+---
+<div class="crtvr cx tl" id={id} data-tl style={`--n:${nodes.length}`}>
+  <div class="tl-scroller" data-scroller>
+    <div class="tl-stage" data-stage>
+      <div class="tl-bigyear cx-display" aria-hidden="true" data-bigyear>{nodes[0].year}</div>
+      <div class="tl-era cx-tag" data-era>The tube era</div>
+      <div class="tl-viewport">
+        <ol class="tl-track" data-track>
+          <li class="tl-rail" aria-hidden="true"><span class="tl-rail-lit" data-lit></span></li>
+          {nodes.map((n, i) => (
+            <li class={`tl-node era-${n.era}`} data-node style={`--i:${i}`}>
+              <svg class="tl-icon" viewBox="0 0 160 120" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                {n.icon === 'braun' && (<g>
+                  <path class="d" pathLength="1" d="M18 54H62C80 54 96 22 128 20Q144 60 128 100C96 98 80 66 62 66H18Z" />
+                  <path class="d" pathLength="1" d="M6 60H18M10 50V70" />
+                  <path class="d beam" pathLength="1" d="M24 60L128 60" stroke-dasharray="4 5" />
+                  <circle class="d dot" pathLength="1" cx="132" cy="60" r="4" />
+                </g>)}
+                {n.icon === 'scope' && (<g>
+                  <circle class="d" pathLength="1" cx="80" cy="58" r="42" />
+                  <circle class="d" pathLength="1" cx="80" cy="58" r="26" opacity=".5" />
+                  <path class="d" pathLength="1" d="M80 58L110 28" />
+                  <path class="d" pathLength="1" d="M44 74q9-24 18 0t18 0t18 0t18 0" />
+                  <circle class="d dot" pathLength="1" cx="100" cy="44" r="2.5" />
+                  <circle class="d dot" pathLength="1" cx="62" cy="40" r="2" />
+                </g>)}
+                {n.icon === 'tv' && (<g>
+                  <rect class="d" pathLength="1" x="28" y="30" width="104" height="70" rx="10" />
+                  <rect class="d" pathLength="1" x="38" y="38" width="68" height="54" rx="16" />
+                  <circle class="d" pathLength="1" cx="119" cy="48" r="5" /><circle class="d" pathLength="1" cx="119" cy="66" r="5" />
+                  <path class="d" pathLength="1" d="M72 30L54 6M88 30L106 6M44 100L38 116M116 100L122 116" />
+                  <path class="d glow" pathLength="1" d="M50 56h44M50 64h44M50 72h44" opacity=".55" />
+                </g>)}
+                {n.icon === 'chromatron' && (<g>
+                  <rect class="d" pathLength="1" x="30" y="18" width="100" height="70" rx="8" />
+                  <path class="d" pathLength="1" d="M42 24V82M52 24V82M62 24V82M72 24V82M82 24V82M92 24V82M102 24V82M112 24V82M122 24V82" stroke-width="1" opacity=".7" />
+                  <path class="d" pathLength="1" d="M70 116L74 98H86L90 116Z" />
+                  <path class="d beam" pathLength="1" d="M80 98L80 84M80 98L66 84M80 98L94 84" stroke-dasharray="3 4" />
+                </g>)}
+                {n.icon === 'trinitron' && (<g>
+                  <path class="d" pathLength="1" d="M28 22Q80 14 132 22V88Q80 96 28 88Z" />
+                  <path class="d" pathLength="1" d="M40 20V90M50 19V91M60 18V92M70 18V92M80 18V92M90 18V92M100 18V92M110 19V91M120 20V90" stroke-width="1" opacity=".6" />
+                  <path class="d" pathLength="1" d="M66 98H94L88 116H72Z" />
+                  <path class="d beam" pathLength="1" d="M74 98L62 60" stroke="#ff2d20" />
+                  <path class="d beam" pathLength="1" d="M80 98L80 60" stroke="#00ff99" />
+                  <path class="d beam" pathLength="1" d="M86 98L98 60" stroke="#3a6bff" />
+                </g>)}
+                {n.icon === 'vector' && (<g>
+                  <path class="d" pathLength="1" d="M48 6H112L118 28V114H42V28Z" />
+                  <rect class="d" pathLength="1" x="54" y="30" width="52" height="46" rx="3" />
+                  <path class="d glow" pathLength="1" d="M80 44l-7 16l7-4l7 4Z" />
+                  <path class="d glow" pathLength="1" d="M60 38l6-3l5 3l-1 6l-6 2l-5-3Z" />
+                  <path class="d glow" pathLength="1" d="M94 62l5-2l4 3l-2 5l-5 0Z" />
+                  <path class="d" pathLength="1" d="M42 84H118M62 96h4M90 96h12" />
+                </g>)}
+                {n.icon === 'watchman' && (<g>
+                  <rect class="d" pathLength="1" x="44" y="14" width="72" height="96" rx="10" />
+                  <rect class="d" pathLength="1" x="54" y="24" width="40" height="30" rx="4" />
+                  <path class="d" pathLength="1" d="M94 39H110" />
+                  <path class="d beam" pathLength="1" d="M108 39L64 30M108 39L70 48" stroke-dasharray="3 4" />
+                  <circle class="d" pathLength="1" cx="80" cy="84" r="14" />
+                  <path class="d" pathLength="1" d="M58 70h4M58 78h4M58 86h4M58 94h4" />
+                </g>)}
+                {n.icon === 'flat' && (<g>
+                  <rect class="d" pathLength="1" x="18" y="16" width="124" height="72" rx="2" />
+                  <path class="d" pathLength="1" d="M18 34H142M18 52H142M18 70H142M42 16V88M66 16V88M90 16V88M114 16V88" stroke-width=".8" opacity=".5" />
+                  <path class="d" pathLength="1" d="M80 88V104M58 106H102" />
+                </g>)}
+                {n.icon === 'hold' && (<g>
+                  <rect class="d" pathLength="1" x="26" y="20" width="88" height="72" rx="8" />
+                  <path class="d" pathLength="1" d="M114 30L136 42V78L114 90" />
+                  <rect class="d" pathLength="1" x="34" y="28" width="72" height="56" rx="12" />
+                  <circle class="d glow" pathLength="1" cx="70" cy="56" r="12" />
+                  <path class="d glow" pathLength="1" d="M70 38V50M70 62V74M52 56H64M76 56H88" />
+                  <path class="d" pathLength="1" d="M52 92L46 106H98L92 92" />
+                </g>)}
+                {n.icon === 'vr' && (<g>
+                  <path class="d" pathLength="1" d="M24 48Q24 30 50 30H110Q136 30 136 48V74Q136 90 118 90H100Q90 78 80 78Q70 78 60 90H42Q24 90 24 74Z" />
+                  <path class="d" pathLength="1" d="M136 54H150Q156 54 156 60Q156 66 150 66H136M24 54H10Q4 54 4 60Q4 66 10 66H24" />
+                  {six.map((c, k) => (
+                    <path class="d beam vr-beam" pathLength="1" d={`M150 60L${96 - k * 3} ${44 + k * 6}`} stroke={c} />
+                  ))}
+                  {six.map((c, k) => (
+                    <path class="d beam vr-beam" pathLength="1" d={`M10 60L${64 + k * 3} ${44 + k * 6}`} stroke={c} />
+                  ))}
+                </g>)}
+              </svg>
+              <p class="tl-year cx-display">{n.year}</p>
+              <h4 class="tl-name">{n.name}</h4>
+              <p class="tl-line">{n.line}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div class="tl-beam" aria-hidden="true" data-beam><span></span></div>
+      <div class="tl-progress" aria-hidden="true"><span data-prog></span></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tl { --nw: min(320px, 72vw); --rail-y: 190px; }
+  .tl-scroller { position: relative; height: calc(var(--n) * 55vh + 100vh); }
+  .tl-stage {
+    position: sticky; top: 0; height: 100vh; overflow: hidden;
+    display: grid; align-content: center;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .tl-bigyear {
+    position: absolute; inset: auto 0 6vh 0; text-align: center; pointer-events: none;
+    font-size: clamp(120px, 24vw, 360px); color: var(--crtvr-phosphor); opacity: .06; white-space: nowrap;
+    transition: color .8s;
+  }
+  .tl-era { position: absolute; top: 14vh; left: 0; right: 0; text-align: center; transition: color .6s; }
+  .tl-viewport { position: relative; height: 420px; }
+  .tl-track {
+    list-style: none; position: absolute; left: 0; top: 0; height: 100%;
+    display: flex; width: calc(var(--n) * var(--nw)); will-change: transform;
+  }
+  .tl-rail { position: absolute; left: calc(var(--nw) / 2); right: calc(var(--nw) / 2); top: var(--rail-y); height: 2px; background: var(--crtvr-line); }
+  .tl-rail-lit {
+    position: absolute; inset: 0 auto 0 0; width: 0; height: 2px;
+    background: linear-gradient(90deg,
+      var(--crtvr-phosphor) 0%, var(--crtvr-phosphor) 74%,
+      var(--crtvr-panel-cold) 78%, color-mix(in srgb, var(--crtvr-panel-cold) 40%, transparent) 84%,
+      var(--crtvr-phosphor) 89%,
+      #ff2d20 92%, #ffe135 94%, #00ff99 96%, #00e5ff 98%, #3a6bff 99%, #ff3cc8 100%);
+    background-size: var(--rail-full, 2880px) 100%;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--crtvr-phosphor) 60%, transparent);
+  }
+  .tl-node {
+    position: relative; flex: 0 0 var(--nw); padding: 0 18px; text-align: center;
+    color: var(--crtvr-phosphor); opacity: .28; transform: scale(.9);
+    transition: opacity .6s var(--crtvr-ease-out), transform .6s var(--crtvr-ease-out);
+  }
+  .tl-node.is-focus { opacity: 1; transform: scale(1); }
+  .tl-node.era-flat { color: var(--crtvr-panel-cold); }
+  .tl-node.era-vr { color: var(--crtvr-white); }
+  .tl-icon { width: 170px; height: 128px; margin: 40px auto 18px; overflow: visible; }
+  .tl-icon .d { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.3s var(--crtvr-ease-out); }
+  .tl-icon .d.beam[stroke-dasharray] { stroke-dasharray: 1; }
+  .tl-node.is-on .tl-icon .d { stroke-dashoffset: 0; }
+  .tl-node.is-on .tl-icon .d.beam { transition-delay: .5s; }
+  .tl-node.is-on .tl-icon .d.dot { fill: currentColor; transition-delay: .9s; }
+  :global(html[data-vfx-tier="full"]) .tl-node.is-focus .tl-icon { filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 18px color-mix(in srgb, currentColor 40%, transparent)); }
+  :global(html[data-vfx-tier="full"]) .tl-node.era-flat.is-focus .tl-icon { filter: none; }
+  .tl-node::after {
+    content: ''; position: absolute; left: 50%; top: calc(var(--rail-y) - 5px); width: 12px; height: 12px; margin-left: -6px;
+    border-radius: 50%; border: 2px solid currentColor; background: var(--crtvr-bg); transition: background .4s, box-shadow .4s;
+  }
+  .tl-node.is-on::after { background: currentColor; box-shadow: 0 0 14px currentColor; }
+  .tl-year { font-size: 44px; margin-top: 46px; color: currentColor; }
+  .tl-name { font-family: var(--crtvr-font-mono); font-weight: 500; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--crtvr-text); margin-top: 6px; }
+  .tl-line { font-family: var(--crtvr-font-serif); font-style: italic; font-weight: 300; font-size: 20px; line-height: 1.25; color: var(--crtvr-text); margin-top: 8px; opacity: 0; transform: translateY(8px); transition: opacity .6s .3s, transform .6s .3s var(--crtvr-ease-out); }
+  .tl-node.is-on .tl-line { opacity: 1; transform: none; }
+  .tl-node.era-hold.is-focus .tl-icon .glow { animation: tl-flicker 2.4s steps(1) infinite; }
+  @keyframes tl-flicker { 0%, 100% { opacity: 1 } 42% { opacity: .35 } 44% { opacity: 1 } 71% { opacity: .5 } 72% { opacity: 1 } }
+  .tl-node.era-vr .vr-beam { stroke-width: 1.4; }
+
+  .tl-beam { position: absolute; left: 50%; top: calc(50% - 210px + var(--rail-y)); width: 0; height: 0; pointer-events: none; }
+  .tl-beam span {
+    position: absolute; left: -9px; top: -8px; width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 22%, var(--beam, var(--crtvr-phosphor)) 40%, transparent 70%);
+    box-shadow: 0 0 24px 6px color-mix(in srgb, var(--beam, var(--crtvr-phosphor)) 70%, transparent), 0 0 80px 18px color-mix(in srgb, var(--beam, var(--crtvr-phosphor)) 25%, transparent);
+  }
+  .tl-progress { position: absolute; left: 30%; right: 30%; bottom: 14vh; height: 1px; background: var(--crtvr-line); }
+  .tl-progress span { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--crtvr-phosphor); }
+
+  /* Static / reduced motion: no pinning, a wrapped grid with every device drawn. */
+  .tl.is-static .tl-scroller { height: auto; }
+  .tl.is-static .tl-stage { position: relative; height: auto; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .tl.is-static .tl-bigyear, .tl.is-static .tl-era, .tl.is-static .tl-beam, .tl.is-static .tl-progress, .tl.is-static .tl-rail { display: none; }
+  .tl.is-static .tl-viewport { height: auto; }
+  .tl.is-static .tl-track { position: relative; width: auto; flex-wrap: wrap; justify-content: center; transform: none !important; gap: 24px 0; }
+  .tl.is-static .tl-node { opacity: 1; transform: none; }
+  .tl.is-static .tl-node::after { display: none; }
+  .tl.is-static .tl-icon { margin-top: 0; }
+  .tl.is-static .tl-year { margin-top: 0; }
+  .tl.is-static .tl-icon .d { stroke-dashoffset: 0; transition: none; }
+  .tl.is-static .tl-line { opacity: 1; transform: none; transition: none; }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+  import { scrubLoop, stickyProgress, clamp } from '../../visuals/crt-vr/lib/scrub';
+  import { widen } from './lib/wide';
+
+  function init(root: HTMLElement) {
+    widen(root);
+    const scroller = root.querySelector<HTMLElement>('[data-scroller]')!;
+    const stage = root.querySelector<HTMLElement>('[data-stage]')!;
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const lit = root.querySelector<HTMLElement>('[data-lit]')!;
+    const big = root.querySelector<HTMLElement>('[data-bigyear]')!;
+    const era = root.querySelector<HTMLElement>('[data-era]')!;
+    const beam = root.querySelector<HTMLElement>('[data-beam]')!;
+    const prog = root.querySelector<HTMLElement>('[data-prog]')!;
+    const nodes = Array.from(root.querySelectorAll<HTMLElement>('[data-node]'));
+    const N = nodes.length;
+    const ERA: Record<string, [string, string]> = {
+      tube: ['The tube era', 'var(--crtvr-phosphor)'],
+      flat: ['The flat-panel era', 'var(--crtvr-panel-cold)'],
+      hold: ['The holdouts', 'var(--crtvr-phosphor)'],
+      vr: ['The return', '#f0f4ff'],
+    };
+    let stop: (() => void) | null = null;
+    let lastFocus = -1;
+
+    const render = (p: number) => {
+      const nw = nodes[0].offsetWidth;
+      const vw = stage.clientWidth;
+      const pos = p * (N - 1); // continuous node index under the beam
+      track.style.transform = `translate3d(${vw / 2 - (pos + 0.5) * nw}px,0,0)`;
+      const railFull = (N - 1) * nw;
+      lit.style.width = `${pos * nw}px`;
+      lit.style.setProperty('--rail-full', `${railFull}px`);
+      root.style.setProperty('--rail-full', `${railFull}px`);
+      prog.style.width = `${p * 100}%`;
+      const f = Math.round(pos);
+      nodes.forEach((n, i) => {
+        n.classList.toggle('is-on', pos >= i - 0.5);
+        n.classList.toggle('is-focus', i === f);
+      });
+      if (f !== lastFocus) {
+        lastFocus = f;
+        const n = nodes[f];
+        big.textContent = n.querySelector('.tl-year')!.textContent;
+        big.style.fontSize = (big.textContent || '').length > 6 ? 'clamp(90px, 14vw, 220px)' : '';
+        const key = (n.className.match(/era-(\w+)/) || [])[1] || 'tube';
+        const [label, col] = ERA[key];
+        era.textContent = label; era.style.color = col; big.style.color = col;
+        beam.style.setProperty('--beam', key === 'flat' ? 'var(--crtvr-panel-cold)' : key === 'vr' ? '#ffffff' : 'var(--crtvr-phosphor)');
+        beam.style.opacity = key === 'flat' ? '.35' : '1';
+      }
+    };
+
+    const measure = (el: HTMLElement) => clamp(stickyProgress(el) * 1.04 - 0.02);
+
+    onTier((t: VfxTier) => {
+      const isStatic = t === 'static';
+      root.classList.toggle('is-static', isStatic);
+      if (isStatic) {
+        stop?.(); stop = null;
+        nodes.forEach((n) => n.classList.add('is-on'));
+        track.style.transform = '';
+      } else if (!stop) {
+        stop = scrubLoop(scroller, measure, render, { smoothing: t === 'full' ? 0.14 : 0.3 });
+      }
+    });
+    window.addEventListener('resize', () => { if (stop) render(measure(scroller)); });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-tl]').forEach(init);
+</script>

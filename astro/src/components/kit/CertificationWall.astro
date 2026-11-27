@@ -1,0 +1,13 @@
+---
+interface Item { name: string; detail?: string }
+interface Props { items: Item[]; footnote?: string }
+const { items, footnote } = Astro.props;
+---
+<div class="cert-wall">
+  <ul>
+    {items.map((i) => (
+      <li class="cert-badge"><strong>{i.name}</strong>{i.detail && <span>{i.detail}</span>}</li>
+    ))}
+  </ul>
+  {footnote && <p class="footnote">{footnote}</p>}
+</div>

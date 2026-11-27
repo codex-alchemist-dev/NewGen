@@ -1,0 +1,195 @@
+---
+/**
+ * BeamText: real HTML text drawn on by an electron beam.
+ *
+ * Each glyph is painted by a bright beam spot that sweeps in reading order.
+ * A glyph is wiped in left→right as the beam crosses it, flashes white-hot,
+ * then cools to its phosphor color with a persistence glow.
+ *
+ * trigger:
+ *   "scroll"   scrubbed to scroll as the element crosses the viewport (default)
+ *   "enter"    plays once in time when it first enters the viewport
+ *   "external" driven by code: el.progress = 0…1 (used by ActTransition,
+ *              and by anything that needs text synced to an animation)
+ *
+ * Stays a real, selectable, accessible text node (aria-label on the host).
+ */
+interface Props {
+  text: string;
+  as?: 'h1' | 'h2' | 'h3' | 'p' | 'span' | 'div';
+  trigger?: 'scroll' | 'enter' | 'external';
+  /** phosphor color once cooled. Default: the live section tint. */
+  color?: string;
+  /** seconds, for trigger="enter" */
+  duration?: number;
+  class?: string;
+  style?: string;
+}
+const { text, as: Tag = 'span', trigger = 'scroll', color, duration = 1.6, class: cls = '', style = '' } = Astro.props;
+const words = text.split(/(\s+)/);
+---
+<beam-text
+  data-trigger={trigger}
+  data-duration={duration}
+  style={color ? `--beam-color:${color};${style}` : style}
+  class:list={['beam-text', cls]}
+>
+  <Tag class="beam-text__line" aria-label={text}>
+    {words.map((w) =>
+      /^\s+$/.test(w) ? (
+        <span class="beam-text__space" aria-hidden="true"> </span>
+      ) : (
+        <span class="beam-text__word" aria-hidden="true">
+          {[...w].map((ch) => <span class="beam-text__ch" data-ch={ch}>{ch}</span>)}
+        </span>
+      )
+    )}
+  </Tag>
+  <span class="beam-text__spot" aria-hidden="true"></span>
+</beam-text>
+
+<style>
+  beam-text {
+    --beam-color: rgb(var(--vfx-tint-rgb));
+    position: relative;
+    display: block;
+  }
+  .beam-text__line { margin: 0; font: inherit; letter-spacing: inherit; color: inherit; }
+  .beam-text__word { display: inline-block; white-space: nowrap; }
+  .beam-text__space { display: inline; }
+  .beam-text__ch {
+    position: relative;
+    display: inline-block;
+    color: var(--beam-color);
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    will-change: clip-path, opacity, color, text-shadow;
+  }
+  .beam-text__spot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+      0 0 6px 2px #fff,
+      0 0 18px 6px var(--beam-color),
+      0 0 48px 16px color-mix(in srgb, var(--beam-color) 45%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  :global(html[data-vfx-tier='static']) .beam-text__ch,
+  :global(html:not([data-vfx-tier])) .beam-text__ch {
+    opacity: 1 !important;
+    clip-path: none !important;
+    color: var(--beam-color) !important;
+    text-shadow: 0 0 18px color-mix(in srgb, var(--beam-color) 35%, transparent) !important;
+  }
+  :global(html[data-vfx-tier='static']) .beam-text__spot { display: none; }
+</style>
+
+<script>
+  import { ready, clamp01 } from './motion';
+  import { getTier } from './quality';
+
+  const TRAIL = 5; // glyphs of white-hot heat behind the beam
+
+  class BeamTextEl extends HTMLElement {
+    chars: HTMLElement[] = [];
+    spot!: HTMLElement;
+    rects: { x: number; y: number; w: number; h: number }[] = [];
+    private _p = -1;
+    private measured = false;
+
+    connectedCallback() {
+      this.chars = [...this.querySelectorAll<HTMLElement>('.beam-text__ch')];
+      this.spot = this.querySelector<HTMLElement>('.beam-text__spot')!;
+      const { gsap, ScrollTrigger } = ready();
+      const mode = this.dataset.trigger;
+      addEventListener('resize', () => (this.measured = false));
+      ScrollTrigger.addEventListener('refresh', () => (this.measured = false));
+      this.progress = 0;
+      if (mode === 'scroll') {
+        ScrollTrigger.create({
+          trigger: this,
+          start: 'top 88%',
+          end: 'top 42%',
+          scrub: 0.8,
+          onUpdate: (st) => (this.progress = st.progress),
+        });
+      } else if (mode === 'enter') {
+        const dur = parseFloat(this.dataset.duration || '1.6');
+        const state = { p: 0 };
+        ScrollTrigger.create({
+          trigger: this,
+          start: 'top 85%',
+          once: true,
+          onEnter: () =>
+            gsap.to(state, { p: 1, duration: dur, ease: 'none', onUpdate: () => (this.progress = state.p) }),
+        });
+      }
+    }
+
+    private measure() {
+      const host = this.getBoundingClientRect();
+      this.rects = this.chars.map((c) => {
+        const r = c.getBoundingClientRect();
+        return { x: r.left - host.left, y: r.top - host.top, w: r.width, h: r.height };
+      });
+      this.measured = true;
+    }
+
+    get progress() {
+      return this._p;
+    }
+
+    /** 0 = blank, 1 = fully drawn and cooled. */
+    set progress(p: number) {
+      p = clamp01(p);
+      if (p === this._p) return;
+      this._p = p;
+      if (getTier() === 'static') return;
+      if (!this.measured) this.measure();
+      const n = this.chars.length;
+      // the beam travels n glyphs, then the tail cools for TRAIL more
+      const head = p * (n + TRAIL);
+      for (let i = 0; i < n; i++) {
+        const c = this.chars[i];
+        const local = head - i; // how long since the beam reached glyph i (in glyphs)
+        if (local <= 0) {
+          c.style.opacity = '0';
+          c.style.clipPath = 'inset(0 100% 0 0)';
+          continue;
+        }
+        const wipe = clamp01(local);
+        const heat = Math.exp(-(local - wipe) * 0.75) * (local < TRAIL + 1 ? 1 : 0);
+        c.style.opacity = '1';
+        c.style.clipPath = wipe >= 1 ? 'none' : `inset(-20% ${((1 - wipe) * 100).toFixed(1)}% -20% -20%)`;
+        if (heat > 0.02) {
+          const w = Math.round(heat * 100);
+          c.style.color = `color-mix(in srgb, #ffffff ${w}%, var(--beam-color))`;
+          c.style.textShadow = `0 0 ${4 + heat * 10}px rgba(255,255,255,${(heat * 0.9).toFixed(2)}), 0 0 ${14 + heat * 30}px var(--beam-color)`;
+        } else {
+          c.style.color = '';
+          c.style.textShadow = '0 0 18px color-mix(in srgb, var(--beam-color) 35%, transparent)';
+        }
+      }
+      // beam spot
+      const gi = Math.min(n - 1, Math.floor(head));
+      const r = this.rects[Math.max(0, gi)];
+      if (r && head > 0 && head < n) {
+        const f = head - gi;
+        this.spot.style.opacity = '1';
+        this.spot.style.transform = `translate(${(r.x + r.w * f).toFixed(1)}px, ${(r.y + r.h * (0.15 + 0.7 * ((i) => (i % 2 ? 1 - f : f))(gi))).toFixed(1)}px)`;
+      } else {
+        this.spot.style.opacity = '0';
+      }
+    }
+  }
+
+  if (!customElements.get('beam-text')) customElements.define('beam-text', BeamTextEl);
+</script>

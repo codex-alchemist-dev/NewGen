@@ -1,0 +1,168 @@
+---
+/**
+ * CRT-VR · Act 12 · "CRT-VR vs. everything." — slot `comparison-table`.
+ *
+ * The comparison data from src/data/crt-vr-proof.ts (generated from the live
+ * page, numbers untouched), as a filterable table:
+ *   - topic filter (All, Image, Motion, Practical),
+ *   - pick which technologies to compare against CRT-VR,
+ *   - hover or focus a cell for a row-and-column crosshair.
+ * The CRT-VR column stays pinned and lit.
+ *
+ * Tiers: full and reduced (row reveal + filter fades), static (no motion).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './cx.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+import { comparisonHeads, comparisonRows } from '../../../data/crt-vr-proof';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { id = 'crtvr-compare' } = Astro.props;
+
+const TOPIC: Record<string, string> = {
+  'Peak Brightness': 'image', 'Blacks / Contrast': 'image', 'Color Gamut': 'image', 'Resolution': 'image',
+  'Refresh': 'motion', 'Motion Blur': 'motion', 'Foveated Rendering': 'motion',
+  'Burn-In': 'practical', 'Weight / Packaging': 'practical', 'Power': 'practical', 'Maturity / Cost': 'practical',
+};
+const topics = [['all', 'All'], ['image', 'Image'], ['motion', 'Motion'], ['practical', 'Practical']];
+const rivals = comparisonHeads.slice(1);
+---
+<div class="crtvr cx cmp" id={id} data-cmp>
+  <div class="cmp-bar">
+    <div class="cmp-group" role="group" aria-label="Topic">
+      <span class="cx-label">Topic</span>
+      {topics.map(([k, l], i) => <button type="button" class="cx-chip" data-topic={k} aria-pressed={i === 0 ? 'true' : 'false'}>{l}</button>)}
+    </div>
+    <div class="cmp-group" role="group" aria-label="Compare with">
+      <span class="cx-label">Compare with</span>
+      {rivals.map((r, i) => <button type="button" class="cx-chip cmp-rival" data-col={i + 1} aria-pressed="true">{r}</button>)}
+    </div>
+  </div>
+
+  <div class="cx-frame cmp-frame" role="region" aria-label="CRT-VR vs. everything" tabindex="0">
+    <table class="cmp-table">
+      <caption class="cx-sr">CRT-VR compared with microOLED, TV-class OLED, true RGB LED and MiniLED LCD</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="cmp-corner"><span class="cx-label">Spec</span></th>
+          {comparisonHeads.map((h, c) => (
+            <th scope="col" data-c={c} class:list={[{ 'cmp-us': c === 0 }]}>
+              {c === 0 ? (<><span class="cmp-us-name">CRT-VR</span><span class="cmp-us-sub">Theoretical</span></>) : h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {comparisonRows.map((r, i) => (
+          <tr data-topic={TOPIC[r.label] ?? 'practical'} style={`--i:${i}`}>
+            <th scope="row">{r.label}</th>
+            {r.cells.map((cell, c) => <td data-c={c} class:list={[{ 'cmp-us': c === 0 }]} tabindex="-1">{cell}</td>)}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+  <p class="cx-note cmp-foot">CRT-VR figures are theoretical design targets (TRL 2–3).</p>
+</div>
+
+<style>
+  .cmp-bar { display: flex; flex-wrap: wrap; gap: 12px 28px; margin-bottom: 16px; }
+  .cmp-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .cmp-group .cx-label { margin-right: 4px; }
+  .cmp-rival[aria-pressed="true"] { --cx-accent: var(--crtvr-panel-cold); }
+  .cmp-frame { overflow-x: auto; scrollbar-color: var(--crtvr-line-bright) transparent; }
+  .cmp-table { width: 100%; min-width: 820px; border-collapse: separate; border-spacing: 0; font-size: 12.5px; line-height: 1.5; }
+  .cmp-table th, .cmp-table td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--crtvr-line); transition: background .25s, color .25s, opacity .25s; }
+  .cmp-table thead th { position: sticky; top: 0; z-index: 2; background: #070a13; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500; color: var(--crtvr-text-dim); vertical-align: bottom; }
+  .cmp-table tbody th { position: sticky; left: 0; z-index: 1; background: #070a13; font-weight: 500; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--crtvr-text); white-space: nowrap; }
+  .cmp-corner { left: 0; z-index: 3 !important; }
+  .cmp-table td { color: var(--crtvr-text-dim); max-width: 26ch; }
+  /* CRT-VR column, lit */
+  .cmp-table .cmp-us { background: color-mix(in srgb, var(--crtvr-phosphor) 6%, #050810); color: var(--crtvr-white); box-shadow: inset 1px 0 0 color-mix(in srgb, var(--crtvr-phosphor) 45%, transparent), inset -1px 0 0 color-mix(in srgb, var(--crtvr-phosphor) 45%, transparent); min-width: 30ch; }
+  .cmp-table thead .cmp-us { box-shadow: inset 1px 0 0 color-mix(in srgb, var(--crtvr-phosphor) 45%, transparent), inset -1px 0 0 color-mix(in srgb, var(--crtvr-phosphor) 45%, transparent), inset 0 3px 0 var(--crtvr-phosphor); }
+  .cmp-us-name { display: block; font-family: var(--crtvr-font-display); font-size: 30px; letter-spacing: .03em; color: var(--crtvr-white); text-transform: none; line-height: 1; }
+  :global(html[data-vfx-tier="full"]) .cmp .cmp-us-name { text-shadow: 0 0 14px rgba(0, 255, 153, .55); }
+  .cmp-us-sub { color: var(--crtvr-phosphor); font-size: 10px; }
+
+  /* crosshair */
+  .cmp-table tr.is-row > * { background: color-mix(in srgb, var(--crtvr-white) 4%, transparent); }
+  .cmp-table tr.is-row > th { background: #0c1222; color: var(--crtvr-white); }
+  .cmp-table [data-c].is-col { background: color-mix(in srgb, var(--crtvr-white) 4%, transparent); color: var(--crtvr-text); }
+  .cmp-table .cmp-us.is-col, .cmp-table tr.is-row > .cmp-us { background: color-mix(in srgb, var(--crtvr-phosphor) 11%, #050810); }
+  .cmp-table td.is-cell { color: var(--crtvr-white); outline: 1px solid color-mix(in srgb, var(--crtvr-white) 40%, transparent); outline-offset: -1px; }
+
+  /* filters */
+  .cmp-table .is-hidden { display: none; }
+  .cmp-table tbody tr { opacity: 0; transform: translateY(8px); transition: opacity .5s calc(var(--i) * 45ms) var(--crtvr-ease-out), transform .5s calc(var(--i) * 45ms) var(--crtvr-ease-out); }
+  .cmp.is-on .cmp-table tbody tr { opacity: 1; transform: none; }
+  .cmp.is-static .cmp-table tbody tr { opacity: 1; transform: none; transition: none; }
+  .cmp-foot { margin-top: 12px; text-transform: none; letter-spacing: .04em; }
+</style>
+
+<script>
+  import { onTier } from '../../visuals/crt-vr/lib/tier';
+  import { widen, onceVisible } from './lib/wide';
+
+  function init(root: HTMLElement) {
+    widen(root);
+    const table = root.querySelector<HTMLTableElement>('table')!;
+    const rows = Array.from(table.tBodies[0].rows);
+    const topicBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-topic]')).filter((b) => b.tagName === 'BUTTON');
+    const colBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-col]'));
+    let topic = 'all';
+    const hiddenCols = new Set<number>();
+
+    const apply = () => {
+      rows.forEach((r) => r.classList.toggle('is-hidden', topic !== 'all' && r.dataset.topic !== topic));
+      table.querySelectorAll<HTMLElement>('[data-c]').forEach((el) => el.classList.toggle('is-hidden', hiddenCols.has(+el.dataset.c!)));
+      topicBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.topic === topic)));
+      colBtns.forEach((b) => b.setAttribute('aria-pressed', String(!hiddenCols.has(+b.dataset.col!))));
+      table.style.minWidth = `${Math.max(520, 260 + (4 - hiddenCols.size) * 150 + 280)}px`;
+    };
+    topicBtns.forEach((b) => b.addEventListener('click', () => { topic = b.dataset.topic!; apply(); }));
+    colBtns.forEach((b) => b.addEventListener('click', () => {
+      const c = +b.dataset.col!;
+      if (hiddenCols.has(c)) hiddenCols.delete(c);
+      else if (hiddenCols.size < colBtns.length - 1) hiddenCols.add(c); // keep at least one rival
+      apply();
+    }));
+
+    // crosshair
+    const clear = () => table.querySelectorAll('.is-row, .is-col, .is-cell').forEach((el) => el.classList.remove('is-row', 'is-col', 'is-cell'));
+    const mark = (cell: HTMLElement) => {
+      clear();
+      const tr = cell.closest('tr')!;
+      if (tr.parentElement?.tagName === 'TBODY') tr.classList.add('is-row');
+      const c = cell.dataset.c;
+      if (c !== undefined) {
+        table.querySelectorAll(`[data-c="${c}"]`).forEach((el) => el.classList.add('is-col'));
+        if (cell.tagName === 'TD') cell.classList.add('is-cell');
+      }
+    };
+    table.addEventListener('pointerover', (e) => { const cell = (e.target as HTMLElement).closest<HTMLElement>('td, th'); if (cell) mark(cell); });
+    table.addEventListener('pointerleave', clear);
+    table.addEventListener('focusin', (e) => { const cell = (e.target as HTMLElement).closest<HTMLElement>('td, th'); if (cell) mark(cell); });
+
+    // arrow-key navigation between cells once the table region is focused
+    root.querySelector('.cmp-frame')!.addEventListener('keydown', (e) => {
+      const ke = e as KeyboardEvent;
+      const cur = (document.activeElement as HTMLElement)?.closest?.('td') as HTMLTableCellElement | null;
+      const visibleRows = rows.filter((r) => !r.classList.contains('is-hidden'));
+      const visibleCells = (r: HTMLTableRowElement) => Array.from(r.cells).filter((td) => td.tagName === 'TD' && !td.classList.contains('is-hidden')) as HTMLTableCellElement[];
+      if (!cur) { if (ke.key.startsWith('Arrow') && visibleRows[0]) { visibleCells(visibleRows[0])[0]?.focus(); e.preventDefault(); } return; }
+      const r = visibleRows.indexOf(cur.parentElement as HTMLTableRowElement);
+      const cs = visibleCells(cur.parentElement as HTMLTableRowElement); const c = cs.indexOf(cur);
+      let next: HTMLTableCellElement | undefined;
+      if (ke.key === 'ArrowRight') next = cs[c + 1];
+      if (ke.key === 'ArrowLeft') next = cs[c - 1];
+      if (ke.key === 'ArrowDown' && visibleRows[r + 1]) next = visibleCells(visibleRows[r + 1])[c];
+      if (ke.key === 'ArrowUp' && visibleRows[r - 1]) next = visibleCells(visibleRows[r - 1])[c];
+      if (next) { next.focus(); e.preventDefault(); }
+    });
+
+    onTier((t) => { root.classList.toggle('is-static', t === 'static'); if (t === 'static') root.classList.add('is-on'); });
+    onceVisible(root, () => root.classList.add('is-on'), 0.15);
+    apply();
+  }
+  document.querySelectorAll<HTMLElement>('[data-cmp]').forEach(init);
+</script>

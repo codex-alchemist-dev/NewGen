@@ -1,0 +1,221 @@
+---
+/**
+ * CRT-VR · Act 5 · "Light, aimed." — slot `emission-compare`.
+ *
+ * One subpixel, two faceplates. Left: Lambertian scattering, light leaves in
+ * every direction and most of it misses the relay lens. Right: Directional
+ * Outcoupling, the micro-structured faceplate aims the light into the relay's
+ * acceptance cone. Photons are simulated: the left pane samples a cosine
+ * (Lambertian) distribution, the right a narrow forward lobe. The meters are the
+ * running share that reaches the lens. Illustrative, not a measured result.
+ *
+ * Tiers: full (photon trails), reduced (fewer photons, no trails), static (ray fans).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './cx.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { id = 'crtvr-emission' } = Astro.props;
+---
+<div class="crtvr cx emc" id={id} data-emc style="--cx-accent: #f0f4ff">
+  <div class="cx-head">
+    <span class="cx-tag">One subpixel · two faceplates</span>
+    <span class="cx-note">Illustrative simulation</span>
+  </div>
+  <div class="emc-grid">
+    <figure class="cx-frame emc-pane" style="--cx-accent: var(--crtvr-text-dim)">
+      <canvas data-mode="lambert" aria-hidden="true"></canvas>
+      <figcaption>
+        <span class="cx-label">Lambertian scattering</span>
+        <span class="emc-sub">Light goes everywhere. Most misses the lens.</span>
+        <span class="emc-meter"><span class="cx-label">Reaches the lens</span><i><b data-meter></b></i></span>
+      </figcaption>
+    </figure>
+    <figure class="cx-frame emc-pane">
+      <canvas data-mode="directional" aria-hidden="true"></canvas>
+      <figcaption>
+        <span class="cx-label emc-hot">Directional Outcoupling</span>
+        <span class="emc-sub">Aimed straight into the relay cone.</span>
+        <span class="emc-meter hot"><span class="cx-label">Reaches the lens</span><i><b data-meter></b></i></span>
+      </figcaption>
+    </figure>
+  </div>
+  <p class="cx-sr">Left: a subpixel that scatters light in all directions, so only a small share enters the relay lens. Right: the same subpixel with directional outcoupling, which sends nearly all of its light into the lens.</p>
+</div>
+
+<style>
+  .emc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .emc-grid { grid-template-columns: 1fr; } }
+  .emc-pane { margin: 0; }
+  .emc-pane canvas { width: 100%; aspect-ratio: 5 / 4; display: block; }
+  .emc-pane figcaption { display: grid; gap: 4px; padding: 14px 16px 16px; border-top: 1px solid var(--crtvr-line); }
+  .emc-hot { color: var(--crtvr-white); }
+  .emc-sub { font-family: var(--crtvr-font-serif); font-style: italic; font-weight: 300; font-size: 18px; color: var(--crtvr-text); }
+  .emc-meter { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; margin-top: 8px; }
+  .emc-meter i { position: relative; height: 6px; border-radius: 3px; background: var(--crtvr-line); overflow: hidden; }
+  .emc-meter b { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--crtvr-text-dim); border-radius: 3px; transition: width .4s linear; }
+  .emc-meter.hot b { background: linear-gradient(90deg, #f0f4ff, #00e5ff); box-shadow: 0 0 12px rgba(0, 229, 255, .6); }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+  import { widen, rafLoop, fitCanvas } from './lib/wide';
+
+  const W = 500, H = 400;
+  const EX = 250, EY = 338;            // emitter (subpixel centre)
+  const LY = 92, LX0 = 186, LX1 = 314; // relay lens aperture
+  const TH_C = Math.atan2((LX1 - LX0) / 2, EY - LY); // acceptance half-angle
+  const COLS = ['#f0f4ff', '#ff2d20', '#00ff99', '#3a6bff', '#ff3cc8', '#00e5ff', '#ffe135'];
+
+  interface P { x: number; y: number; vx: number; vy: number; inCone: boolean; life: number; c: string; through: boolean }
+
+  function sampleAngle(mode: string) {
+    if (mode === 'lambert') return Math.asin(2 * Math.random() - 1) * 0.98; // cosine-weighted
+    // narrow forward lobe (Box–Muller), sigma ≈ 5.5°
+    const g = Math.sqrt(-2 * Math.log(Math.random() + 1e-9)) * Math.cos(2 * Math.PI * Math.random());
+    return g * 0.096;
+  }
+
+  function drawGeometry(g: CanvasRenderingContext2D, mode: string) {
+    // acceptance cone
+    g.save();
+    const cone = g.createLinearGradient(0, EY, 0, LY);
+    cone.addColorStop(0, 'rgba(0,229,255,.10)'); cone.addColorStop(1, 'rgba(0,229,255,.02)');
+    g.fillStyle = cone; g.beginPath(); g.moveTo(EX, EY); g.lineTo(LX0, LY); g.lineTo(LX1, LY); g.closePath(); g.fill();
+    g.setLineDash([4, 6]); g.strokeStyle = 'rgba(0,229,255,.45)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(EX, EY); g.lineTo(LX0, LY); g.moveTo(EX, EY); g.lineTo(LX1, LY); g.stroke(); g.setLineDash([]);
+    // relay lens (biconvex)
+    g.strokeStyle = 'rgba(216,228,255,.9)'; g.lineWidth = 1.5; g.fillStyle = 'rgba(160,190,255,.08)';
+    g.beginPath(); g.moveTo(LX0, LY); g.quadraticCurveTo(EX, LY - 26, LX1, LY); g.quadraticCurveTo(EX, LY + 26, LX0, LY); g.fill(); g.stroke();
+    g.font = '11px "DM Mono", monospace'; g.fillStyle = 'rgba(216,228,255,.75)'; g.textAlign = 'left';
+    g.fillText('RELAY LENS', LX1 + 12, LY + 4);
+    g.fillText('→ EYE', LX1 + 12, LY - 52);
+    // faceplate
+    g.strokeStyle = mode === 'directional' ? 'rgba(0,229,255,.9)' : 'rgba(106,127,168,.8)'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(40, EY - 18); g.lineTo(W - 40, EY - 18); g.stroke();
+    if (mode === 'directional') {
+      // micro-structure on the faceplate
+      g.strokeStyle = 'rgba(0,229,255,.7)'; g.lineWidth = 1;
+      for (let x = 50; x < W - 40; x += 10) { g.beginPath(); g.moveTo(x, EY - 18); g.lineTo(x + 5, EY - 25); g.lineTo(x + 10, EY - 18); g.stroke(); }
+    }
+    g.fillStyle = 'rgba(216,228,255,.6)';
+    g.fillText(mode === 'directional' ? 'MICRO-STRUCTURED FACEPLATE' : 'PLAIN FACEPLATE', 40, EY - 30);
+    // subpixel well (cross-section)
+    g.strokeStyle = '#1a2240'; g.fillStyle = '#080b14'; g.lineWidth = 1;
+    g.fillRect(40, EY - 16, W - 80, 60);
+    g.fillStyle = '#000'; g.fillRect(EX - 52, EY - 16, 8, 44); g.fillRect(EX + 44, EY - 16, 8, 44);
+    const glow = g.createRadialGradient(EX, EY, 0, EX, EY, 40);
+    glow.addColorStop(0, 'rgba(255,255,255,.95)'); glow.addColorStop(.25, 'rgba(0,255,153,.6)'); glow.addColorStop(1, 'rgba(0,255,153,0)');
+    g.fillStyle = glow; g.fillRect(EX - 44, EY - 16, 88, 44);
+    g.fillStyle = 'rgba(216,228,255,.6)'; g.fillText('SUBPIXEL', EX + 60, EY + 16);
+    g.restore();
+  }
+
+  function setupPane(c: HTMLCanvasElement, meter: HTMLElement) {
+    const mode = c.dataset.mode!;
+    const ps: P[] = [];
+    const trail = document.createElement('canvas'); trail.width = W * 2; trail.height = H * 2;
+    const tg = trail.getContext('2d')!; tg.scale(2, 2);
+    let hits = 0, total = 0, acc = 0;
+
+    const spawn = (ahead: number) => {
+      const a = sampleAngle(mode);
+      const inCone = Math.abs(a) < TH_C;
+      total++; if (inCone) hits++;
+      ps.push({ x: EX + (Math.random() - .5) * 30, y: EY - 18, vx: Math.sin(a) * 300, vy: -Math.cos(a) * 300, inCone, life: 1, through: false,
+        c: COLS[(Math.random() * COLS.length) | 0] });
+      // spread a frame's batch along the ray so low frame rates don't band
+      const p = ps[ps.length - 1]; p.x += p.vx * ahead; p.y += p.vy * ahead;
+    };
+
+    const step = (dt: number, tier: VfxTier) => {
+      const rate = tier === 'full' ? 240 : 90; // photons per second
+      acc += rate * dt;
+      while (acc >= 1) { acc -= 1; spawn(Math.random() * dt); }
+      for (const p of ps) {
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        if (p.inCone && !p.through && p.y <= LY) {
+          // the lens bends accepted light toward the eye
+          p.through = true; p.vx *= .2;
+        }
+        if (!p.inCone) p.life -= dt * .9;
+      }
+      for (let i = ps.length - 1; i >= 0; i--) {
+        const p = ps[i];
+        if (p.life <= 0 || p.y < -20 || p.x < -20 || p.x > W + 20 || p.y > H + 20) ps.splice(i, 1);
+      }
+      meter.style.width = `${total ? (hits / total) * 100 : 0}%`;
+      if (total > 4000) { hits *= .5; total *= .5; }
+    };
+
+    const paint = (tier: VfxTier) => {
+      const { w, h } = fitCanvas(c);
+      const g = c.getContext('2d')!;
+      const s = Math.min(w / W, h / H);
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = '#04050a'; g.fillRect(0, 0, w, h);
+      g.setTransform(s, 0, 0, s, (w - W * s) / 2, (h - H * s) / 2);
+      if (tier === 'full') {
+        tg.globalCompositeOperation = 'destination-out'; tg.fillStyle = 'rgba(0,0,0,.22)'; tg.fillRect(0, 0, W, H);
+        tg.globalCompositeOperation = 'lighter';
+        for (const p of ps) {
+          tg.globalAlpha = p.inCone ? 0.9 : Math.max(0, p.life) * 0.7;
+          tg.fillStyle = p.inCone ? p.c : '#6a7fa8';
+          tg.fillRect(p.x - 1.2, p.y - 1.2, 2.4, 2.4);
+        }
+        tg.globalAlpha = 1;
+        drawGeometry(g, mode);
+        g.globalCompositeOperation = 'lighter';
+        g.drawImage(trail, 0, 0, W, H);
+        g.globalCompositeOperation = 'source-over';
+      } else {
+        drawGeometry(g, mode);
+        for (const p of ps) {
+          g.globalAlpha = p.inCone ? 0.95 : Math.max(0, p.life) * 0.5;
+          g.fillStyle = p.inCone ? p.c : '#6a7fa8';
+          g.beginPath(); g.arc(p.x, p.y, 1.8, 0, Math.PI * 2); g.fill();
+        }
+        g.globalAlpha = 1;
+      }
+    };
+
+    const paintStatic = () => {
+      const { w, h } = fitCanvas(c);
+      const g = c.getContext('2d')!;
+      const s = Math.min(w / W, h / H);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#04050a'; g.fillRect(0, 0, w, h);
+      g.setTransform(s, 0, 0, s, (w - W * s) / 2, (h - H * s) / 2);
+      drawGeometry(g, mode);
+      const n = 41; let inside = 0;
+      for (let i = 0; i < n; i++) {
+        const u = (i + .5) / n;
+        const a = mode === 'lambert' ? Math.asin(2 * u - 1) * .98 : (u - .5) * 2 * TH_C * .9;
+        const ok = Math.abs(a) < TH_C; if (ok) inside++;
+        const len = ok ? (EY - 18 - LY) / Math.cos(a) : 220;
+        g.strokeStyle = ok ? 'rgba(240,244,255,.85)' : 'rgba(106,127,168,.35)'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(EX, EY - 18); g.lineTo(EX + Math.sin(a) * len, EY - 18 - Math.cos(a) * len); g.stroke();
+      }
+      meter.style.transition = 'none';
+      meter.style.width = `${(inside / n) * 100}%`;
+    };
+
+    return { step, paint, paintStatic };
+  }
+
+  function init(root: HTMLElement) {
+    widen(root);
+    const panes = Array.from(root.querySelectorAll<HTMLCanvasElement>('canvas')).map((c) =>
+      setupPane(c, c.closest('figure')!.querySelector<HTMLElement>('[data-meter]')!));
+    let tier: VfxTier = 'full';
+    const loop = rafLoop(root, (dt) => { panes.forEach((p) => { p.step(dt, tier); p.paint(tier); }); });
+    onTier((t) => {
+      tier = t;
+      loop.enabled = t !== 'static';
+      if (t === 'static') panes.forEach((p) => p.paintStatic());
+    });
+    window.addEventListener('resize', () => { if (tier === 'static') panes.forEach((p) => p.paintStatic()); });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-emc]').forEach(init);
+</script>

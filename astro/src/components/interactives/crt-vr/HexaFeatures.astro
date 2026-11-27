@@ -1,0 +1,266 @@
+---
+/**
+ * CRT-VR · Act 7 · "hexa-features" — Hexa-Index, part 3: what the signal buys.
+ *
+ * One animatic, five scenarios. Each loops the same three beats:
+ *   1. the beam drifts, 2. the rims it brushes light up, 3. the beam locks back.
+ * Scenarios: beam lock for all six beams · Earth-field and head-turn drift ·
+ * side-fire keystone · aging / brightness uniformity · stuck-beam kill.
+ *
+ * Tiers: full (looping animatic + glow), reduced (looping, no glow, slower),
+ * static (drifted state as a dashed ghost under the locked state, no loop).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './blueprint.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { tier = 'full', id = 'bp-features' } = Astro.props;
+
+const SCEN = [
+  { key: 'lock', name: 'Beam lock ×6', drift: 'Six beams misconverge', rim: 'Each beam brushes its own rims', lock: 'All six snap back onto their triangles' },
+  { key: 'earth', name: 'Earth field + head turn', drift: 'Turning your head swings the raster in Earth’s field', rim: 'Rims along the shifted edge fire', lock: 'Whole raster re-registered' },
+  { key: 'keystone', name: 'Side-fire keystone', drift: 'Shallow side-fire throw fans the raster into a trapezoid', rim: 'Rims at the far edge fire first', lock: 'Raster squared up' },
+  { key: 'aging', name: 'Aging + uniformity', drift: 'Worn phosphor dims where a HUD sat for months', rim: 'Rim current measures the delivered beam per zone', lock: 'Drive trimmed back to uniform' },
+  { key: 'stuck', name: 'Stuck-beam kill', drift: 'The beam stops moving', rim: 'Its rim fires without stopping, not in pulses', lock: 'Beam blanked: no dwell, no burn' },
+];
+
+// Big hex for the beam-lock scenario (pointy-top, 6 wedges).
+const HX = 450, HY = 200, HR = 150;
+const corner = (k: number, r = HR, cx = HX, cy = HY) => {
+  const a = (Math.PI / 180) * (60 * k - 90);
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+};
+const WEDGE = ['#ff3c3c', '#ffe135', '#00ff99', '#00e5ff', '#3a6bff', '#ff3cdc'];
+// Small-hex field for the other scenarios.
+const hr = 22;
+const field: { x: number; y: number; c: string }[] = [];
+for (let r = 0; r < 7; r++) for (let c = 0; c < 13; c++) {
+  field.push({ x: 205 + c * hr * Math.sqrt(3) + (r % 2 ? (hr * Math.sqrt(3)) / 2 : 0), y: 70 + r * hr * 1.5 + 12, c: WEDGE[(r * 13 + c) % 6] });
+}
+const hexPath = (cx: number, cy: number, r: number) =>
+  `M${[0, 1, 2, 3, 4, 5].map((k) => corner(k, r, cx, cy).map((v) => v.toFixed(1)).join(',')).join(' L')} Z`;
+---
+
+<div class:list={['crtvr', 'bp', 'bp-features', { 'is-static': tier === 'static' }]} id={id} data-hexa-features>
+  <div class="bp-frame bp-wide">
+    <div class="bp-head">
+      <span><b>Hexa-Index · features</b> &nbsp;· drift, detect, lock</span>
+      <span class="bp-dwg">DWG CRT-VR-07-06C · animatic</span>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Hexa-Index features">
+      {SCEN.map((s, i) => (
+        <button role="tab" aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-scen={s.key}
+          aria-controls={`${id}-stage`}>{s.name}</button>
+      ))}
+    </div>
+
+    <div id={`${id}-stage`} role="tabpanel" class="stage">
+      <svg viewBox="0 0 900 400" role="img" aria-label="Animatic: the beam drifts, the rims light up, the beam locks back">
+        <!-- lock scenario -->
+        <g data-g="lock">
+          {WEDGE.map((c, k) => {
+            const [ax, ay] = corner(k), [bx, by] = corner(k + 1);
+            return <path d={`M${HX},${HY} L${ax},${ay} L${bx},${by} Z`} fill={c} fill-opacity=".14" />;
+          })}
+          {WEDGE.map((_, k) => {
+            const [ax, ay] = corner(k), [bx, by] = corner(k + 1);
+            return <path d={`M${HX},${HY} L${ax},${ay} L${bx},${by} Z`} class="rim" data-rim={`L${k}`} />;
+          })}
+          {WEDGE.map((c, k) => <circle class="spot glow" data-spot={`L${k}`} r="11" fill={c} style={`color:${c}`} />)}
+          {WEDGE.map((c, k) => <circle class="ghost" data-ghost={`L${k}`} r="11" stroke={c} />)}
+        </g>
+        <!-- field scenarios -->
+        <g data-g="field">
+          {field.map((p, i) => <path d={hexPath(p.x, p.y, hr - 1)} class="rim" data-rim={`F${i}`} />)}
+          {field.map((p, i) => <circle class="ghost" data-ghost={`F${i}`} r="5" stroke={p.c} />)}
+          {field.map((p, i) => <circle class="spot" data-spot={`F${i}`} r="5.5" fill={p.c} style={`color:${p.c}`} />)}
+          <g data-gun class="gunmark"><rect x="20" y="170" width="60" height="60" rx="10" class="ink" /><text class="lbl sub" x="50" y="250" text-anchor="middle">gun</text></g>
+          <g data-head class="headmark" transform="translate(810 72)">
+            <circle r="26" class="ink" /><path d="M0,-26 L6,-36 L-6,-36 Z" fill="#7fd4ff" data-nose />
+            <text class="lbl sub" y="48" text-anchor="middle">head</text>
+          </g>
+          <g data-bfield class="bfield"><path class="ink dash" d="M760,340 L860,340" /><path class="ink" d="M852,334 L862,340 L852,346" /><text class="lbl sub" x="770" y="330">Earth B-field</text></g>
+          <g data-kill class="kill"><rect x="380" y="330" width="140" height="34" rx="4" /><text class="lbl" x="450" y="352" text-anchor="middle">Beam killed</text></g>
+        </g>
+      </svg>
+      <ol class="beats" aria-label="Animatic beats">
+        <li data-beat="0"><span>1</span><em data-t="drift"></em></li>
+        <li data-beat="1"><span>2</span><em data-t="rim"></em></li>
+        <li data-beat="2"><span>3</span><em data-t="lock"></em></li>
+      </ol>
+    </div>
+    <p class="bp-foot">Drift is exaggerated for the animatic. The corrections run inside the scan, from the same rim signals the sensors decode; no camera, no extra light path.</p>
+  </div>
+</div>
+
+<script define:vars={{ G: { SCEN, HX, HY, HR, field: field.map((p) => [p.x, p.y]) } }}>
+  window.__bpFeatG = G;
+</script>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+  import { seg, easeInOut, easeOut } from '../../visuals/crt-vr/lib/scrub';
+
+  type Scen = { key: string; name: string; drift: string; rim: string; lock: string };
+  const G = (window as any).__bpFeatG as { SCEN: Scen[]; HX: number; HY: number; HR: number; field: [number, number][] };
+  const LOOP = 5200;
+
+  // Wedge centroids for the six beams.
+  const centroid = (k: number) => {
+    const c = (j: number) => { const a = (Math.PI / 180) * (60 * j - 90); return [G.HX + G.HR * Math.cos(a), G.HY + G.HR * Math.sin(a)]; };
+    const [ax, ay] = c(k), [bx, by] = c(k + 1);
+    return [(G.HX + ax + bx) / 3, (G.HY + ay + by) / 3];
+  };
+  const LOCK_OFF = [[34, -22], [-28, 30], [40, 26], [-36, -18], [22, 38], [-30, -34]];
+  const FCX = 450, FCY = 200;
+  const WORN = (x: number, y: number) => Math.exp(-(((x - 560) / 120) ** 2 + ((y - 150) / 70) ** 2));
+  const STUCK = 40;
+
+  function setup(root: HTMLElement) {
+    const q = <T extends Element>(s: string) => root.querySelector(s) as T;
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const gLock = q<SVGGElement>('[data-g="lock"]'), gField = q<SVGGElement>('[data-g="field"]');
+    const spots = new Map<string, SVGCircleElement>(), ghosts = new Map<string, SVGCircleElement>(), rims = new Map<string, SVGPathElement>();
+    root.querySelectorAll<SVGCircleElement>('[data-spot]').forEach((e) => spots.set(e.dataset.spot!, e));
+    root.querySelectorAll<SVGCircleElement>('[data-ghost]').forEach((e) => ghosts.set(e.dataset.ghost!, e));
+    root.querySelectorAll<SVGPathElement>('[data-rim]').forEach((e) => rims.set(e.dataset.rim!, e));
+    const beats = Array.from(root.querySelectorAll<HTMLLIElement>('[data-beat]'));
+    const head = q<SVGGElement>('[data-head]'), bfield = q<SVGGElement>('[data-bfield]'), gun = q<SVGGElement>('[data-gun]'), kill = q<SVGGElement>('[data-kill]');
+    let tier: VfxTier = 'full';
+    let scen = G.SCEN[0];
+    let visible = false, raf = 0, t0 = performance.now();
+
+    const set = (e: Element | undefined, x: number, y: number) => { e?.setAttribute('cx', x.toFixed(1)); e?.setAttribute('cy', y.toFixed(1)); };
+
+    /** Displaced position of field spot i at drift amount a (0..1). */
+    const fieldPos = (i: number, a: number): [number, number] => {
+      const [x, y] = G.field[i];
+      if (scen.key === 'earth') {
+        const th = (a * 3 * Math.PI) / 180, dx = x - FCX, dy = y - FCY;
+        return [FCX + dx * Math.cos(th) - dy * Math.sin(th) + a * 22, FCY + dx * Math.sin(th) + dy * Math.cos(th) - a * 10];
+      }
+      if (scen.key === 'keystone') {
+        const f = (x - 205) / 470;
+        return [x, FCY + (y - FCY) * (1 + a * 0.8 * f - a * 0.2)];
+      }
+      return [x, y];
+    };
+
+    const render = (ms: number) => {
+      // beats: 0–1.8 s drift · 1.8–2.8 s rims fire · 2.8–3.8 s lock back · hold
+      const s = ms / 1000;
+      const drift = tier === 'static' ? 1 : easeInOut(seg(s, 0.2, 1.8));
+      const lockT = tier === 'static' ? 1 : easeOut(seg(s, 2.8, 3.8));
+      const a = drift * (1 - lockT);
+      const fire = tier === 'static' ? 0.6 : seg(s, 1.6, 1.9) * (1 - seg(s, 3.2, 3.8));
+      const beat = s < 1.8 ? 0 : s < 2.8 ? 1 : 2;
+      beats.forEach((b, i) => b.classList.toggle('on', tier === 'static' || i === beat));
+
+      if (scen.key === 'lock') {
+        for (let k = 0; k < 6; k++) {
+          const [cx, cy] = centroid(k);
+          set(spots.get(`L${k}`), cx + LOCK_OFF[k][0] * a, cy + LOCK_OFF[k][1] * a);
+          set(ghosts.get(`L${k}`), cx + LOCK_OFF[k][0], cy + LOCK_OFF[k][1]);
+          rims.get(`L${k}`)!.style.setProperty('--fire', String(fire));
+        }
+        return;
+      }
+      const isAging = scen.key === 'aging', isStuck = scen.key === 'stuck';
+      head.style.display = scen.key === 'earth' ? '' : 'none';
+      bfield.style.display = scen.key === 'earth' ? '' : 'none';
+      gun.style.display = scen.key === 'keystone' ? '' : 'none';
+      kill.style.display = isStuck ? '' : 'none';
+      kill.style.opacity = String(lockT);
+      head.setAttribute('transform', `translate(810 72) rotate(${(drift * 35 * (1 - lockT * 0)).toFixed(1)})`);
+      const scanI = Math.floor(((ms / 40) % G.field.length));
+      G.field.forEach((_, i) => {
+        const [x, y] = fieldPos(i, a);
+        const [gx, gy] = fieldPos(i, 1);
+        const sp = spots.get(`F${i}`)!, gh = ghosts.get(`F${i}`)!, rim = rims.get(`F${i}`)!;
+        set(sp, x, y); set(gh, gx, gy);
+        const off = Math.hypot(x - G.field[i][0], y - G.field[i][1]);
+        let op = 1, rf = Math.min(1, off / 10) * fire;
+        if (isAging) {
+          const w = WORN(G.field[i][0], G.field[i][1]);
+          op = 1 - 0.65 * w * (1 - lockT * (s > 2.8 ? 1 : 0)) * drift;
+          rf = w * fire;
+          gh.style.opacity = '0';
+        } else if (isStuck) {
+          // a single beam walks the field; at the drift beat it stops on STUCK
+          const stuck = s > 0.9 && s < 2.8 + 1;
+          const cur = stuck ? STUCK : scanI;
+          op = i === cur && !(lockT > 0.5) ? 1 : 0.12;
+          rf = i === STUCK && stuck ? Math.max(fire, 0.9 * seg(s, 1.4, 1.6)) : 0;
+          gh.style.opacity = '0';
+        } else gh.style.opacity = tier === 'static' || (a > 0.02) ? '.55' : '0';
+        sp.style.opacity = String(op);
+        rim.style.setProperty('--fire', rf.toFixed(2));
+      });
+    };
+
+    const frame = (t: number) => {
+      raf = 0;
+      render(tier === 'static' ? 4000 : (t - t0) % (tier === 'full' ? LOOP : LOOP * 1.3) / (tier === 'full' ? 1 : 1.3));
+      if (visible && tier !== 'static') raf = requestAnimationFrame(frame);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+    const select = (key: string, focus = false) => {
+      scen = G.SCEN.find((s) => s.key === key)!;
+      tabs.forEach((tb) => {
+        const on = tb.dataset.scen === key;
+        tb.setAttribute('aria-selected', String(on)); tb.tabIndex = on ? 0 : -1;
+        if (on && focus) tb.focus();
+      });
+      gLock.style.display = key === 'lock' ? '' : 'none';
+      gField.style.display = key === 'lock' ? 'none' : '';
+      q<HTMLElement>('[data-t="drift"]').textContent = scen.drift;
+      q<HTMLElement>('[data-t="rim"]').textContent = scen.rim;
+      q<HTMLElement>('[data-t="lock"]').textContent = scen.lock;
+      t0 = performance.now();
+      root.dataset.scen = key;
+      kick();
+    };
+    tabs.forEach((tb, i) => {
+      tb.addEventListener('click', () => select(tb.dataset.scen!));
+      tb.addEventListener('keydown', (e) => {
+        const j = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i - 1 + tabs.length) % tabs.length : -1;
+        if (j >= 0) { e.preventDefault(); select(tabs[j].dataset.scen!, true); }
+      });
+    });
+
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) kick(); }).observe(root);
+    onTier((t) => { tier = t; root.classList.toggle('is-static', t === 'static'); select(scen.key); });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-hexa-features]').forEach(setup);
+</script>
+
+<style>
+  .tabs { display: flex; flex-wrap: wrap; gap: 1px; background: var(--bp-ink-faint); border-bottom: 1px solid var(--bp-ink-dim); }
+  .tabs button {
+    flex: 1 1 150px; background: var(--bp-paper); border: 0; padding: 12px 10px; cursor: pointer;
+    font: 11px/1.3 var(--crtvr-font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--crtvr-text-dim);
+  }
+  .tabs button[aria-selected='true'] { color: var(--bp-paper); background: var(--bp-ink); }
+  .stage { padding: 10px 14px 4px; }
+  .rim { fill: none; stroke: #e8f0ff; stroke-width: 1.6; stroke-opacity: calc(.12 + var(--fire, 0) * .88); }
+  [data-g='lock'] .rim { stroke-width: 4; stroke: #05070b; }
+  [data-g='lock'] .rim { stroke: color-mix(in srgb, #05070b, #ffffff calc(var(--fire, 0) * 100%)); }
+  :global(html[data-vfx-tier='full']) .bp-features .rim { filter: drop-shadow(0 0 calc(var(--fire, 0) * 6px) #bfe8ff); }
+  .ghost { fill: none; stroke-dasharray: 3 3; stroke-width: 1.4; opacity: .55; }
+  [data-g='lock'] .ghost { opacity: 0; }
+  .is-static [data-g='lock'] .ghost { opacity: .7; }
+  .kill rect { fill: #2a0610; stroke: #ff3c6e; }
+  .kill text { fill: #ff3c6e; }
+  [data-scen='stuck'] [data-rim='F40'] { stroke: #ff3c6e; }
+  .beats { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--bp-ink-faint); }
+  .beats li { background: var(--bp-paper); padding: 10px; display: flex; gap: 10px; align-items: baseline; color: var(--crtvr-text-dimmer, #3a4a6a); transition: color .25s; }
+  .beats li span { font-family: var(--crtvr-font-display); font-size: 22px; }
+  .beats em { font-style: normal; font-size: 12px; line-height: 1.45; letter-spacing: .02em; }
+  .beats li.on { color: var(--crtvr-white); }
+  .beats li.on span { color: var(--bp-ink); }
+  @media (max-width: 640px) { .beats { grid-template-columns: 1fr; } }
+</style>

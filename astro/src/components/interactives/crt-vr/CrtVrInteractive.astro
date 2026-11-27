@@ -1,0 +1,29 @@
+---
+/**
+ * Mounts the Act 2 / Act 3 interactive island for a slot id (client:visible).
+ * Returns nothing for ids that are not built here, so the page keeps its <Slot>.
+ */
+import type { VfxSlotProps } from '../../../lib/motion/types';
+import GazeScanDensity from './GazeScanDensity';
+import ScanModelSim from './ScanModelSim';
+import AcuityCurve from './AcuityCurve';
+import ZoneInspector from './ZoneInspector';
+import GridVsCrtFoveation from './GridVsCrtFoveation';
+import EyeRoam from './EyeRoam';
+import SkipCoarsenessHz from './SkipCoarsenessHz';
+import MotionAdaptiveTimeline from './MotionAdaptiveTimeline';
+import SlewCompare from './SlewCompare';
+
+interface Props extends Partial<VfxSlotProps> { id: string }
+const { id, tier = 'full', reducedMotion = false } = Astro.props;
+const p = { tier, reducedMotion };
+---
+{id === 'gaze-scan-density' && <GazeScanDensity client:visible {...p} />}
+{id === 'scan-model-sim' && <ScanModelSim client:visible {...p} />}
+{id === 'acuity-curve' && <AcuityCurve client:visible {...p} />}
+{id === 'zone-inspector' && <ZoneInspector client:visible {...p} />}
+{id === 'grid-vs-crt-foveation' && <GridVsCrtFoveation client:visible {...p} />}
+{id === 'eye-roam' && <EyeRoam client:visible {...p} />}
+{id === 'skip-coarseness-hz' && <SkipCoarsenessHz client:visible {...p} />}
+{id === 'motion-adaptive-timeline' && <MotionAdaptiveTimeline client:visible {...p} />}
+{id === 'slew-compare' && <SlewCompare client:visible {...p} />}

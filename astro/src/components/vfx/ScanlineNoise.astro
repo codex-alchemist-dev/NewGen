@@ -1,0 +1,101 @@
+---
+/**
+ * ScanlineNoise: the tube's surface. A fixed, pointer-transparent overlay.
+ *  full     fine scanlines + animated grain + a slow rolling refresh band
+ *  reduced  scanlines + static grain
+ *  static   hidden
+ * Intensities are tokens: --vfx-scan-opacity, --vfx-grain-opacity.
+ * All of it fades with --vfx-retro (1 at Act 1 → 0 at the last act), set by
+ * ScrollBackdrop: the page scrolls from glowing tube to clean modern VR.
+ */
+---
+<div class="vfx-tube" aria-hidden="true">
+  <div class="vfx-tube__scan"></div>
+  <div class="vfx-tube__grain"></div>
+  <div class="vfx-tube__roll"></div>
+</div>
+
+<style>
+  .vfx-tube {
+    --vfx-scan-opacity: 0.07;
+    --vfx-grain-opacity: 0.055;
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .vfx-tube__scan {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0) 0px,
+      rgb(0 0 0 / 0) 2px,
+      rgb(0 0 0 / 1) 3px
+    );
+    opacity: calc(var(--vfx-scan-opacity) * 2.2 * var(--vfx-retro, 1));
+    mix-blend-mode: multiply;
+  }
+  .vfx-tube__grain {
+    position: absolute;
+    inset: -200px;
+    background-image: var(--vfx-grain, none);
+    background-size: 192px 192px;
+    opacity: calc(var(--vfx-grain-opacity) * var(--vfx-retro, 1));
+    mix-blend-mode: screen;
+    animation: vfx-grain 0.9s steps(9) infinite;
+  }
+  .vfx-tube__roll {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 28vh;
+    top: -30vh;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--vfx-tint-rgb, 0 255 153) / 0.025) 45%,
+      rgb(255 255 255 / 0.03) 50%,
+      transparent
+    );
+    animation: vfx-roll 9s linear infinite;
+    opacity: var(--vfx-retro, 1);
+  }
+  @keyframes vfx-grain {
+    0% { transform: translate(0, 0); }
+    11% { transform: translate(-61px, 37px); }
+    22% { transform: translate(43px, -88px); }
+    33% { transform: translate(-97px, -21px); }
+    44% { transform: translate(18px, 64px); }
+    55% { transform: translate(-34px, -53px); }
+    66% { transform: translate(79px, 12px); }
+    77% { transform: translate(-12px, 91px); }
+    88% { transform: translate(56px, -36px); }
+    100% { transform: translate(0, 0); }
+  }
+  @keyframes vfx-roll {
+    from { transform: translateY(0); }
+    to { transform: translateY(160vh); }
+  }
+  :global(html[data-vfx-tier='reduced']) .vfx-tube__grain { animation: none; }
+  :global(html[data-vfx-tier='reduced']) .vfx-tube__roll { display: none; }
+  :global(html[data-vfx-tier='static']) .vfx-tube { display: none; }
+</style>
+
+<script>
+  // One 192² grain tile, generated once.
+  const c = document.createElement('canvas');
+  c.width = c.height = 192;
+  const x = c.getContext('2d');
+  if (x) {
+    const img = x.createImageData(192, 192);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = Math.random() * 255;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    document.documentElement.style.setProperty('--vfx-grain', `url(${c.toDataURL('image/png')})`);
+  }
+</script>

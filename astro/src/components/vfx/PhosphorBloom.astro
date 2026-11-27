@@ -1,0 +1,71 @@
+---
+/**
+ * PhosphorBloom: shared SVG filters + CSS glow utilities.
+ *
+ * SVG:  filter="url(#ng-bloom)"      soft phosphor bloom (any SVG art)
+ *       filter="url(#ng-bloom-hot)"  white-hot core + wide halo (beam spots)
+ * CSS:  .ng-glow        text/box glow in the live tint (or --glow-color)
+ *       .ng-glow--hot   stronger, for numerals and hero words
+ *       .ng-phosphor    phosphor text: tint color + glow + faint flicker
+ */
+---
+<svg class="ng-bloom-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="ng-bloom" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b2" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="24" result="b3" />
+      <feMerge>
+        <feMergeNode in="b3" />
+        <feMergeNode in="b2" />
+        <feMergeNode in="b1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="ng-bloom-hot" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="b2" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="42" result="b3" />
+      <feColorMatrix in="SourceGraphic" type="matrix"
+        values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0" result="white" />
+      <feMerge>
+        <feMergeNode in="b3" />
+        <feMergeNode in="b2" />
+        <feMergeNode in="b1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<style is:global>
+  .ng-bloom-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+  .ng-glow {
+    --glow-color: rgb(var(--vfx-tint-rgb, 0 255 153));
+    text-shadow:
+      0 0 6px color-mix(in srgb, var(--glow-color) 60%, transparent),
+      0 0 22px color-mix(in srgb, var(--glow-color) 35%, transparent);
+  }
+  .ng-glow--hot {
+    text-shadow:
+      0 0 2px #fff,
+      0 0 10px color-mix(in srgb, var(--glow-color) 90%, transparent),
+      0 0 34px color-mix(in srgb, var(--glow-color) 55%, transparent),
+      0 0 90px color-mix(in srgb, var(--glow-color) 30%, transparent);
+  }
+  .ng-phosphor {
+    --glow-color: rgb(var(--vfx-tint-rgb, 0 255 153));
+    color: var(--glow-color);
+    text-shadow:
+      0 0 4px color-mix(in srgb, var(--glow-color) 70%, transparent),
+      0 0 20px color-mix(in srgb, var(--glow-color) 35%, transparent);
+    animation: ng-flicker 4.2s steps(1) infinite;
+  }
+  @keyframes ng-flicker {
+    0%, 100% { opacity: 1; }
+    47% { opacity: 0.94; }
+    48% { opacity: 1; }
+    73% { opacity: 0.97; }
+  }
+  html[data-vfx-tier='static'] .ng-phosphor { animation: none; }
+</style>

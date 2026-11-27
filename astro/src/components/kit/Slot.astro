@@ -1,0 +1,21 @@
+---
+/*
+ * Named placeholder for a visual, interactive or VFX slot.
+ * Replace the <Slot> call in a page or act with the real component; see astro/README.md.
+ */
+import type { SlotKind } from '../../data/slots';
+
+interface Props {
+  id: string;
+  kind: SlotKind;
+  note?: string;
+}
+const { id, kind, note } = Astro.props;
+---
+<div class="slot" data-slot={id} data-kind={kind} role="img" aria-label={`${kind} slot ${id}`}>
+  <div>
+    <p class="slot__tag">{kind} · {id}</p>
+    {note && <p>{note}</p>}
+    <slot />
+  </div>
+</div>

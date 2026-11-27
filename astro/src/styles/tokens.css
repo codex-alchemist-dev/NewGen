@@ -1,0 +1,56 @@
+/*
+ * NewGen 2nd® Gen design tokens.
+ * Values below are the current CRT-VR theme (provisional). The coordinator
+ * will supply the final 2nd® Gen tokens; change values here, not in components.
+ */
+:root {
+  /* Base CRT-VR theme */
+  --bg: #04050a;
+  --bg2: #080b14;
+  --surface: #0d1220;
+  --border: #1a2240;
+  --border-bright: #2a3860;
+  --text: #d8e4ff;
+  --text-dim: #6a7fa8;
+  --text-dimmer: #3a4a6a;
+  --white: #f0f4ff;
+
+  /* Accents */
+  --accent: #00ff99;   /* phosphor green, hero */
+  --accent2: #00b4ff;
+  --accent3: #ffe135;
+  --accent4: #ff3c6e;
+  --accent5: #cc44ff;
+  --accent6: #ff7a00;
+  --sony-red: #ff2d20;
+
+  /* NewGen signature layer (constant across companies) */
+  --ng-label-accent: var(--accent);
+  --ng-grid-line: color-mix(in srgb, var(--border) 50%, transparent);
+  --ng-eyebrow-font: var(--font-mono);
+
+  /* Type */
+  --font-display: 'Bebas Neue', 'Impact', sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+  --font-serif: 'Noto Serif Display', Georgia, serif;
+
+  /* 8px spacing scale */
+  --s-1: 8px;
+  --s-2: 16px;
+  --s-3: 24px;
+  --s-4: 32px;
+  --s-6: 48px;
+  --s-8: 64px;
+  --s-12: 96px;
+  --s-16: 128px;
+  --gutter: 16px;
+
+  /* Motion: one shared easing, long durations for smooth sections */
+  --ease-newgen: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-short: 320ms;
+  --dur-long: 1100ms;
+
+  /* Layout */
+  --measure: 68ch;
+  --nav-offset: 0px;
+}

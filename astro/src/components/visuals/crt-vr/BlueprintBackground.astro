@@ -1,0 +1,83 @@
+---
+/**
+ * CRT-VR · Act 7 background ("act-07/background") — the blueprint table.
+ *
+ * Cyan drafting grid (minor 24 px, major 120 px), sheet border with zone
+ * letters and numbers, registration marks, and a slow plotter-head sweep that
+ * re-inks the grid as it passes. Mounted through ActWrapper's `background` slot.
+ *
+ * Tiers: full (sweep + grid parallax drift), reduced (sweep only),
+ * static / reduced motion (still sheet).
+ */
+import './tokens.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+type Props = Partial<VfxSlotProps>;
+const { tier = 'full' } = Astro.props;
+const zones = ['A', 'B', 'C', 'D', 'E', 'F'];
+---
+
+<div class:list={['crtvr', 'bp-bg', { 'is-static': tier === 'static' }]} aria-hidden="true">
+  <div class="sheet">
+    <div class="grid minor"></div>
+    <div class="grid major"></div>
+    <div class="border">
+      <div class="zones top">{[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <span>{n}</span>)}</div>
+      <div class="zones left">{zones.map((z) => <span>{z}</span>)}</div>
+    </div>
+    <span class="reg tl"></span><span class="reg tr"></span><span class="reg bl"></span><span class="reg br"></span>
+    <div class="sweep"></div>
+    <div class="titleblock">
+      <span>NEWGEN × SONY</span><span>CRT-VR · ACT 07 · THE MACHINE</span><span>SHEET 07 / 12</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .bp-bg { position: absolute; inset: 0; pointer-events: none; overflow: clip; }
+  .sheet {
+    position: sticky; top: 0; height: 100vh; height: 100svh;
+    background: radial-gradient(120% 90% at 50% 40%, #04101f 0%, #020711 70%, #01040a 100%);
+  }
+  .grid { position: absolute; inset: -120px; }
+  .minor {
+    background:
+      linear-gradient(rgba(127, 212, 255, .055) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, rgba(127, 212, 255, .055) 1px, transparent 1px) 0 0 / 24px 24px;
+  }
+  .major {
+    background:
+      linear-gradient(rgba(127, 212, 255, .12) 1px, transparent 1px) 0 0 / 120px 120px,
+      linear-gradient(90deg, rgba(127, 212, 255, .12) 1px, transparent 1px) 0 0 / 120px 120px;
+  }
+  .border { position: absolute; inset: 18px; border: 1px solid rgba(127, 212, 255, .2); }
+  .zones { position: absolute; display: flex; justify-content: space-around; font: 10px/1 var(--crtvr-font-mono); color: rgba(127, 212, 255, .3); letter-spacing: .2em; }
+  .zones.top { left: 0; right: 0; top: -14px; }
+  .zones.left { top: 0; bottom: 0; left: -13px; flex-direction: column; }
+  .reg { position: absolute; width: 26px; height: 26px; border: 1px solid rgba(127, 212, 255, .28); border-radius: 50%; }
+  .reg::before, .reg::after { content: ''; position: absolute; background: rgba(127, 212, 255, .28); }
+  .reg::before { left: 50%; top: -8px; bottom: -8px; width: 1px; }
+  .reg::after { top: 50%; left: -8px; right: -8px; height: 1px; }
+  .reg.tl { top: 40px; left: 40px; } .reg.tr { top: 40px; right: 40px; }
+  .reg.bl { bottom: 40px; left: 40px; } .reg.br { bottom: 40px; right: 40px; }
+  .titleblock {
+    position: absolute; right: 18px; bottom: 18px; display: grid; grid-auto-flow: column; gap: 0;
+    font: 9.5px/1 var(--crtvr-font-mono); letter-spacing: .18em; color: rgba(127, 212, 255, .42);
+    border: 1px solid rgba(127, 212, 255, .2); border-right: 0; border-bottom: 0;
+  }
+  .titleblock span { padding: 7px 10px; border-left: 1px solid rgba(127, 212, 255, .2); }
+  .titleblock span:first-child { border-left: 0; color: rgba(255, 45, 32, .6); }
+  .sweep {
+    position: absolute; top: 0; bottom: 0; width: 180px; left: -200px;
+    background: linear-gradient(90deg, transparent, rgba(127, 212, 255, .06) 70%, rgba(127, 212, 255, .22) 99%, transparent);
+    mix-blend-mode: screen;
+  }
+  :global(html[data-vfx-tier='full']) .bp-bg .sweep,
+  :global(html[data-vfx-tier='reduced']) .bp-bg .sweep { animation: bp-sweep 14s linear infinite; }
+  :global(html[data-vfx-tier='full']) .bp-bg .major { animation: bp-drift 60s linear infinite; }
+  :global(html[data-vfx-tier='static']) .bp-bg .sweep, .is-static .sweep { display: none; }
+  @keyframes bp-sweep { to { transform: translateX(calc(100vw + 400px)); } }
+  @keyframes bp-drift { to { transform: translate(120px, 120px); } }
+  @media (prefers-reduced-motion: reduce) { .sweep, .major { animation: none !important; } .sweep { display: none; } }
+  @media (max-width: 640px) { .titleblock, .zones { display: none; } }
+</style>

@@ -1,0 +1,153 @@
+---
+/**
+ * CRT-VR · Act 1 · "The Sony lineage" — slot `sony-lineage-tree`.
+ *
+ * Each Sony ancestor (left, Sony red) sends a beam across to the CRT-VR feature
+ * it became (right, phosphor green). The features join one bus that converges
+ * into CRT-VR at the bottom. Hover or focus a row to trace that one line.
+ * Mappings and years are from the coordinator. Text only, no logos.
+ *
+ * Tiers: full (beams draw, then pulses travel), reduced (beams draw, no pulses),
+ * static (everything drawn).
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './cx.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { id = 'crtvr-sony-lineage' } = Astro.props;
+
+const rows = [
+  { year: '1961', from: 'Chromatron', to: 'Focus-Well Hexagons' },
+  { year: '1968', from: 'Trinitron', to: 'Six converged beams' },
+  { year: '1982', from: 'Watchman FD', to: 'Side-fire tube' },
+  { year: '1998–2000', from: 'FD Trinitron · GDM-FW900 · BVM', to: 'Color and motion reference' },
+  { year: '2010s', from: 'Sony microOLED (ECX)', to: 'The panel we beat', rival: true },
+  { year: '2013', from: 'TRILUMINOS + XCD-LED', to: 'Six-primary QDs' },
+  { year: '2016', from: 'G Master optics', to: 'Relay optics' },
+  { year: '2016', from: 'PlayStation VR', to: 'VR heritage' },
+];
+const six = ['#ff2d20', '#ffe135', '#00ff99', '#00e5ff', '#3a6bff', '#ff3cc8'];
+---
+<div class="crtvr cx slt" id={id} data-slt>
+  <div class="slt-heads" aria-hidden="true">
+    <span class="cx-tag slt-sony">Sony ancestor</span>
+    <span></span>
+    <span class="cx-tag">Became, in CRT-VR</span>
+  </div>
+  <ol class="slt-rows">
+    {rows.map((r, i) => (
+      <li class:list={['slt-row', { rival: r.rival }]} style={`--i:${i}`} tabindex="0" data-row
+        aria-label={`${r.year}, ${r.from}${r.rival ? ': ' : ' became '}${r.to}`}>
+        <div class="slt-from">
+          <span class="slt-year cx-display">{r.year}</span>
+          <span class="slt-name">{r.from}</span>
+        </div>
+        <svg class="slt-link" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
+          <path class="slt-path" d="M0 20 C70 20 130 20 200 20" pathLength="1" />
+          <circle class="slt-pulse" r="3" cy="20" cx="0" />
+        </svg>
+        <div class="slt-to">
+          <span class="slt-feat">{r.to}</span>
+        </div>
+      </li>
+    ))}
+  </ol>
+  <div class="slt-root" aria-hidden="true">
+    <svg class="slt-merge" viewBox="0 0 100 60" preserveAspectRatio="none">
+      {six.map((c, k) => <path d={`M${20 + k * 12} 0 C${20 + k * 12} 30 50 30 50 60`} stroke={c} pathLength="1" />)}
+    </svg>
+  </div>
+  <p class="slt-crt cx-display">CRT-VR</p>
+</div>
+
+<style>
+  .slt { --red: var(--crtvr-sony-red); --grn: var(--crtvr-phosphor); }
+  .slt-heads, .slt-row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(60px, .8fr) minmax(0, 1fr); align-items: center; }
+  .slt-heads { margin-bottom: 14px; }
+  .slt-sony { color: var(--red); }
+  .slt-heads span:last-child { padding-left: 18px; }
+  .slt-rows { list-style: none; position: relative; display: grid; gap: 10px; }
+  /* right-hand bus that every feature joins */
+  .slt-rows::after {
+    content: ''; position: absolute; right: 0; top: 24px; bottom: -14px; width: 2px;
+    background: linear-gradient(180deg, transparent, var(--grn));
+    transform-origin: top; transform: scaleY(var(--bus, 0)); transition: transform 1.6s var(--crtvr-ease-out);
+  }
+  .slt-row { position: relative; outline: none; transition: opacity .35s; }
+  .slt-from {
+    display: flex; align-items: baseline; gap: 14px; padding: 12px 16px; border: 1px solid color-mix(in srgb, var(--red) 35%, var(--crtvr-line));
+    border-left: 3px solid var(--red); border-radius: 4px; background: color-mix(in srgb, var(--red) 6%, transparent);
+    opacity: 0; transform: translateX(-14px); transition: opacity .6s calc(var(--i) * 90ms), transform .6s calc(var(--i) * 90ms) var(--crtvr-ease-out), box-shadow .3s;
+  }
+  .slt-year { font-size: 26px; color: var(--red); min-width: 4.8ch; white-space: nowrap; }
+  .slt-name { font-size: 13px; letter-spacing: .06em; color: var(--crtvr-text); }
+  .slt-link { width: 100%; height: 40px; overflow: visible; }
+  .slt-path { fill: none; stroke: url(#none); stroke: var(--grn); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .9s calc(var(--i) * 90ms + 300ms) var(--crtvr-ease-out); }
+  .slt-row:not(.rival) .slt-path { stroke: var(--grn); filter: drop-shadow(0 0 3px var(--grn)); }
+  .slt-row.rival .slt-path { stroke: var(--red); stroke-dasharray: .03 .03; }
+  .slt-pulse { fill: #fff; opacity: 0; }
+  .slt-to {
+    position: relative; padding: 12px 18px; margin-right: 14px; border: 1px solid color-mix(in srgb, var(--grn) 40%, var(--crtvr-line)); border-radius: 4px;
+    background: color-mix(in srgb, var(--grn) 7%, transparent);
+    opacity: 0; transform: translateX(14px); transition: opacity .6s calc(var(--i) * 90ms + 600ms), transform .6s calc(var(--i) * 90ms + 600ms) var(--crtvr-ease-out), box-shadow .3s;
+  }
+  .slt-to::after { content: ''; position: absolute; right: -15px; top: 50%; width: 14px; height: 2px; background: var(--grn); opacity: .7; }
+  .slt-row.rival .slt-to { background: transparent; border-style: dashed; border-color: color-mix(in srgb, var(--red) 50%, var(--crtvr-line)); }
+  .slt-row.rival .slt-to::after { display: none; }
+  .slt-feat { font-size: 14px; font-weight: 500; letter-spacing: .04em; color: var(--crtvr-white); }
+  .slt-row.rival .slt-feat { color: var(--red); }
+
+  .slt.is-on .slt-from, .slt.is-on .slt-to { opacity: 1; transform: none; }
+  .slt.is-on .slt-path { stroke-dashoffset: 0; }
+  .slt.is-on .slt-rows { --bus: 1; }
+  .slt.is-on.is-pulsing .slt-row:not(.rival) .slt-pulse { animation: slt-pulse 3.2s calc(var(--i) * 400ms + 1.8s) infinite var(--crtvr-ease-out); }
+  @keyframes slt-pulse { 0% { opacity: 0; transform: translateX(0) } 8% { opacity: 1 } 70% { opacity: 1; transform: translateX(200px) } 80%, 100% { opacity: 0; transform: translateX(200px) } }
+
+  /* trace one line */
+  .slt-rows:has(.slt-row:hover, .slt-row:focus-visible) .slt-row:not(:hover):not(:focus-visible) { opacity: .28; }
+  .slt-row:hover .slt-from, .slt-row:focus-visible .slt-from { box-shadow: 0 0 24px color-mix(in srgb, var(--red) 35%, transparent); }
+  .slt-row:hover .slt-to, .slt-row:focus-visible .slt-to { box-shadow: 0 0 24px color-mix(in srgb, var(--grn) 35%, transparent); }
+
+  .slt-root { display: flex; justify-content: flex-end; }
+  .slt-merge { width: 160px; height: 70px; margin-right: -78px; overflow: visible; }
+  .slt-merge path { fill: none; stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.2s 1.6s var(--crtvr-ease-out); }
+  .slt.is-on .slt-merge path { stroke-dashoffset: 0; }
+  .slt-crt {
+    text-align: right; font-size: clamp(56px, 9vw, 110px); margin-top: 6px; padding-right: 0;
+    background: linear-gradient(90deg, #ff2d20, #ffe135, #00ff99, #00e5ff, #3a6bff, #ff3cc8); -webkit-background-clip: text; background-clip: text; color: transparent;
+    opacity: 0; transform: translateY(10px); transition: opacity 1s 2.4s, transform 1s 2.4s var(--crtvr-ease-out);
+  }
+  .slt.is-on .slt-crt { opacity: 1; transform: none; }
+  :global(html[data-vfx-tier="full"]) .slt-crt { filter: drop-shadow(0 0 18px rgba(0, 255, 153, .25)); }
+
+  @media (max-width: 720px) {
+    .slt-heads { display: none; }
+    .slt-row { grid-template-columns: 1fr; gap: 0; }
+    .slt-link { height: 26px; width: 40px; justify-self: center; transform: rotate(90deg); }
+    .slt-to { margin-right: 0; }
+    .slt-to::after, .slt-rows::after, .slt-root { display: none; }
+    .slt-crt { text-align: center; }
+  }
+
+  .slt.is-static * { transition: none !important; animation: none !important; }
+</style>
+
+<script>
+  import { onTier, type VfxTier } from '../../visuals/crt-vr/lib/tier';
+  import { onceVisible, widen } from './lib/wide';
+
+  function init(root: HTMLElement) {
+    widen(root);
+    let tier: VfxTier = 'full';
+    onTier((t) => {
+      tier = t;
+      root.classList.toggle('is-static', t === 'static');
+      root.classList.toggle('is-pulsing', t === 'full');
+      if (t === 'static') root.classList.add('is-on');
+    });
+    onceVisible(root, () => root.classList.add('is-on'), 0.2);
+    void tier;
+  }
+  document.querySelectorAll<HTMLElement>('[data-slt]').forEach(init);
+</script>

@@ -1,0 +1,15 @@
+---
+interface Props {
+  number: number;
+  title: string;
+  eyebrow?: string;
+  subtitle?: string;
+}
+const { number, title, eyebrow, subtitle } = Astro.props;
+const num = String(number).padStart(2, '0');
+---
+<header class="act-title">
+  <p class="eyebrow">{eyebrow ?? `Act ${num}`}</p>
+  <h2 class="display">{title}</h2>
+  {subtitle && <p class="act-title__sub">{subtitle}</p>}
+</header>

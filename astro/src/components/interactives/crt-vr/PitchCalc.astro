@@ -1,0 +1,246 @@
+---
+/**
+ * CRT-VR · Act 7 · "pitch-calc" — Density: pitch vs tube size and resolution.
+ *
+ * Coordinator-approved model (Nov 27):
+ *   · pitch = screen width / horizontal pixels; width from the diagonal and aspect
+ *     (default 4:3, so 24K on 4″ → 81.3 mm / 24,000 = 3.39 µm),
+ *   · each hex pixel is six equilateral triangles meeting at its centre, so the
+ *     triangle side = pitch / √3 (≈ 1.96 µm at 24K on 4″),
+ *   · electron spread in the phosphor follows a power law through the two anchors
+ *     0.1 µm at 2.5 kV and 1 µm at 10 kV: spread = 1 µm × (kV / 10)^1.66.
+ *
+ * Tiers: no motion beyond short value transitions; static disables them.
+ */
+import '../../visuals/crt-vr/tokens.css';
+import './blueprint.css';
+import type { VfxSlotProps } from '../../../lib/motion/types';
+
+interface Props extends Partial<VfxSlotProps> { id?: string }
+const { tier = 'full', id = 'bp-pitch' } = Astro.props;
+
+const WEDGE = ['#ff3c3c', '#ffe135', '#00ff99', '#00e5ff', '#3a6bff', '#ff3cdc'];
+---
+
+<div class:list={['crtvr', 'bp', 'bp-pitch', { 'is-static': tier === 'static' }]} id={id} data-pitch-calc>
+  <div class="bp-frame bp-wide">
+    <div class="bp-head">
+      <span><b>Density calculator</b> &nbsp;· pitch vs tube size and resolution</span>
+      <span class="bp-dwg">DWG CRT-VR-07-07</span>
+    </div>
+
+    <div class="bp-controls top">
+      <label class="bp-ctl">Tube diagonal <output data-o="diag"></output>
+        <input type="range" min="1.5" max="6" step="0.1" value="4" data-in="diag" />
+      </label>
+      <label class="bp-ctl">Horizontal resolution <output data-o="res"></output>
+        <input type="range" min="4" max="32" step="1" value="24" data-in="res" />
+      </label>
+      <label class="bp-ctl">Beam voltage <output data-o="kv"></output>
+        <input type="range" min="1" max="15" step="0.5" value="2.5" data-in="kv" />
+      </label>
+      <div class="bp-ctl">Aspect
+        <span class="bp-seg" role="group" aria-label="Aspect ratio">
+          <button type="button" aria-pressed="true" data-aspect="4:3">4:3</button>
+          <button type="button" aria-pressed="false" data-aspect="16:9">16:9</button>
+          <button type="button" aria-pressed="false" data-aspect="1:1">1:1</button>
+        </span>
+      </div>
+    </div>
+    <div class="presets">
+      <span class="bp-note">Presets</span>
+      <button type="button" class="bp-btn" data-preset="24,4,2.5,4:3">CRT-VR · 24K · 4″ · 2.5 kV</button>
+      <button type="button" class="bp-btn" data-preset="24,4,10,4:3">Same tube at 10 kV</button>
+      <button type="button" class="bp-btn" data-preset="8,4,2.5,4:3">8K on 4″</button>
+    </div>
+
+    <div class="bp-readouts">
+      <div class="bp-ro" data-ro="width"><span>Screen width</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="pitch"><span>Pixel pitch</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="tri"><span>Triangle side (pitch / √3)</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="ppi"><span>Density</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="spread"><span>Electron spread</span><strong>—</strong></div>
+      <div class="bp-ro" data-ro="ratio"><span>Spread vs triangle</span><strong>—</strong></div>
+    </div>
+
+    <div class="views">
+      <figure class="micro">
+        <svg viewBox="0 0 360 320" role="img" aria-labelledby={`${id}-mt`}>
+          <title id={`${id}-mt`}>One hex pixel at true relative scale with the electron spread drawn in its green triangle</title>
+          <g data-hex></g>
+          <circle data-spread class="spread glow" />
+          <g transform="translate(20 296)">
+            <line data-scalebar x1="0" y1="0" x2="60" y2="0" class="ink" stroke-width="3" />
+            <text data-scaletxt class="lbl sub" x="0" y="-8">1 µm</text>
+          </g>
+          <text class="lbl sub" x="340" y="296" text-anchor="end" data-microlbl></text>
+        </svg>
+        <figcaption class="bp-note">Microscope view · white disc = electron spread</figcaption>
+      </figure>
+      <figure class="chart">
+        <svg viewBox="0 0 560 320" role="img" aria-labelledby={`${id}-ct`}>
+          <title id={`${id}-ct`}>Triangle side against tube diagonal for 8K, 16K, 24K and 32K, with the electron spread at the chosen beam voltage as a dashed line</title>
+          <g data-axes></g>
+          <g data-curves></g>
+          <line data-spreadline class="spreadline" />
+          <text data-spreadlbl class="lbl sub" fill="#fff4d6"></text>
+          <circle data-pt r="6" class="pt glow" />
+        </svg>
+        <figcaption class="bp-note">Triangle side (log scale) vs tube diagonal · dashed = electron spread</figcaption>
+      </figure>
+    </div>
+    <p class="bp-foot">Spread model: a power law through 0.1 µm at 2.5 kV and 1 µm at 10 kV (exponent 1.66, Kanaya–Okayama-like). At 2 kV the beam spreads only ~0.1 µm in the phosphor, far inside a ~2 µm subpixel. At the 10 kV top end it spreads about 1 µm, roughly half a subpixel, and the walled Kurocoat wells keep it from bleeding into neighbors. That is why CRT-VR runs at 2–10 kV.</p>
+  </div>
+</div>
+
+<script define:vars={{ WEDGE }}>
+  window.__bpPitchW = WEDGE;
+</script>
+
+<script>
+  import { onTier } from '../../visuals/crt-vr/lib/tier';
+
+  const WEDGE = (window as any).__bpPitchW as string[];
+  const NS = 'http://www.w3.org/2000/svg';
+  const ASPECT: Record<string, [number, number]> = { '4:3': [4, 3], '16:9': [16, 9], '1:1': [1, 1] };
+  const EXP = Math.log(10) / Math.log(4); // 1.66: through (2.5 kV, 0.1 µm) and (10 kV, 1 µm)
+
+  const widthMm = (diagIn: number, a: [number, number]) => diagIn * 25.4 * (a[0] / Math.hypot(a[0], a[1]));
+  const pitchUm = (diagIn: number, kRes: number, a: [number, number]) => (widthMm(diagIn, a) * 1000) / (kRes * 1000);
+  const spreadUm = (kv: number) => Math.pow(kv / 10, EXP);
+
+  const mk = (tag: string, attrs: Record<string, string | number>, parent?: Element) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+    parent?.appendChild(e);
+    return e;
+  };
+
+  function setup(root: HTMLElement) {
+    const q = <T extends Element>(s: string) => root.querySelector(s) as T;
+    const inp = (k: string) => q<HTMLInputElement>(`[data-in="${k}"]`);
+    const out = (k: string) => q<HTMLOutputElement>(`[data-o="${k}"]`);
+    const ro = (k: string) => q<HTMLElement>(`[data-ro="${k}"]`);
+    const aspBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-aspect]'));
+    let aspect = '4:3';
+
+    // chart frame
+    const CX0 = 60, CX1 = 540, CY0 = 20, CY1 = 280, D0 = 1.5, D1 = 6, L0 = Math.log10(0.02), L1 = Math.log10(20);
+    const xOf = (d: number) => CX0 + ((d - D0) / (D1 - D0)) * (CX1 - CX0);
+    const yOf = (um: number) => CY1 - ((Math.log10(Math.max(0.02, um)) - L0) / (L1 - L0)) * (CY1 - CY0);
+    const axes = q<SVGGElement>('[data-axes]');
+    mk('rect', { x: CX0, y: CY0, width: CX1 - CX0, height: CY1 - CY0, fill: '#020610', stroke: '#7fd4ff', 'stroke-opacity': 0.3 }, axes);
+    for (const v of [0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20]) {
+      mk('line', { x1: CX0, x2: CX1, y1: yOf(v), y2: yOf(v), stroke: '#7fd4ff', 'stroke-opacity': [0.1, 1, 10].includes(v) ? 0.22 : 0.07 }, axes);
+      const t = mk('text', { x: CX0 - 8, y: yOf(v) + 4, 'text-anchor': 'end', class: 'lbl sub', 'font-size': 10 }, axes);
+      t.textContent = `${v}`;
+    }
+    for (let d = 2; d <= 6; d++) {
+      mk('line', { x1: xOf(d), x2: xOf(d), y1: CY0, y2: CY1, stroke: '#7fd4ff', 'stroke-opacity': 0.07 }, axes);
+      const t = mk('text', { x: xOf(d), y: CY1 + 16, 'text-anchor': 'middle', class: 'lbl sub', 'font-size': 10 }, axes);
+      t.textContent = `${d}″`;
+    }
+    const yl = mk('text', { x: 14, y: CY0 + 4, class: 'lbl sub', 'font-size': 10 }, axes);
+    yl.textContent = 'µm';
+    const curves = q<SVGGElement>('[data-curves]');
+
+    const drawCurves = () => {
+      curves.replaceChildren();
+      const a = ASPECT[aspect];
+      [8, 16, 24, 32].forEach((k, i) => {
+        let d = '';
+        for (let dg = D0; dg <= D1 + 1e-6; dg += 0.1) d += `${d ? 'L' : 'M'}${xOf(dg).toFixed(1)},${yOf(pitchUm(dg, k, a) / Math.sqrt(3)).toFixed(1)}`;
+        mk('path', { d, class: `curve c${i}`, 'data-k': k }, curves);
+        const t = mk('text', { x: CX1 + 4, y: yOf(pitchUm(D1, k, a) / Math.sqrt(3)) + 4, class: 'lbl sub', 'font-size': 10 }, curves);
+        t.textContent = `${k}K`;
+      });
+    };
+
+    const hexG = q<SVGGElement>('[data-hex]');
+    const spreadC = q<SVGCircleElement>('[data-spread]');
+
+    const update = () => {
+      const diag = Number(inp('diag').value), k = Number(inp('res').value), kv = Number(inp('kv').value);
+      const a = ASPECT[aspect];
+      const w = widthMm(diag, a), p = pitchUm(diag, k, a), tri = p / Math.sqrt(3), sp = spreadUm(kv), ratio = sp / tri;
+      out('diag').textContent = `${diag.toFixed(1)}″`;
+      out('res').textContent = `${k}K (${(k * 1000).toLocaleString('en-US')} px)`;
+      out('kv').textContent = `${kv.toFixed(1)} kV`;
+      const set = (key: string, html: string, cls = '') => { ro(key).querySelector('strong')!.innerHTML = html; ro(key).className = `bp-ro ${cls}`; };
+      set('width', `${w.toFixed(1)}<small>mm</small>`);
+      set('pitch', `${p.toFixed(2)}<small>µm</small>`);
+      set('tri', `${tri.toFixed(2)}<small>µm</small>`);
+      set('ppi', `${Math.round(25400 / p).toLocaleString('en-US')}<small>PPI</small>`);
+      set('spread', `${sp < 0.1 ? sp.toFixed(3) : sp.toFixed(2)}<small>µm</small>`);
+      set('ratio', `${(ratio * 100).toFixed(ratio < 0.1 ? 1 : 0)}<small>% · ${ratio < 0.1 ? 'crisp' : ratio < 0.35 ? 'soft edges' : 'bleeds into neighbours'}</small>`,
+        ratio < 0.1 ? 'ok' : ratio < 0.35 ? 'warn' : 'bad');
+
+      // microscope: hex drawn so the triangle side fills ~120 px unless the spread needs more room
+      const scale = 120 / tri; // px per µm
+      const cx = 180, cy = 150, R = tri * scale;
+      hexG.replaceChildren();
+      for (let j = 0; j < 6; j++) {
+        const c = (m: number) => { const ang = (Math.PI / 180) * (60 * m - 90); return [cx + R * Math.cos(ang), cy + R * Math.sin(ang)]; };
+        const [ax, ay] = c(j), [bx, by] = c(j + 1);
+        mk('path', { d: `M${cx},${cy} L${ax},${ay} L${bx},${by} Z`, fill: WEDGE[j], 'fill-opacity': j === 2 ? 0.6 : 0.22, stroke: '#05070b', 'stroke-width': 3 }, hexG);
+      }
+      const [gx, gy] = (() => { const c = (m: number) => { const ang = (Math.PI / 180) * (60 * m - 90); return [cx + R * Math.cos(ang), cy + R * Math.sin(ang)]; }; const [ax, ay] = c(2), [bx, by] = c(3); return [(cx + ax + bx) / 3, (cy + ay + by) / 3]; })();
+      spreadC.setAttribute('cx', gx.toFixed(1)); spreadC.setAttribute('cy', gy.toFixed(1));
+      spreadC.setAttribute('r', Math.max(1.2, (sp * scale) / 2).toFixed(1));
+      // scale bar: pick a round length near 60 px
+      const nice = [0.1, 0.2, 0.5, 1, 2, 5, 10].find((v) => v * scale >= 40) ?? 10;
+      q<SVGLineElement>('[data-scalebar]').setAttribute('x2', String(nice * scale));
+      q<SVGTextElement>('[data-scaletxt]').textContent = `${nice} µm`;
+      q<SVGTextElement>('[data-microlbl]').textContent = `triangle ${tri.toFixed(2)} µm`;
+
+      // chart point + spread line
+      const pt = q<SVGCircleElement>('[data-pt]');
+      pt.setAttribute('cx', xOf(diag).toFixed(1)); pt.setAttribute('cy', yOf(tri).toFixed(1));
+      const sl = q<SVGLineElement>('[data-spreadline]');
+      sl.setAttribute('x1', String(CX0)); sl.setAttribute('x2', String(CX1));
+      sl.setAttribute('y1', yOf(sp).toFixed(1)); sl.setAttribute('y2', yOf(sp).toFixed(1));
+      const slt = q<SVGTextElement>('[data-spreadlbl]');
+      slt.setAttribute('x', String(CX0 + 8)); slt.setAttribute('y', (yOf(sp) - 6).toFixed(1));
+      slt.textContent = `spread @ ${kv.toFixed(1)} kV`;
+      curves.querySelectorAll<SVGPathElement>('.curve').forEach((c) => c.classList.toggle('sel', Number(c.dataset.k) === k));
+    };
+
+    root.querySelectorAll<HTMLInputElement>('input').forEach((i) => i.addEventListener('input', update));
+    const setAspect = (asp: string) => {
+      aspect = asp;
+      aspBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.aspect === asp)));
+      drawCurves(); update();
+    };
+    aspBtns.forEach((b) => b.addEventListener('click', () => setAspect(b.dataset.aspect!)));
+    root.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((b) => b.addEventListener('click', () => {
+      const [k, d, kv, asp] = b.dataset.preset!.split(',');
+      inp('res').value = k; inp('diag').value = d; inp('kv').value = kv;
+      setAspect(asp);
+    }));
+    onTier((t) => root.classList.toggle('is-static', t === 'static'));
+    drawCurves(); update();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-pitch-calc]').forEach(setup);
+</script>
+
+<style>
+  .top { border-top: 0; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0 14px 14px; }
+  .views { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); border-top: 1px solid var(--bp-ink-dim); }
+  .views figure { margin: 0; padding: 12px; }
+  .views figure + figure { border-left: 1px solid var(--bp-ink-faint); }
+  figcaption { margin-top: 6px; }
+  .spread { fill: #fff4d6; fill-opacity: .85; color: #fff4d6; transition: r .25s var(--crtvr-ease-out); }
+  [data-hex] :global(path) { transition: d .25s; }
+  .chart :global(.curve) { fill: none; stroke: #7fd4ff; stroke-opacity: .35; stroke-width: 1.5; }
+  .chart :global(.curve.sel) { stroke: #00ff99; stroke-opacity: 1; stroke-width: 2.4; }
+  .spreadline { stroke: #fff4d6; stroke-dasharray: 6 5; stroke-width: 1.4; }
+  .pt { fill: #00ff99; color: #00ff99; }
+  .is-static .spread { transition: none; }
+  @media (max-width: 760px) {
+    .views { grid-template-columns: 1fr; }
+    .views figure + figure { border-left: 0; border-top: 1px solid var(--bp-ink-faint); }
+    .micro svg { max-width: 320px; margin: 0 auto; }
+  }
+</style>

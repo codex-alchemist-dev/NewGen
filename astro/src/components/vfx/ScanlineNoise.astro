@@ -5,6 +5,8 @@
  *  reduced  scanlines + static grain
  *  static   hidden
  * Intensities are tokens: --vfx-scan-opacity, --vfx-grain-opacity.
+ * All of it fades with --vfx-retro (1 at Act 1 → 0 at the last act), set by
+ * ScrollBackdrop: the page scrolls from glowing tube to clean modern VR.
  */
 ---
 <div class="vfx-tube" aria-hidden="true">
@@ -32,7 +34,7 @@
       rgb(0 0 0 / 0) 2px,
       rgb(0 0 0 / 1) 3px
     );
-    opacity: calc(var(--vfx-scan-opacity) * 2.2);
+    opacity: calc(var(--vfx-scan-opacity) * 2.2 * var(--vfx-retro, 1));
     mix-blend-mode: multiply;
   }
   .vfx-tube__grain {
@@ -40,7 +42,7 @@
     inset: -200px;
     background-image: var(--vfx-grain, none);
     background-size: 192px 192px;
-    opacity: var(--vfx-grain-opacity);
+    opacity: calc(var(--vfx-grain-opacity) * var(--vfx-retro, 1));
     mix-blend-mode: screen;
     animation: vfx-grain 0.9s steps(9) infinite;
   }
@@ -58,6 +60,7 @@
       transparent
     );
     animation: vfx-roll 9s linear infinite;
+    opacity: var(--vfx-retro, 1);
   }
   @keyframes vfx-grain {
     0% { transform: translate(0, 0); }

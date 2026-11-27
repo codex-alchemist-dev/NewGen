@@ -353,8 +353,8 @@ const v = (['default', 'eye', 'warp', 'six-beam', 'rays'].includes(variant) ? va
         const f = Math.exp(-Math.pow((u - 0.86) / 0.05, 2));
         flash.setAttribute('cx', String(c.cx));
         flash.setAttribute('cy', String(c.cy));
-        flash.setAttribute('r', (c.R * (0.05 + f * 0.6)).toFixed(1));
-        flash.setAttribute('opacity', (f * 0.85 * (1 - out)).toFixed(3));
+        flash.setAttribute('r', (c.R * (0.05 + f * 0.32)).toFixed(1));
+        flash.setAttribute('opacity', (f * 0.7 * (1 - out)).toFixed(3));
       },
     };
   }

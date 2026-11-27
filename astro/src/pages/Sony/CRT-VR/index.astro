@@ -2,24 +2,26 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import ActRail from '../../../components/kit/ActRail.astro';
 import {
-  ActWrapper, ActTitle, Section, Slot, StatCard, Badge, SpecTable, ComparisonTable, CertificationWall, Footnote, Callout,
+  ActWrapper, ActTitle, Section, Slot, StatCard, Badge, ComparisonTable, CertificationWall, Footnote,
 } from '../../../components/kit';
-import { acts } from '../../../data/crt-vr';
 import HeroAnimatic from '../../../components/visuals/crt-vr/HeroAnimatic.astro';
 import HookBackground from '../../../components/visuals/crt-vr/HookBackground.astro';
 import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
 import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
 import CrtVrInteractive from '../../../components/interactives/crt-vr/CrtVrInteractive.astro';
 import { BUILT_INTERACTIVES } from '../../../components/interactives/crt-vr';
+import { acts } from '../../../data/crt-vr';
+import { comparisonHeads, comparisonRows, openQuestions, liveFootnotes, specGroups } from '../../../data/crt-vr-proof';
+import SpecTable from '../../../components/kit/SpecTable.astro';
 
 const placeholder = '[copy pending]';
 ---
 <BaseLayout
   title="SONY CRT-VR — 2nd® Gen preview"
-  description="Preview scaffold for the 2nd® Gen CRT-VR page. Placeholder copy."
+  description="Preview scaffold for the 2nd® Gen CRT-VR page."
 >
   <div class="page-chrome">
-    <p class="eyebrow">NewGen × Sony · 2nd® Gen preview · placeholder copy</p>
+    <p class="eyebrow">NewGen × Sony · 2nd® Gen preview</p>
   </div>
   <GlobalVfx />
   <ActRail />
@@ -28,31 +30,36 @@ const placeholder = '[copy pending]';
       <ActWrapper id={act.id} number={act.number} transition={act.transition} title={act.title}>
         <ActTitle number={act.number} title={act.title} subtitle={act.tagline} />
         {act.sections.map((s) => (
-          <Section id={s.id} title={s.title}>
-            {s.kind === 'hero' && (
-              <>
-                <Badge kind="trl" label="TRL 2–3" />
-                <p>{placeholder}</p>
-              </>
+          <Section id={s.id} title={s.headline ?? s.title} eyebrow={s.eyebrow}>
+            {s.kind === 'hero' && <Badge kind="trl" label="TRL 2–3" />}
+            {s.body ? s.body.map((p) => <p>{p}</p>) : s.kind !== 'stats' && s.kind !== 'badges' && s.kind !== 'comparison' && s.kind !== 'specs' && s.kind !== 'honesty' && <p>{placeholder}</p>}
+
+            {s.kind === 'stats' && s.id === 'the-reveal' && act.number === 1 && (
+              <RevealStats tier="full" reducedMotion={false} items={(s.items ?? []).map((i) => ({ value: i.value ?? '', unit: i.unit, label: i.label, color: i.color }))} />
             )}
-            {s.kind !== 'stats' && s.kind !== 'badges' && s.kind !== 'comparison' && s.kind !== 'specs' && (
-              <p>{placeholder}</p>
-            )}
-            {s.kind === 'stats' && s.id === 'the-reveal' && act.number === 1 && <RevealStats tier="full" reducedMotion={false} />}
             {s.kind === 'stats' && !(s.id === 'the-reveal' && act.number === 1) && (
               <div class="stat-grid">
-                {(s.items ?? []).map((i) => <StatCard label={i.label} />)}
+                {(s.items ?? []).map((i) => <StatCard label={i.label} value={i.value} unit={i.unit} />)}
               </div>
             )}
-            {s.kind === 'badges' && (
-              <CertificationWall items={s.items ?? []} footnote={s.footnote} />
-            )}
+            {s.kind === 'badges' && <CertificationWall items={s.items ?? []} />}
             {s.kind === 'comparison' && (
-              <ComparisonTable caption="Versus" columns={s.columns ?? []} rows={(s.items ?? []).map((i) => ({ label: i.label, cells: i.cells ?? [] }))} />
+              <ComparisonTable caption="CRT-VR vs. everything" columns={comparisonHeads} rows={comparisonRows} />
             )}
-            {s.kind === 'specs' && <SpecTable caption="Full specs" rows={[]} />}
+            {s.kind === 'specs' && specGroups.map((g) => <SpecTable caption={g.name} rows={g.rows} />)}
+            {s.kind === 'honesty' && (
+              <>
+                <ol class="open-questions">
+                  {openQuestions.map((q, i) => (
+                    <li><span class="eyebrow">{q.tier}</span> <span>№{i + 1}</span><p>{q.body}</p></li>
+                  ))}
+                </ol>
+                {liveFootnotes.map((f, i) => <Footnote n={i + 1}>{f}</Footnote>)}
+              </>
+            )}
+
+            {s.footnote && <Footnote n="†">{s.footnote}</Footnote>}
             {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
-            {/* Act 1 background (act-01/background). It mounts itself into the act; the VFX thread can move it into ActBackground. */}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
             {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
             {s.interactive && BUILT_INTERACTIVES.has(s.interactive) && <CrtVrInteractive id={s.interactive} />}
@@ -66,5 +73,6 @@ const placeholder = '[copy pending]';
 <style>
   .page-chrome { position: sticky; top: 0; z-index: 10; padding: var(--s-2) var(--gutter); background: color-mix(in srgb, var(--bg) 85%, transparent); }
   .stat-grid { display: grid; gap: var(--s-2); grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin: var(--s-3) 0; }
+  .open-questions { list-style: none; display: grid; gap: var(--s-2); margin: var(--s-3) 0; }
   main { padding-right: 0; }
 </style>

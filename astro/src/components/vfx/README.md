@@ -38,15 +38,15 @@ background can scrub without its own ScrollTrigger.
 | File | What it does |
 |---|---|
 | `GlobalVfx.astro` | Bundles everything below and the section motion |
-| `ScrollBackdrop.astro` | Fixed WebGL backdrop. Scenes: `phosphor`, `mask` (hex RGB + inverted MCY lattice), `grid` (VR perspective), `scan` (raster beam + phosphor decay), `void`. Morphs act to act on a damped "section position", so blends never pop. Writes the live tint to `--vfx-tint-rgb` |
+| `ScrollBackdrop.astro` | Fixed WebGL backdrop, one scene per act (`act-looks.ts`): `field`, `eye` (almond scan field on the cursor, densest at the fovea), `streaks` (speed with scroll), `mosaic` (six-primary hex flow), `hdr` (white bloom on a true-zero black), `trails` (hard-edged impulse copies, no smear), `blueprint`, `cone`, `calm`, `timelapse`, `shimmer`, `clean`. Morphs act to act on a damped "section position", so blends never pop. Writes `--vfx-tint-rgb` and `--vfx-retro` (1 at Act 1 → 0 at the last act) |
 | `section-motion.ts` | One loop for every `.act-title` / `.section` child and any `[data-reveal]`: scroll-scrubbed opacity, rise and de-blur in and out, staggered. `[data-parallax="0.15"]` floats at depth |
 | `ActTransition.astro` | The grand act change (below) |
 | `ActBackground.astro` | Act backdrop declaration + custom background host |
 | `BeamText.astro` | Real HTML text drawn on by an electron beam. `trigger="scroll" \| "enter" \| "external"`; with `external`, set `el.progress = 0..1` to sync it to any animation |
-| `ScanlineNoise.astro` | Scanlines, animated grain, rolling refresh band |
+| `ScanlineNoise.astro` | Scanlines, animated grain, rolling refresh band. Fades out with `--vfx-retro` across the page |
 | `PhosphorBloom.astro` | SVG filters `#ng-bloom`, `#ng-bloom-hot`; CSS `.ng-glow`, `.ng-glow--hot`, `.ng-phosphor` |
 | `PersistenceCursor.astro` | Pointer trail with two-stage phosphor persistence, white-hot to tint |
-| `act-looks.ts` | Per-act scene + tint (provisional) |
+| `act-looks.ts` | Per-act scene + tint, from the design doc's per-act table |
 | `tokens.css` | VFX tokens on top of `src/styles/tokens.css` (RGBMCY primaries, font aliases, curves) |
 | `quality.ts`, `motion.ts` | Adapter over the shared quality store; velocity signal and math kit |
 

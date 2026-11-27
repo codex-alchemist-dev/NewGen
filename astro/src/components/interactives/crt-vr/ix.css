@@ -1,0 +1,123 @@
+/*
+ * CRT-VR interactive frame (Acts 2–3). Instrument-panel look:
+ * deep glass, hairline grid, corner brackets, mono eyebrows, Bebas readouts.
+ * Uses the aliases in visuals/crt-vr/tokens.css.
+ */
+@import '../../visuals/crt-vr/tokens.css';
+
+.ix {
+  --ix-pad: clamp(14px, 2.4vw, 28px);
+  position: relative;
+  margin: var(--s-4, 32px) 0 var(--s-6, 48px);
+  width: min(1088px, calc(100vw - 2 * var(--gutter, 16px)));
+  max-width: none;
+  padding: var(--ix-pad);
+  color: var(--crtvr-text);
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--crtvr-phosphor) 5%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--crtvr-surface) 70%, transparent), color-mix(in srgb, var(--crtvr-bg) 92%, transparent));
+  border: 1px solid var(--crtvr-line);
+  border-radius: 6px;
+  box-shadow: 0 30px 80px -40px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(255, 255, 255, .03);
+  isolation: isolate;
+  font-family: var(--crtvr-font-mono);
+}
+.ix::before { /* NewGen signature grid */
+  content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background-image:
+    linear-gradient(var(--ng-grid-line, rgba(26, 34, 64, .5)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ng-grid-line, rgba(26, 34, 64, .5)) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(90% 70% at 50% 40%, #000 30%, transparent 85%);
+  opacity: .35;
+}
+.ix__corner { position: absolute; width: 14px; height: 14px; border-color: var(--crtvr-phosphor); border-style: solid; opacity: .7; }
+.ix__corner--tl { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+.ix__corner--br { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+.ix__head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 24px; margin-bottom: 18px; }
+.ix__eyebrow {
+  flex: 1 0 100%; margin: 0; display: flex; align-items: center; gap: 8px;
+  font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ng-label-accent, var(--crtvr-phosphor));
+}
+.ix__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.ix__title {
+  flex: 1 1 auto; margin: 0; font-family: var(--crtvr-font-display); font-weight: 400;
+  font-size: clamp(26px, 3.6vw, 40px); letter-spacing: .03em; line-height: 1; color: var(--crtvr-white);
+}
+.ix__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+
+.ix__body { display: grid; grid-template-columns: minmax(0, 1fr) 248px; gap: 20px; }
+.ix__body--solo { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 860px) { .ix__body { grid-template-columns: minmax(0, 1fr); } }
+
+.ix__stage { position: relative; min-width: 0; }
+.ix__stage canvas, .ix__stage svg.ix-svg {
+  display: block; width: 100%; height: auto; border-radius: 4px; background: var(--crtvr-bg);
+  border: 1px solid var(--crtvr-line); touch-action: none;
+}
+.ix__stage canvas { cursor: crosshair; }
+.ix__screen { position: relative; border-radius: 4px; overflow: hidden; }
+.ix__screen::after { /* tube glass: scanlines + vignette, fades with the retro arc */
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, calc(.22 * var(--vfx-retro, 1))) 0 1px, transparent 1px 3px),
+    radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(0, 0, 0, .55));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .02), inset 0 0 40px rgba(0, 255, 153, .04);
+}
+:root[data-vfx-tier='static'] .ix__screen::after { background: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(0, 0, 0, .5)); }
+
+.ix__hint { margin: 10px 0 0; font-size: 11px; letter-spacing: .08em; color: var(--crtvr-text-dim); }
+.ix__foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--crtvr-line); font-size: 11px; line-height: 1.7; letter-spacing: .04em; color: var(--crtvr-text-dimmer); }
+.ix__foot b { color: var(--crtvr-text-dim); font-weight: 500; }
+
+.ix__readout { display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 860px) { .ix__readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }
+
+.ro { --ro-c: var(--crtvr-text); padding: 12px 14px; border: 1px solid var(--crtvr-line); border-left: 2px solid var(--ro-c); border-radius: 3px; background: color-mix(in srgb, var(--crtvr-bg) 70%, transparent); }
+.ro__k { margin: 0 0 4px; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--crtvr-text-dim); }
+.ro__v { margin: 0; font-family: var(--crtvr-font-display); font-size: 30px; line-height: 1; color: var(--ro-c); font-variant-numeric: tabular-nums; text-shadow: 0 0 calc(18px * var(--ix-glow, 1)) color-mix(in srgb, var(--ro-c) 55%, transparent); }
+.ro--big .ro__v { font-size: clamp(46px, 6vw, 64px); }
+.ro__u { margin-left: 6px; font-family: var(--crtvr-font-mono); font-size: 12px; letter-spacing: .08em; color: var(--crtvr-text-dim); text-shadow: none; }
+.ro__n { margin: 6px 0 0; font-size: 10.5px; line-height: 1.55; color: var(--crtvr-text-dimmer); }
+:root[data-vfx-tier='static'] .ix, :root[data-vfx-tier='reduced'] .ix { --ix-glow: .4; }
+
+.sl { display: grid; gap: 6px; min-width: 200px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--crtvr-text-dim); }
+.sl__l { display: flex; justify-content: space-between; gap: 12px; }
+.sl__l b { font-weight: 500; color: var(--crtvr-phosphor); }
+.sl input[type='range'] {
+  --p: 50%; appearance: none; -webkit-appearance: none; width: 100%; height: 18px; margin: 0; background: transparent; cursor: pointer;
+}
+.sl input[type='range']::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, var(--crtvr-phosphor) var(--p), var(--crtvr-line-bright) var(--p)); }
+.sl input[type='range']::-moz-range-track { height: 2px; background: linear-gradient(90deg, var(--crtvr-phosphor) var(--p), var(--crtvr-line-bright) var(--p)); }
+.sl input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -6px; border-radius: 50%; background: var(--crtvr-bg); border: 2px solid var(--crtvr-phosphor); box-shadow: 0 0 12px var(--crtvr-phosphor); }
+.sl input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--crtvr-bg); border: 2px solid var(--crtvr-phosphor); box-shadow: 0 0 12px var(--crtvr-phosphor); }
+.sl input:focus-visible { outline: 1px dashed var(--crtvr-phosphor); outline-offset: 4px; }
+
+.seg { display: inline-flex; border: 1px solid var(--crtvr-line-bright); border-radius: 3px; overflow: hidden; }
+.seg button {
+  appearance: none; border: 0; margin: 0; padding: 7px 12px; cursor: pointer; background: transparent; color: var(--crtvr-text-dim);
+  font: 500 10.5px/1 var(--crtvr-font-mono); letter-spacing: .16em; text-transform: uppercase; transition: background .2s, color .2s;
+}
+.seg button + button { border-left: 1px solid var(--crtvr-line-bright); }
+.seg button:hover { color: var(--crtvr-text); }
+.seg button.is-on { background: color-mix(in srgb, var(--crtvr-phosphor) 14%, transparent); color: var(--crtvr-phosphor); }
+.seg button:focus-visible { outline: 1px dashed var(--crtvr-phosphor); outline-offset: -3px; }
+
+.ix-btn {
+  appearance: none; cursor: pointer; padding: 8px 14px; border-radius: 3px; border: 1px solid var(--crtvr-phosphor);
+  background: color-mix(in srgb, var(--crtvr-phosphor) 10%, transparent); color: var(--crtvr-phosphor);
+  font: 500 10.5px/1 var(--crtvr-font-mono); letter-spacing: .16em; text-transform: uppercase;
+}
+.ix-btn:hover { background: color-mix(in srgb, var(--crtvr-phosphor) 20%, transparent); }
+
+.lg { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 10.5px; letter-spacing: .08em; color: var(--crtvr-text-dim); }
+.lg li { display: flex; align-items: center; gap: 7px; }
+.lg span { width: 8px; height: 8px; border-radius: 50%; }
+
+.ix-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 700px) { .ix-split { grid-template-columns: 1fr; } }
+.ix-split__h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 0 8px; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--crtvr-text-dim); }
+.ix-split__h b { font-family: var(--crtvr-font-display); font-size: 22px; letter-spacing: .02em; font-weight: 400; }
+
+.ix-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

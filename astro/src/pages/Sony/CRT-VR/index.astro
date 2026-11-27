@@ -9,6 +9,8 @@ import HeroAnimatic from '../../../components/visuals/crt-vr/HeroAnimatic.astro'
 import HookBackground from '../../../components/visuals/crt-vr/HookBackground.astro';
 import RevealStats from '../../../components/visuals/crt-vr/RevealStats.astro';
 import GlobalVfx from '../../../components/vfx/GlobalVfx.astro';
+import CrtVrInteractive from '../../../components/interactives/crt-vr/CrtVrInteractive.astro';
+import { BUILT_INTERACTIVES } from '../../../components/interactives/crt-vr';
 
 const placeholder = '[copy pending]';
 ---
@@ -53,7 +55,8 @@ const placeholder = '[copy pending]';
             {/* Act 1 background (act-01/background). It mounts itself into the act; the VFX thread can move it into ActBackground. */}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
             {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
-            {s.interactive && <Slot id={s.interactive} kind="interactive" />}
+            {s.interactive && BUILT_INTERACTIVES.has(s.interactive) && <CrtVrInteractive id={s.interactive} />}
+            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && <Slot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>

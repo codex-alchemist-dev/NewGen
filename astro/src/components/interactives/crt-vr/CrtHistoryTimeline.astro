@@ -261,6 +261,7 @@ const six = ['#ff2d20', '#00ff99', '#3a6bff', '#ff3cc8', '#00e5ff', '#ffe135'];
         lastFocus = f;
         const n = nodes[f];
         big.textContent = n.querySelector('.tl-year')!.textContent;
+        big.style.fontSize = (big.textContent || '').length > 6 ? 'clamp(90px, 14vw, 220px)' : '';
         const key = (n.className.match(/era-(\w+)/) || [])[1] || 'tube';
         const [label, col] = ERA[key];
         era.textContent = label; era.style.color = col; big.style.color = col;

@@ -45,3 +45,10 @@ All three copy lines, captions and figures are real HTML/SVG text.
 | `BlueprintBackground.astro` | `act-07/background` | Cyan drafting sheet: minor/major grid, zone letters, registration marks, title block, slow plotter sweep. Mounted through ActWrapper's `background` slot. |
 
 The Act 7 interactives live in `interactives/crt-vr/` (see its README).
+
+## Act 8 · Wraparound Optics
+
+| Component | Section | What it is |
+|---|---|---|
+| `PupilSwim.astro` | `pupil-swim-correction` | Eye turns, the pupil shifts; correction off makes the view wobble, on holds it still. Static tier shows a held frame. |
+| `GlareControl.astro` | `glare-and-ghost-control` | Barrel cross-section: bare walls bounce stray light into the eye and lift black; Kurocoat lining and baffles absorb it. |

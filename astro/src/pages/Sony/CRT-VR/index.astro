@@ -30,6 +30,18 @@ import HexaSensors from '../../../components/interactives/crt-vr/HexaSensors.ast
 import HexaFeatures from '../../../components/interactives/crt-vr/HexaFeatures.astro';
 import PitchCalc from '../../../components/interactives/crt-vr/PitchCalc.astro';
 import BlueprintBackground from '../../../components/visuals/crt-vr/BlueprintBackground.astro';
+import PupilSwim from '../../../components/visuals/crt-vr/PupilSwim.astro';
+import GlareControl from '../../../components/visuals/crt-vr/GlareControl.astro';
+import FlatVsCone from '../../../components/interactives/crt-vr/FlatVsCone';
+import RayTracer from '../../../components/interactives/crt-vr/RayTracer';
+import RotateEye from '../../../components/interactives/crt-vr/RotateEye';
+import TierCompare from '../../../components/interactives/crt-vr/TierCompare';
+import ExplodedRelay from '../../../components/interactives/crt-vr/ExplodedRelay';
+import FringeToggle from '../../../components/interactives/crt-vr/FringeToggle';
+
+// Act 8 visuals and islands that replace their <Slot>.
+const act8Visuals = new Set(['pupil-swim', 'glare-control']);
+const act8Islands = new Set(['flat-vs-cone', 'rotate-eye', 'tier-compare', 'fringe-toggle']);
 
 const placeholder = '[copy pending]';
 /* Act 7 · The Machine interactives (slot id → component). Hexa-Index mounts emission, sensors and features. */
@@ -84,18 +96,34 @@ const act7: Record<string, any> = {
             {s.footnote && <Footnote n="†">{s.footnote}</Footnote>}
             {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
-            {s.visual && s.visual !== 'hero-animatic' && <CrtvrSlot id={s.visual} kind="visual" />}
-{s.interactive === 'gamut-explorer' && <GamutExplorer client:visible tier="full" reducedMotion={false} />}
+            {s.visual === 'pupil-swim' && <PupilSwim tier="full" reducedMotion={false} />}
+            {s.visual === 'glare-control' && <GlareControl tier="full" reducedMotion={false} />}
+            {s.visual && s.visual !== 'hero-animatic' && !act8Visuals.has(s.visual) && <CrtvrSlot id={s.visual} kind="visual" />}
+            {s.interactive === 'flat-vs-cone' && (
+              <>
+                <FlatVsCone client:visible tier="full" reducedMotion={false} />
+                <RayTracer client:visible tier="full" reducedMotion={false} />
+              </>
+            )}
+            {s.interactive === 'rotate-eye' && <RotateEye client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'tier-compare' && (
+              <>
+                <TierCompare client:visible tier="full" reducedMotion={false} />
+                <ExplodedRelay client:visible tier="full" reducedMotion={false} />
+              </>
+            )}
+            {s.interactive === 'fringe-toggle' && <FringeToggle client:visible tier="full" reducedMotion={false} />}
+            {s.interactive === 'gamut-explorer' && <GamutExplorer client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'hex-zoom' && <HexZoom client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'six-beam-convergence' && <SixBeamConvergence client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'coverage-calc' && <CoverageCalc client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'puretone-picker' && <PuretonePicker client:visible tier="full" reducedMotion={false} />}
             {act.number === 4 && s.id === 'gamut-innovations' && <GamutInnovations tier="full" reducedMotion={false} />}
             {s.interactive && BUILT_INTERACTIVES.has(s.interactive) && <CrtVrInteractive id={s.interactive} />}
-            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && !['gamut-explorer', 'hex-zoom', 'six-beam-convergence', 'coverage-calc', 'puretone-picker'].includes(s.interactive) && !act7[s.interactive] && <CrtvrSlot id={s.interactive} kind="interactive" />}
             {s.interactive && act7[s.interactive] && (() => { const C = act7[s.interactive!]; return <C tier="full" reducedMotion={false} />; })()}
             {s.interactive === 'hexa-emission' && <HexaSensors tier="full" reducedMotion={false} />}
             {s.interactive === 'hexa-emission' && <HexaFeatures tier="full" reducedMotion={false} />}
+            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && !act8Islands.has(s.interactive) && !act7[s.interactive] && !['gamut-explorer', 'hex-zoom', 'six-beam-convergence', 'coverage-calc', 'puretone-picker'].includes(s.interactive) && <CrtvrSlot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>

@@ -127,7 +127,7 @@ export const openQuestions = [
  },
  {
   "tier": "P1 Architecture-Completing",
-  "body": "Latency budget: how fast can the foveal boundary shift before the beam schedule can't keep up? Saccade velocities vs. per-frame scan-plan recompute. Flagged in design sessions, never worked out."
+  "body": "Saccade timing: how early can the panel predict the landing point to start the burst?"
  },
  {
   "tier": "P1 Architecture-Completing",

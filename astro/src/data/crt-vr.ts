@@ -241,7 +241,7 @@ export const acts: ActDef[] = [
       { id: 'vacuum-lifetime', title: 'Vacuum lifetime', eyebrow: 'Vacuum', headline: 'A vacuum that stays a vacuum.', body: [
         'Non-evaporable getters (NEG) keep the vacuum by soaking up gas over the panel\'s whole life, the same approach long-life vacuum tubes and FEDs use. Getter capacity against outgassing is open question №9.'] },
       { id: 'durability', title: 'Durability', eyebrow: 'Durability', headline: 'Tough by shape.', body: [
-        'The shallow cap bows into the vacuum, so it carries the vacuum load in tension, like a membrane, at about 1–2 MPa, far below strengthened glass's limit. Chemically strengthened glass and vacuum-side ribs outside the active area hold it.'] },
+        'The shallow cap bows into the vacuum, so it carries the vacuum load in tension, like a membrane, at about 1–2 MPa, far below strengthened glass\'s limit. Chemically strengthened glass and vacuum-side ribs outside the active area hold it.'] },
     ],
   },
   {

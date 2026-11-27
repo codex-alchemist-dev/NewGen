@@ -134,7 +134,8 @@ const act7: Record<string, any> = {
   main { padding-right: 0; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   /* Plain stat grids (Acts 3, 5): headline numbers at display size. */
-  :global(.stat-grid .stat-card__value) { font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1; }
+  :global(.stat-grid .stat-card__value) { font-size: clamp(2.25rem, 5vw, 3.75rem); line-height: 1; white-space: nowrap; }
   /* Act 8 interactives get the wide column the other acts use. */
   :global(#cone-in-cone-out .section__body, #gaze-cone-optics .section__body, #optics-tiers .section__body, #exploded-relay .section__body, #per-beam-ca-prewarp .section__body) { max-width: none; }
+  :global(#cone-in-cone-out p, #gaze-cone-optics p, #optics-tiers p, #exploded-relay p, #per-beam-ca-prewarp p) { max-width: var(--measure); }
 </style>

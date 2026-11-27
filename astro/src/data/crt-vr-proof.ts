@@ -75,7 +75,7 @@ export const comparisonRows = [
   "label": "Weight / Packaging",
   "cells": [
    "Unknown — honest open question №1",
-   "107–170 g shipping",
+   "107–170 g shipping (today's microOLED panel and optics)",
    "N/A",
    "N/A",
    "N/A"
@@ -115,7 +115,7 @@ export const comparisonRows = [
 export const openQuestions = [
  {
   "tier": "P0 Feasibility-Deciding",
-  "body": "Two miniature vacuum tubes + relay optics covering 160° per eye and 200°+ binocular FOV vs. 107–170 g shipping microOLED headsets. No honest mass/volume estimate exists yet. This is where \"smaller, thinner\" is proven or dies. Inputs needed: tube envelope wall thickness at wafer-level-sealed scale, relay lens element count/mass, HV supply mass."
+  "body": "Two miniature vacuum tubes + relay optics covering 160° per eye and 200°+ binocular FOV vs. 107–170 g for today's shipping microOLED panel and optics. A first design estimate puts the CRT-VR panel module at about 300 g per eye, but the full-stack mass is still open. This is where \"smaller, thinner\" is proven or dies. Inputs needed: tube envelope wall thickness at wafer-level-sealed scale, relay lens element count/mass, HV supply mass."
  },
  {
   "tier": "P0 Feasibility-Deciding",
@@ -164,7 +164,7 @@ export const liveFootnotes = [
  "† Foveation refresh figures in the Act 3 vari-refresh simulator are illustrations of the conversion mechanism (peripheral scan savings → central refresh), computed from a notional 120 Hz full-field baseline. They are not performance claims.",
  "† Gamut figures in Act 4 are CIE 1931 calculations; final primary wavelengths are still unlocked (open question №6). The structural claim — a hexagon through six primaries contains every triangle through three — is geometry, not projection.",
  "† Cathodoluminescent quantum-dot phosphors are active research, not fantasy — but unproven at product scale. ALD passivation against e-beam degradation is design intent, not demonstrated lifetime.",
- "† MicroOLED ties on blacks and leads outright on maturity, packaging, and proven density. Comparison rows state this without hedging; the asymmetry (theory vs. shipping product) is disclosed at the top of this act.",
+ "† MicroOLED ties on blacks and leads outright on maturity, packaging, and proven density. Comparison rows state this without hedging; the asymmetry (theory vs. shipping product) is the design target, TRL 2–3.",
  "† \"6 guns, 6 dots\": classic Trinitron \"single gun\" marketing = one assembly, three converged beams, purely geometric color separation via aperture grille. CRT-VR extends the same converged-assembly principle to six beams with a litho-patterned grille — no mechanical wires, no damper-wire shadows.",
  "† Adaptive drive strategy (purity at low luminance, recruitment at high luminance) originates in the XCD-LED display concept and is applied here as firmware/driver logic. See /Sony/XCD-LED for the originating architecture."
 ];

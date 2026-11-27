@@ -20,6 +20,8 @@ import SixBeamConvergence from '../../../components/interactives/crt-vr/SixBeamC
 import CoverageCalc from '../../../components/interactives/crt-vr/CoverageCalc';
 import PuretonePicker from '../../../components/interactives/crt-vr/PuretonePicker';
 import GamutInnovations from '../../../components/visuals/crt-vr/GamutInnovations.astro';
+import CertBadgeWall from '../../../components/visuals/crt-vr/CertBadgeWall.astro';
+import CrtvrSlot from '../../../components/interactives/crt-vr/CrtvrSlot.astro';
 
 const placeholder = '[copy pending]';
 ---
@@ -49,8 +51,8 @@ const placeholder = '[copy pending]';
                 {(s.items ?? []).map((i) => <StatCard label={i.label} value={i.value} unit={i.unit} />)}
               </div>
             )}
-            {s.kind === 'badges' && <CertificationWall items={s.items ?? []} />}
-            {s.kind === 'comparison' && (
+            {s.kind === 'badges' && <CertBadgeWall tier="full" reducedMotion={false} items={s.items ?? []} />}
+            {s.kind === 'comparison' && !s.interactive && (
               <ComparisonTable caption="CRT-VR vs. everything" columns={comparisonHeads} rows={comparisonRows} />
             )}
             {s.kind === 'specs' && specGroups.map((g) => <SpecTable caption={g.name} rows={g.rows} />)}
@@ -68,7 +70,7 @@ const placeholder = '[copy pending]';
             {s.footnote && <Footnote n="†">{s.footnote}</Footnote>}
             {s.visual === 'hero-animatic' && <HeroAnimatic tier="full" reducedMotion={false} />}
             {s.visual === 'hero-animatic' && <HookBackground tier="full" reducedMotion={false} variant="hook" />}
-            {s.visual && s.visual !== 'hero-animatic' && <Slot id={s.visual} kind="visual" />}
+            {s.visual && s.visual !== 'hero-animatic' && <CrtvrSlot id={s.visual} kind="visual" />}
 {s.interactive === 'gamut-explorer' && <GamutExplorer client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'hex-zoom' && <HexZoom client:visible tier="full" reducedMotion={false} />}
             {s.interactive === 'six-beam-convergence' && <SixBeamConvergence client:visible tier="full" reducedMotion={false} />}
@@ -76,7 +78,7 @@ const placeholder = '[copy pending]';
             {s.interactive === 'puretone-picker' && <PuretonePicker client:visible tier="full" reducedMotion={false} />}
             {act.number === 4 && s.id === 'gamut-innovations' && <GamutInnovations tier="full" reducedMotion={false} />}
             {s.interactive && BUILT_INTERACTIVES.has(s.interactive) && <CrtVrInteractive id={s.interactive} />}
-            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && !['gamut-explorer', 'hex-zoom', 'six-beam-convergence', 'coverage-calc', 'puretone-picker'].includes(s.interactive) && <Slot id={s.interactive} kind="interactive" />}
+            {s.interactive && !BUILT_INTERACTIVES.has(s.interactive) && !['gamut-explorer', 'hex-zoom', 'six-beam-convergence', 'coverage-calc', 'puretone-picker'].includes(s.interactive) && <CrtvrSlot id={s.interactive} kind="interactive" />}
           </Section>
         ))}
       </ActWrapper>
